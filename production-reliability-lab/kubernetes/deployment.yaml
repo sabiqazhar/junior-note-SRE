@@ -1,0 +1,100 @@
+# Deploy lab API ke cluster lokal (kind). Lihat labs/week-15-kubernetes/.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-api
+  labels: { app: sre-api }
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0          # nol downtime
+  selector:
+    matchLabels: { app: sre-api }
+  template:
+    metadata:
+      labels: { app: sre-api }
+    spec:
+      terminationGracePeriodSeconds: 30   # harus > shutdown timeout aplikasi (20s)
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: api
+          # Tag immutable. BUKAN :latest — rollback harus deterministik.
+          image: ghcr.io/<user>/production-reliability-lab/sre-api:sha-abc123
+          ports: [{ containerPort: 8080, name: http }]
+
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 256Mi }
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+
+          # startupProbe: kasih waktu buat app yang booting lamaa.
+          # Tanpa ini, aplikasi lawas sering CrashLoopBackOff palsu.
+          startupProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            failureThreshold: 30
+            periodSeconds: 2
+
+          # readiness: BOLEH ngecek dependency. Gagal = dikeluarkan dari Service.
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8080 }
+            periodSeconds: 5
+            failureThreshold: 2
+
+          # liveness: cuma cek proses. JANGAN ngecek dependency —
+          # kalau DB down, restart massal = cascading failure.
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            periodSeconds: 10
+            failureThreshold: 3
+
+          envFrom:
+            - configMapRef: { name: sre-api-config }
+            - secretRef:    { name: sre-api-secret }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sre-api
+spec:
+  type: ClusterIP
+  selector: { app: sre-api }
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sre-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sre-api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 70 }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sre-api
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels: { app: sre-api }

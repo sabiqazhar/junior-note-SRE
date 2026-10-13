@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jadwal Belajar SRE 16 Minggu — Interactive Roadmap</title>
+<style>
+:root{
+  --bg:#0d1117; --bg2:#161b22; --bg3:#1c2128; --line:#30363d;
+  --fg:#e6edf3; --fg2:#9198a1; --accent:#58a6ff; --accent2:#3fb950;
+  --warn:#d29922; --danger:#f85149; --purple:#bc8cff;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.65;
+}
+a{color:var(--accent); text-decoration:none}
+a:hover{text-decoration:underline}
+code{background:var(--bg3); padding:1px 5px; border-radius:4px; font-size:.88em; font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+pre{background:var(--bg3); border:1px solid var(--line); border-radius:var(--radius);
+  padding:12px 14px; overflow-x:auto; font-size:.85em; line-height:1.5}
+pre code{background:none;padding:0}
+
+/* ---------- layout ---------- */
+.wrap{display:flex; min-height:100vh}
+.side{
+  width:290px; flex:0 0 290px; background:var(--bg2); border-right:1px solid var(--line);
+  padding:18px 0; overflow-y:auto; position:sticky; top:0; height:100vh;
+}
+.main{flex:1; padding:26px 30px 80px; max-width:1000px}
+
+/* ---------- header ---------- */
+.head{padding:0 18px 14px; border-bottom:1px solid var(--line); margin-bottom:12px}
+.head h1{font-size:16px; margin:0 0 4px}
+.head p{margin:0; font-size:12px; color:var(--fg2)}
+.progbox{padding:14px 18px; border-bottom:1px solid var(--line); margin-bottom:8px}
+.progbox .lbl{display:flex; justify-content:space-between; font-size:12px; color:var(--fg2); margin-bottom:6px}
+.bar{height:8px; background:var(--bg3); border-radius:6px; overflow:hidden}
+.bar > i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; transition:width .3s}
+.searchbox{padding:10px 18px 14px; border-bottom:1px solid var(--line)}
+.searchbox input{width:100%; background:var(--bg3); border:1px solid var(--line);
+  color:var(--fg); border-radius:8px; padding:8px 10px; font-size:13px; outline:none}
+.searchbox input:focus{border-color:var(--accent)}
+
+/* ---------- nav ---------- */
+.nav{padding:8px 10px}
+.nav .month{font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--fg2); padding:14px 8px 6px; font-weight:700}
+.nav a{display:flex; align-items:center; gap:9px; padding:7px 10px; border-radius:7px;
+  color:var(--fg); font-size:13.5px}
+.nav a:hover{background:var(--bg3); text-decoration:none}
+.nav a.active{background:#1f6feb22; color:var(--accent); font-weight:600}
+.nav a .dot{width:9px;height:9px;border-radius:50%;background:var(--bg3);border:1px solid var(--line);flex:0 0 9px}
+.nav a.done .dot{background:var(--accent2);border-color:var(--accent2)}
+.nav a .n{color:var(--fg2); font-size:11.5px; min-width:20px}
+.nav a.done .n{color:var(--accent2)}
+
+/* ---------- week card ---------- */
+.week{display:none; animation:fade .2s ease}
+.week.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.week h2{font-size:23px; margin:0 0 4px; line-height:1.3}
+.week .sub{color:var(--fg2); font-size:14px; margin-bottom:18px}
+.badge{display:inline-block; font-size:11px; padding:2px 9px; border-radius:20px;
+  background:var(--bg3); border:1px solid var(--line); color:var(--fg2); margin-left:8px; vertical-align:middle}
+.badge.m1{color:var(--accent); border-color:#1f6feb55}
+.badge.m2{color:var(--purple); border-color:#bc8cff55}
+.badge.m3{color:var(--warn); border-color:#d2992255}
+.badge.m4{color:var(--accent2); border-color:#3fb95055}
+
+.donebar{display:flex; align-items:center; gap:12px; background:var(--bg2);
+  border:1px solid var(--line); border-radius:var(--radius); padding:12px 16px; margin-bottom:22px}
+.donebar label{display:flex; align-items:center; gap:9px; cursor:pointer; font-weight:600; font-size:14px}
+.donebar input{width:17px;height:17px;accent-color:var(--accent2);cursor:pointer}
+.donebar .hint{font-size:12px; color:var(--fg2); margin-left:auto}
+
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px}
+.card h3{margin:0 0 12px; font-size:14px; display:flex; align-items:center; gap:8px}
+.card h3 .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+  font-size:12px; background:var(--bg3); border:1px solid var(--line)}
+.card ul{margin:0; padding-left:19px}
+.card li{margin-bottom:7px; font-size:13.8px}
+.card li::marker{color:var(--fg2)}
+
+.days{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px}
+@media(max-width:900px){.days{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.days{grid-template-columns:1fr}}
+.day{background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius); padding:14px}
+.day .dh{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--fg2);
+  margin-bottom:9px; display:flex; justify-content:space-between}
+.day .dh b{color:var(--accent); font-weight:700}
+.day ul{margin:0; padding-left:17px}
+.day li{font-size:13px; margin-bottom:6px}
+
+.acc{background:var(--bg2); border:1px solid var(--line); border-left:3px solid var(--accent2);
+  border-radius:var(--radius); padding:16px 18px; margin-bottom:20px}
+.acc h3{margin:0 0 12px; font-size:14px}
+.acc ol{margin:0; padding-left:20px}
+.acc li{margin-bottom:8px; font-size:13.8px}
+
+.trap{background:#2d1a0e; border:1px solid #d2992240; border-left:3px solid var(--warn);
+  border-radius:var(--radius); padding:16px 18px; margin-bottom:20px}
+.trap h3{margin:0 0 12px; font-size:14px; color:var(--warn)}
+.trap ul{margin:0;padding-left:19px}
+.trap li{margin-bottom:7px;font-size:13.5px}
+
+.refs{background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; margin-bottom:22px}
+.refs h3{margin:0 0 12px; font-size:14px}
+.refs ul{margin:0;padding-left:19px}
+.refs li{margin-bottom:6px;font-size:13.5px}
+.labbox{background:#0d2b1a; border:1px solid #3fb95055; border-left:3px solid var(--accent2);
+  border-radius:var(--radius); padding:16px 18px; margin-bottom:20px}
+.labbox h3{margin:0 0 10px; font-size:14px; color:var(--accent2)}
+.labbox ul{margin:0; padding-left:19px}
+.labbox li{margin-bottom:7px; font-size:13.8px}
+.labbox a{color:var(--accent2)}
+.labbox .tag{display:inline-block; font-size:11px; font-weight:700; padding:1px 8px; border-radius:20px;
+  border:1px solid #3fb95055; margin-right:7px; vertical-align:1px}
+.labbox .tag.read{background:#3fb95022}
+.labbox .tag.lab{background:#58a6ff22; color:var(--accent); border-color:#58a6ff55}
+.labbox .tag.doc{background:#d2992222; color:var(--warn); border-color:#d2992255}
+.labbox .tag.repo{background:#bc8cff22; color:var(--purple); border-color:#bc8cff55}
+
+.navbtns{display:flex; justify-content:space-between; gap:12px; margin-top:34px;
+  padding-top:20px; border-top:1px solid var(--line)}
+.btn{background:var(--bg3); border:1px solid var(--line); color:var(--fg);
+  padding:9px 16px; border-radius:8px; cursor:pointer; font-size:13.5px}
+.btn:hover{border-color:var(--accent); color:var(--accent)}
+.btn:disabled{opacity:.35; cursor:default}
+
+.overview h2{font-size:22px;margin:0 0 6px}
+.pill{display:inline-block;padding:6px 14px;border-radius:20px;font-size:12.5px;
+  background:var(--bg3);border:1px solid var(--line);margin:0 8px 8px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin:14px 0}
+th,td{border:1px solid var(--line);padding:9px 11px;text-align:left}
+th{background:var(--bg3);font-weight:600}
+.note{background:#0f2b1a;border:1px solid #3fb95040;border-radius:var(--radius);
+  padding:14px 16px;margin:16px 0;font-size:13.5px}
+.foot{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px}
+.reset{background:none;border:1px solid var(--line);color:var(--fg2);border-radius:7px;
+  padding:5px 10px;font-size:11.5px;cursor:pointer;margin-top:10px}
+.reset:hover{border-color:var(--danger);color:var(--danger)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <aside class="side">
+    <div class="head">
+      <h1>Jadwal Belajar SRE</h1>
+      <p>16 minggu · 128 jam · 4 hari × 2 jam</p>
+    </div>
+
+    <div class="progbox">
+      <div class="lbl"><span>Progress</span><span id="pct">0 / 16</span></div>
+      <div class="bar"><i id="barfill"></i></div>
+      <button class="reset" id="reset">Reset progres</button>
+    </div>
+
+    <div class="searchbox">
+      <input id="q" type="search" placeholder="Cari minggu, topik, perintah...">
+    </div>
+
+    <nav class="nav" id="nav"></nav>
+  </aside>
+
+  <main class="main">
+    <section class="week active" id="w0">
+      <div class="overview">
+        <h2>Selamat datang</h2>
+        <p class="sub">Roadmap interaktif buat backend engineer yang mau jadi SRE / Platform Engineer.</p>
+
+        <div class="note">
+          <b>Cara pakai:</b> buka tiap minggu, kerjakan 4 harinya, centang kalau semua acceptance criteria sudah lolos
+          dengan bukti. Progres tersimpan di browser lo.
+        </div>
+
+        <h3 style="font-size:15px;margin-top:24px">5 kebiasaan yang dibentuk 16 minggu ini</h3>
+        <div>
+          <span class="pill">Ukur sebelum beropini</span>
+          <span class="pill">Deteksi sebelum user ngeluh</span>
+          <span class="pill">Diagnosis pakai bukti berjenjang</span>
+          <span class="pill">Mitigasi dulu, analisis belakangan</span>
+          <span class="pill">Cegah yang sama terulang</span>
+        </div>
+
+        <h3 style="font-size:15px;margin-top:24px">Peta bulan</h3>
+        <table>
+          <tr><th>Bulan</th><th>Minggu</th><th>Tema</th><th>Yang bikin lo beda</th></tr>
+          <tr><td>1</td><td>1–4</td><td>Linux, networking, container, proxy</td><td>Bisa jawab "kenapa lambat/mati" pakai bukti</td></tr>
+          <tr><td>2</td><td>5–8</td><td>CI/CD, secret, backup, readiness</td><td>Bisa rilis, rollback, pulihkan data tanpa panik</td></tr>
+          <tr><td>3</td><td>9–12</td><td>Metrics, alert, log, trace, SLO</td><td>Bisa bilang "sehat 99,7%, ini buktinya"</td></tr>
+          <tr><td>4</td><td>13–16</td><td>IaC, cloud, K8s, load test, chaos</td><td>Bisa ukur kapasitas dan buktikan sistem pulih</td></tr>
+        </table>
+
+        <h3 style="font-size:15px;margin-top:24px">Aturan bukti</h3>
+        <ol style="font-size:13.8px">
+          <li>Setiap acceptance criteria harus punya <b>bukti yang bisa direproduksi</b> (perintah + output).</li>
+          <li>Output yang mengandung IP internal, token, password, atau data pribadi <b>wajib disanitasi</b>.</li>
+          <li>Jangan centang minggu hanya karena tutorialnya sudah ditonton.</li>
+          <li>Satu minggu selesai kalau: bisa direproduksi, ada buktinya, bisa dijelaskan, ada runbook-nya.</li>
+        </ol>
+
+        <div class="note" style="background:#2d1a0e;border-color:#d2992240">
+          <b>Catatan versi (per 12 Oktober 2026):</b> dokumen ini menandai mana versi <b>2025</b> (milestone) dan mana
+          yang sudah bergerak. Contoh: <b>Promtail EOL 2 Maret 2026</b> → pakai Grafana Alloy. <b>k6 v1.0</b> rilis Mei 2025,
+          sekarang sudah v2.x → pin versi di CI.
+        </div>
+
+        <div class="navbtns">
+          <span></span>
+          <button class="btn" id="start">Mulai Minggu 1 →</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="weeks"></div>
+  </main>
+</div>
+
+<script>
+const DATA = [
+{
+ n:1, m:1, slug:"Linux observability & troubleshooting",
+ tujuan:"Bisa menjelaskan kenapa sebuah service lambat atau mati menggunakan bukti, bukan tebakan.",
+ konsep:["Process vs thread — 1 thread nakal bisa tersembunyi di balik proses yang kelihatan normal",
+         "Signals: SIGTERM (minta berhenti sopan) vs SIGKILL (ditembak). Nyambung ke graceful shutdown minggu 6",
+         "systemd & journalctl sebagai sumber kebenaran",
+         "Memori: lihat MemAvailable, bukan free. Buff/cache bukan musuh",
+         "File descriptor: 'too many open files' = koneksi nggak ditutup",
+         "cgroup v2 + PSI (/proc/pressure) buat bedain stall CPU vs I/O"],
+ hari:[
+  ["Teori","Baca man-pages dan cgroup v2 docs","Pahami process, thread, signals, systemd, memory, fd","Catat kenapa load average bisa tinggi padahal CPU idle"],
+  ["Praktik","go run ./app lalu cek PID, CPU/RAM, port, log","pgrep -af · ss -lntp · lsof -p $PID · ls /proc/$PID/fd | wc -l","Buktikan aplikasi lo listen di 8080 dan nyambung ke Postgres/Redis"],
+  ["Eksperimen","Bikin proses CPU-intensive: yes > /dev/null &","top -H -p $PID lalu pidstat -urd -p $PID 1 5","kill -TERM dulu, pahami kapan -KILL jadi keputusan buruk","Bedakan 3 kondisi: proses mati / port nggak listen / aplikasi hang"],
+  ["Review","Bikin runbook high-cpu.md, oom-symptoms.md, service-down.md","Simpan output diagnosis yang sudah disanitasi","Tulis root cause tiap eksperimen"]],
+ acc:["Bisa nunjuk proses/thread penyebab CPU tinggi dalam <5 menit dengan bukti",
+      "Bisa nemuin error dari system journal dan bedain error aplikasi vs sistem",
+      "Bisa bedain service down vs service hidup tapi nggak nerima koneksi (decision tree)",
+      "Bisa jelasin beda kill -TERM dan kill -KILL, dan kapan -KILL itu salah"],
+ trap:["Load average tinggi ≠ CPU tinggi. Bisa karena I/O — cek vmstat kolom wa dan b",
+       "'Memory penuh' palsu: Linux pakai sisa RAM buat page cache",
+       "OOM container nggak selalu muncul di dmesg host — cek memory.events dan systemd-oomd",
+       "pidstat iterasi pertama itu rata-rata sejak boot, tunggu baris ke-2",
+       "kill -9 sebagai solusi pertama bikin koneksi DB nggak ditutup rapi"],
+ refs:[["Linux man-pages","https://man7.org/linux/man-pages/"],
+       ["PSI (Pressure Stall Information)","https://www.kernel.org/doc/html/latest/accounting/psi.html"],
+       ["cgroup v2","https://docs.kernel.org/admin-guide/cgroup-v2.html"],
+       ["systemd-oomd","https://www.freedesktop.org/software/systemd/man/latest/systemd-oomd.service.html"]]
+},
+{
+ n:2, m:1, slug:"Networking untuk backend engineer",
+ tujuan:"Paham perjalanan request dari client ke aplikasi dan dependency-nya.",
+ konsep:["5 fase request: DNS → TCP → TLS → HTTP → transfer body",
+         "curl -w bisa nunjukin semua fase dalam angka — ini nutup debat 'lelet di server atau jaringan'",
+         "Bedanya connection refused (pintu dikunci) dan timeout (nggak ada yang nyahut)",
+         "TLS 1.3 + ALPN (h2/h3); HTTP/3 ≈ 21% traffic global 2025",
+         "DNS di Docker Compose itu internal: api bisa resolve redis, laptop lo nggak"],
+ hari:[
+  ["Teori","DNS, routing, TCP handshake, listening socket, connection timeout, HTTP, TLS, reverse proxy","Cloudflare Learning Center","Catat fakta: Cloudflare Radar 2025: HTTP/2 ~50%, HTTP/1.x ~29%, HTTP/3 ~21%"],
+  ["Praktik","ip addr · ip route · ss -lntp · dig +trace","curl -w dengan time_namelookup, time_connect, time_appconnect, time_starttransfer, time_total","Bandingkan hasil ke localhost vs domain publik"],
+  ["Eksperimen","Reproduksi 4 kegagalan: DNS failed, connection refused, timeout, HTTP 5xx","Catat exit code curl: 6=DNS, 7=refused, 28=timeout, 0=ok","Bikin tabel error di commands.md"],
+  ["Review","Bikin diagram request flow","Tulis decision tree: DNS / refused / timeout / 5xx","Verifikasi TLS: openssl s_client -servername ... -tls1_3 -alpn h2"]],
+ acc:["Bisa jelasin dan mereproduksi DNS failure, TCP failure, HTTP error, timeout",
+      "Bisa nemuin port yang listen dan proses pemiliknya",
+      "Bisa ukur dan jelasin 5 fase latency satu request",
+      "Bisa buktiin versi TLS dan protokol (h2/h3) yang dipakai"],
+ trap:["time_starttransfer bukan waktu jaringan — sudah termasuk waktu server mikir",
+       "Hasil dig belum tentu yang dipakai aplikasi (cache, systemd-resolved, stub 127.0.0.53)",
+       "Ping diblok ≠ service mati. ICMP dan TCP beda jalan",
+       "openssl s_client tanpa -servername bisa dapat sertifikat salah (SNI)",
+       "Biasakan cek exit code curl ($?), bukan cuma lihat outputnya"],
+ refs:[["Cloudflare Learning Center","https://www.cloudflare.com/learning/network-layer/"],
+       ["Cloudflare Radar 2025","https://blog.cloudflare.com/radar-2025-year-in-review/"],
+       ["curl -w variables","https://curl.se/docs/manpage.html"]]
+},
+{
+ n:3, m:1, slug:"Docker production fundamentals",
+ tujuan:"Mengoperasikan container dengan lifecycle, resource, dan network yang terkontrol.",
+ konsep:["docker compose (v2). Versi lama docker-compose (Python) sudah dihapus",
+         "depends_on bentuk pendek cuma nunggu start, BUKAN nunggu siap → pakai condition: service_healthy",
+         "deploy.replicas / update_config itu fitur Swarm; yang jalan di Compose biasa: resources.limits",
+         "Healthcheck harus nguji kesiapan beneran, bukan CMD true",
+         "Multi-stage build + distroless + non-root USER"],
+ hari:[
+  ["Teori","Image layer, lifecycle, bridge network, volume, healthcheck, cgroups, CMD vs ENTRYPOINT","Docker Get Started + Compose file reference"],
+  ["Praktik","compose.yaml: api + postgres + redis","depends_on dengan condition: service_healthy","docker compose up -d --build --wait lalu --wait tunggu healthcheck OK"],
+  ["Eksperimen","Batasi memori/CPU/pids lalu amati","docker compose stop redis → apakah API panic, hang, atau gagal terkendali?","docker inspect --format '{{json .State}}' · docker events"],
+  ["Review","Tabel perbandingan depends_on vs healthcheck vs application retry",".env.example + .gitignore; nggak ada password di repo","Pastikan port DB/Redis nggak terekspos ke host"]],
+ acc:["Semua service hidup dari kondisi bersih dengan satu perintah",
+      "API gagal secara terkendali saat dependency nggak tersedia (bukan hang/panic)",
+      "Tiap container punya limit resource masuk akal + healthcheck yang berfungsi",
+      "Nggak ada password hardcoded; .env di .gitignore, .env.example di repo"],
+ trap:["Healthcheck pakai curl di image distroless → selalu unhealthy",
+       "Tanpa USER di Dockerfile → container jalan sebagai root",
+       "Tanpa limit memori → yang OOM itu host, bukan container",
+       "Image :latest bikin rollback mustahil",
+       "docker compose down -v = data hilang. Pahami bedanya dengan down"],
+ refs:[["Docker Get Started","https://docs.docker.com/get-started/"],
+       ["Compose file reference","https://docs.docker.com/reference/compose-file/services/"],
+       ["Resource constraints","https://docs.docker.com/engine/containers/resource_constraints/"]]
+},
+{
+ n:4, m:1, slug:"DNS, TLS, dan reverse proxy",
+ tujuan:"Membuat akses HTTP/HTTPS yang benar dan mendiagnosis masalah di depan aplikasi.",
+ konsep:["502 = upstream nolak/reset; 504 = proxy_read_timeout habis; 499 = client nutup duluan (kode internal nginx)",
+         "Default timeout nginx 60s — kepanjangan buat API modern",
+         "Mulai nginx 1.29.7: keepalive di upstream & proxy_http_version 1.1 default ON",
+         "Header forwarding: Host, X-Forwarded-For, X-Forwarded-Proto",
+         "Let's Encrypt sertifikat 6 hari (mulai 2025) → renewal harus otomatis harian"],
+ hari:[
+  ["Teori","Reverse proxy, TLS, upstream health, buffering, keep-alive, proxy timeout, graceful shutdown","NGINX Beginner's Guide + ngx_http_proxy_module"],
+  ["Praktik","Tambah nginx di depan API; cuma nginx yang punya ports:","proxy_set_header + timeout 5s/30s/30s + access/error log","docker compose exec nginx nginx -t SELALU sebelum reload"],
+  ["Eksperimen","Matiin upstream → 502. Endpoint /slow?ms=60000 → 504","Client timeout lebih kecil dari proxy_read_timeout → 499","Salah konfigurasi upstream → cek error.log"],
+  ["Review","Dokumentasi request flow + failure matrix 502/504/499","TLS lokal: mkcert -install && mkcert app.local 127.0.0.1","Buktikan port DB nggak bisa diakses dari luar"]],
+ acc:["Client akses API cuma lewat reverse proxy",
+      "Port Postgres dan Redis nggak terekspos ke host (buktikan dengan ss/nmap)",
+      "Kegagalan upstream menghasilkan error yang bisa ditelusuri dari log",
+      "Bisa jelasin dan reproduksi 502 / 504 / 499"],
+ trap:["502 dan 504 sering ketuker: 502=nolak, 504=kelamaan",
+       "Lupa proxy_set_header Host → backend salah pilih vhost",
+       "Dua proxy beruntun → X-Forwarded-For dobel atau ketimpa",
+       "proxy_read_timeout lebih panjang dari timeout client → hasilnya 499, bukan 504",
+       "mkcert CA cuma dipercaya di mesin lokal, jangan buat domain publik"],
+ refs:[["NGINX Beginner's Guide","https://nginx.org/en/docs/beginners_guide.html"],
+       ["ngx_http_proxy_module","https://nginx.org/en/docs/http/ngx_http_proxy_module.html"],
+       ["Short-lived certificates","https://letsencrypt.org/2025/02/20/first-short-lived-cert-issued"]]
+},
+{
+ n:5, m:2, slug:"CI/CD dan release management",
+ tujuan:"Menghilangkan deployment manual yang rawan lupa langkah.",
+ konsep:["Immutable artifact: satu build = satu artefak yang nggak pernah diubah",
+         "concurrency group: dua push beruntun jangan bikin dua deploy nabrak",
+         "permissions: ditulis eksplisit, jangan andalkan default repo",
+         "OIDC ke cloud, bukan access key statis yang umurnya 5 tahun",
+         "Attestation = bukti kriptografis image ini dibangun dari commit ini"],
+ hari:[
+  ["Teori","CI vs CD, immutable artifact, versioning, environment separation, secrets, rollback","GitHub Actions docs"],
+  ["Praktik","Workflow: go vet + go test -race + golangci-lint","Integration test pakai service postgres & redis","Build image dengan tag commit SHA, push ke GHCR"],
+  ["Eksperimen","Sengaja gagalkan test → buktikan pipeline nolak release","Bikin tag berbasis SHA, bukan latest","Uji rollback ke digest image sebelumnya","Cek kebocoran secret dengan gitleaks"],
+  ["Review","docs/release-process.md: build, publish, deploy versi tertentu, rollback","Pastikan nggak ada secret di log/artefak"]],
+ acc:["Test jalan otomatis tiap PR dan selesai <10 menit",
+      "Image punya versi yang bisa dilacak (commit SHA) dan immutable",
+      "Test gagal → release ditolak (ada buktinya)",
+      "Nggak ada secret di log/artefak; permissions: ditulis eksplisit"],
+ trap:["latest itu musuh rollback — mutable, lo nggak pernah tahu apa yang jalan",
+       "pull_request_target + checkout PR head = celah RCE",
+       "Lupa permissions: di repo lama default-nya write",
+       "Attestation tanpa verifikasi = teater keamanan",
+       "Cache Go bentrok sama matrix build → sukses/gagal acak"],
+ refs:[["GitHub Actions docs","https://docs.github.com/en/actions"],
+       ["Artifact attestations","https://docs.github.com/en/actions/concepts/security/artifact-attestations"],
+       ["Immutable releases","https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases"]]
+},
+{
+ n:6, m:2, slug:"Secrets, konfigurasi, dan deployment",
+ tujuan:"Deployment konsisten, aman, dan mudah di-rollback.",
+ konsep:["startupProbe: 'udah selesai booting?' — boleh ngecek dependency",
+         "readinessProbe: 'boleh nerima traffic?' — INI tempatnya ngecek dependency",
+         "livenessProbe: 'proses masih waras?' — JANGAN ngecek dependency, nggak akan restart massal saat DB down",
+         "Graceful shutdown: signal.NotifyContext + srv.Shutdown dengan timeout < grace period",
+         "Docker Compose nggak punya perintah rollout — keterbatasan ini harus dicatat, bukan dipura-pura"],
+ hari:[
+  ["Teori","12-factor config, secret injection, readiness/liveness, graceful shutdown, rolling deployment"],
+  ["Praktik","Pisahkan konfigurasi dari image","signal.NotifyContext + http.Server.Shutdown di Go","/healthz cuma cek proses; /readyz cek Postgres + Redis"],
+  ["Eksperimen","hey -n 20000 -c 50 sambil kirim SIGTERM → target 0 5xx","Password DB salah → readyz 503, container nggak pernah healthy","Matiin Redis → readyz 503 tapi healthz tetap 200"],
+  ["Review","Deployment checklist + rollback procedure","Catat keterbatasan lab: Compose nggak zero-downtime"]],
+ acc:["Aplikasi berhenti graceful saat SIGTERM; request in-flight selesai",
+      "readyz TIDAK bilang siap saat kondisi wajib belum terpenuhi",
+      "Deployment gagal nggak menimpa versi sehat tanpa rencana recovery",
+      "Nggak ada secret plaintext di Git (SOPS/age atau secret manager)"],
+ trap:["Liveness yang ngecek dependency = mesin pembuat outage (cascading failure)",
+       "Shutdown timeout lebih besar dari grace period → dipaksa mati di tengah jalan",
+       "Secret di env gampang bocor ke docker inspect, log error, crash report",
+       "SIGTERM nggak nyampe kalau PID 1 di container itu shell — pakai exec form atau init: true",
+       "Readiness tanpa connection drain → 502 saat rolling update"],
+ refs:[["signal.NotifyContext","https://pkg.go.dev/os/signal#NotifyContext"],
+       ["http.Server.Shutdown","https://pkg.go.dev/net/http#Server.Shutdown"],
+       ["Configure probes","https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"]]
+},
+{
+ n:7, m:2, slug:"Backup dan disaster recovery",
+ tujuan:"Memastikan data bisa dipulihkan, bukan sekadar merasa aman karena cron pernah jalan.",
+ konsep:["RPO = seberapa banyak data yang boleh hilang. RTO = berapa lama boleh nggak bisa dipakai",
+         "pg_dump = logical backup, TIDAK bisa PITR",
+         "PITR butuh base backup + WAL archiving",
+         "Backup yang belum pernah di-restore itu bukan backup, cuma harapan",
+         "Tool: pgBackRest, Barman, WAL-G, CloudNativePG + plugin-barman-cloud"],
+ hari:[
+  ["Teori","Logical vs physical backup, retention, RPO/RTO, PITR, off-site","PostgreSQL Backup and Restore + Continuous Archiving"],
+  ["Praktik","pg_dump -Fc lalu pg_restore --list (mulai sederhana)","Naik level: pgBackRest + MinIO, full + incr + verify","Retention, enkripsi, off-site"],
+  ["Eksperimen","Restore ke instance BARU yang kosong","Verifikasi: count(*), constraint, checksum tabel","Ukur waktu backup & restore, bandingkan dengan RTO"],
+  ["Review","docs/disaster-recovery.md: RPO/RTO, runbook, retention, lokasi","Tulis yang belum ditangani secara eksplisit"]],
+ acc:["Restore benar-benar berhasil ke instance/database terpisah",
+      "Data hasil restore lolos verifikasi (jumlah row + constraint + checksum)",
+      "Durasi recovery diukur dan dibandingkan dengan target RTO",
+      "Backup terenkripsi dan lokasinya terpisah dari volume database"],
+ trap:["pg_dump tanpa pernah di-restore sering dianggap 'backup aman' padahal nggak bisa PITR",
+       "Lupa archive_mode=on → WAL nggak kearsip → PITR gagal total",
+       "Retensi WAL lebih pendek dari retensi full → backup nggak berguna",
+       "Backup dan WAL di bucket yang sama tanpa object lock",
+       "Verifikasi cuma 'restore exit code 0' — itu bukan bukti datanya benar"],
+ refs:[["Backup and Restore","https://www.postgresql.org/docs/current/backup.html"],
+       ["Continuous Archiving & PITR","https://www.postgresql.org/docs/current/continuous-archiving.html"],
+       ["pgBackRest","https://pgbackrest.org/"]]
+},
+{
+ n:8, m:2, slug:"Production readiness & reliability baseline",
+ tujuan:"Menggabungkan deployment, jaringan, dan recovery jadi sistem yang bisa dioperasikan.",
+ konsep:["PRR njawab: kalau ini rusak jam 3 pagi, apakah orang jaga bisa benerin tanpa nanya-nanya?",
+         "Dependency mapping + FMEA: komponen, failure mode, dampak, deteksi, mitigasi",
+         "SPOF harus ditulis — dan kalau diterima, diterima secara eksplisit",
+         "Satu perintah dari repo kosong sampai sistem jalan. Kalau perlu 5 perintah dari ingatan, itu bug"],
+ hari:[
+  ["Teori","Production readiness review, dependency mapping, failure mode, operational checklist, SPOF","Google SRE: Evolving SRE Engagement Model + Launch Checklist"],
+  ["Praktik","docker compose config → up -d --build --wait → curl /health dan /readyz","Pastikan reproducibility dari repo kosong"],
+  ["Eksperimen","Reboot / restart environment lab","Verifikasi: aplikasi balik online? data persist? secret kebaca?","Ukur berapa lama sampai /readyz balas 200"],
+  ["Review","docs/production-readiness.md: security, availability, observability, recovery, deployment","Diagram arsitektur v1 + dependency map + FMEA"]],
+ acc:["Sistem bisa dibangun dan dijalanin ulang hanya dari repository",
+      "Semua langkah pemulihan terdokumentasi DAN teruji",
+      "Risiko yang belum ditangani ditulis eksplisit",
+      "Environment pulih setelah reboot tanpa campur tangan manual"],
+ trap:["PRR jadi dokumen sekali pakai yang langsung basi",
+       "FMEA tanpa kolom 'gimana deteksinya' → nggak bisa ditindaklanjuti",
+       "Dependency pihak ketiga (auth, payment) nggak masuk peta — padahal paling sering bikin outage",
+       "Nggak ada yang ditulis sebagai pemilik on-call"],
+ refs:[["Evolving SRE Engagement Model (PRR)","https://sre.google/sre-book/evolving-sre-engagement-model/"],
+       ["Launch Coordination Checklist","https://sre.google/sre-book/launch-checklist/"]]
+},
+{
+ n:9, m:3, slug:"Metrics dengan Prometheus",
+ tujuan:"Mengetahui kondisi service melalui metrics, bukan menunggu pengguna mengeluh.",
+ konsep:["Counter = odometer (cuma naik) → rate(). Gauge = speedometer → langsung dipakai",
+         "Histogram = ember ukuran → histogram_quantile(). Summary jarang dipakai",
+         "Kardinalitas adalah pembunuh nomor satu: pakai http_route (pola), BUKAN path mentah",
+         "Prometheus 3.0 rilis Nov 2024: UI baru, Remote Write 2.0, UTF-8, OTLP receiver",
+         "Native histogram stabil sejak 3.8.0 tapi nggak aktif default → scrape_native_histograms: true"],
+ hari:[
+  ["Teori","Counter, gauge, histogram, scrape interval, labels, cardinality, PromQL","Prometheus Getting Started"],
+  ["Praktik","Endpoint /metrics di Go pakai client_golang","Ukur request count, status, duration, in-flight","prometheus.yml dengan job api"],
+  ["Eksperimen","100 request normal + 20 request error → cek counter berubah","Endpoint lambat → cek bucket histogram mana yang naik","docker compose logs prometheus"],
+  ["Review","Query: request rate, error ratio, p95 latency, in-flight, kardinalitas","Simpan sebagai file .promql"]],
+ acc:["Prometheus berhasil scrape API (target UP)",
+      "Metrics berubah sesuai traffic dan error (bukti sebelum/sesudah)",
+      "Query request rate, error ratio, p95 bisa dijalankan dan hasilnya masuk akal",
+      "Nggak ada label berkardinalitas tinggi"],
+ trap:["histogram_quantile itu aproksimasi; bucket terlalu lebar = hasil ngaco",
+       "Jangan rata-ratakan hasil quantile antar instance — jumlahkan _bucket dulu",
+       "Label user_id / path mentah / request_id → Prometheus meledak",
+       "rate() butuh range selector minimal 4x scrape interval",
+       "Native histogram nggak aktif sendiri, harus disetel di scrape config"],
+ refs:[["Prometheus Getting Started","https://prometheus.io/docs/tutorials/getting_started/"],
+       ["Histograms and summaries","https://prometheus.io/docs/practices/histograms/"],
+       ["Native histograms","https://prometheus.io/docs/specs/native_histograms/"]]
+},
+{
+ n:10, m:3, slug:"Grafana dan alerting",
+ tujuan:"Mengubah metrics menjadi informasi operasional yang berguna.",
+ konsep:["RED buat service: Rate, Error, Duration. USE buat resource: Utilization, Saturation, Error",
+         "Alert berbasis gejala (user rugi), bukan penyebab (CPU 80% yang nggak ngaruh)",
+         "Kalau nggak ada yang bisa ditindaklanjuti dari sebuah alert, itu bukan alert — itu grafik",
+         "Tiap alert wajib punya runbook. Severity beda perlakuan: page vs ticket",
+         "Promtail EOL 2 Maret 2026 → pipeline log pakai Grafana Alloy"],
+ hari:[
+  ["Teori","Dashboard design, RED, USE, alert threshold, alert fatigue, symptom-based alerting"],
+  ["Praktik","Dashboard: request rate, error rate, p95/p99, CPU, memori, koneksi DB","Provisioning as code dengan allowUiUpdates: false","Alert: APIDown (page), HighErrorRate (page), HighLatency (ticket)"],
+  ["Eksperimen","Matiin API → berapa detik sampai alert firing?","Naikin error rate → cek pesannya actionable?","Bikin latency tinggi → apakah alert flapping?"],
+  ["Review","Alert runbook: gejala, penyebab, query, mitigasi, eskalasi","Pastikan tiap alert nunjuk ke runbook lewat runbook_url"]],
+ acc:["Dashboard nunjukin traffic dan kondisi service real time, bisa di-reprovision dari nol",
+      "Alert service-down kepicu dalam target waktu (misal <2 menit)",
+      "Setiap alert penting punya instruksi tindakan yang jelas",
+      "Pipeline log jalan lewat Alloy, bukan Promtail"],
+ trap:["allowUiUpdates: true bikin drift — perubahan di UI hilang pas redeploy",
+       "Alert tanpa for: → flapping, bikin on-call kebal",
+       "Satu contact point buat semua severity → yang penting tenggelam",
+       "Nggak ada mute timings buat maintenance → alert noise",
+       "'CPU > 80%' tanpa konteks dampak = alert yang nggak pernah ditindaklanjuti"],
+ refs:[["Grafana alerting rules","https://grafana.com/docs/grafana/latest/alerting/alerting-rules/"],
+       ["Provisioning","https://grafana.com/docs/grafana/latest/administration/provisioning/"],
+       ["Promtail → Alloy migration","https://grafana.com/docs/loki/latest/setup/migrate/migrate-to-alloy/"]]
+},
+{
+ n:11, m:3, slug:"Logs dan distributed tracing",
+ tujuan:"Menghubungkan gejala pada metrics dengan penyebab pada request tertentu.",
+ konsep:["Metrics njawab 'ada yang aneh nggak'. Logs njawab 'apa persisnya'. Traces njawab 'di titik mana'",
+         "Urutan: metrics bilang ada masalah → logs bilang request mana → trace bilang di span mana",
+         "log/slog bawaan Go sejak 1.21 — nggak perlu library tambahan",
+         "W3C Trace Context (traceparent) bikin trace nyambung lintas service dan vendor",
+         "Trace putus paling sering karena lupa nerusin context.Context"],
+ hari:[
+  ["Teori","Structured logging, correlation ID, trace/span, context propagation, sampling","OpenTelemetry Documentation"],
+  ["Praktik","slog.NewJSONHandler + field trace_id dan request_id","otelhttp.NewHandler buat instrumentasi otomatis","Alloy: loki.source.docker + otelcol.receiver.otlp + tail_sampling"],
+  ["Eksperimen","Bikin request lambat karena query DB (pg_sleep atau tanpa index)","Cari log berdasarkan trace_id di Loki","Buka trace di Tempo: dari 1,2 detik, berapa yang habis di span DB?"],
+  ["Review","Panduan: dari dashboard → log → trace, dengan screenshot","Contoh log tersanitasi"]],
+ acc:["Log terstruktur dan bisa difilter berdasarkan trace/correlation ID",
+      "Trace nunjukin durasi span aplikasi DAN dependency",
+      "Satu request lambat sengaja dibuat dan berhasil ditelusuri tanpa nebak",
+      "traceparent diteruskan, trace nggak putus"],
+ trap:["Trace putus karena context nggak diteruskan ke fungsi turunan",
+       "Correlation ID ada tapi nggak masuk log — harus di-inject tiap kali nulis log",
+       "Tail sampling tanpa policy 100% untuk error → trace terpenting kebuang",
+       "Ngira semua semconv sudah stabil — sebagian masih Mixed",
+       "Nama field level nggak konsisten (level vs severity) → query LogQL berantakan"],
+ refs:[["OpenTelemetry docs","https://opentelemetry.io/docs/"],
+       ["Semconv HTTP metrics","https://opentelemetry.io/docs/specs/semconv/http/http-metrics/"],
+       ["W3C Trace Context","https://www.w3.org/TR/trace-context/"]]
+},
+{
+ n:12, m:3, slug:"SLI, SLO, error budget, dan incident response",
+ tujuan:"Mulai berpikir seperti SRE, bukan hanya operator monitoring.",
+ konsep:["SLI = angka dari sisi user. SLO = targetnya. SLA = janji ke user. Error budget = jatah gagal",
+         "Error budget ngubah debat 'boleh rilis nggak' dari opini jadi angka",
+         "Multiwindow multi-burn-rate: burn 14.4 (page), 6 (page), 1 (ticket)",
+         "Mitigasi dulu, analisis belakangan — urutan ini sengaja",
+         "Blameless: kalau root cause-nya nyebut nama orang, postmortem itu gagal"],
+ hari:[
+  ["Teori","SLI/SLO/SLA, error budget policy, incident lifecycle, blameless postmortem","Google SRE Workbook: Implementing SLOs"],
+  ["Praktik","Tulis docs/slo.md: availability 99,5% 30 hari rolling; latency 95% < 300ms","Sebutkan eksklusi request nggak valid dan alasannya","Angka ini target latihan, tulis dengan jujur"],
+  ["Eksperimen","Pasang alert burn rate, uji dengan promtool test rules","Simulasi insiden: catat timeline, deteksi, mitigasi, recovery","Hitung berapa error budget yang habis"],
+  ["Review","postmortems/incident-001.md: impact, timeline, root cause, 5-whys, action item ber-owner"]],
+ acc:["SLI bisa dihitung dari metrics yang sudah dikumpulkan (sumber data + window jelas)",
+      "SLO punya periode evaluasi dan aturan eksklusi request nggak valid",
+      "Alert burn rate terpasang dan diuji dengan promtool",
+      "Satu postmortem blameless lengkap dengan action item ber-owner dan tenggat"],
+ trap:["SLO diukur dari metrik internal, bukan dari sisi user — aplikasi yang crash nggak pernah kehitung error",
+       "Alert statis 'error rate > 1%' tanpa burn rate → banyak false positive",
+       "Service dengan traffic rendah butuh aturan khusus (1 request gagal/jam = burn 1000x)",
+       "Postmortem tanpa action item ber-owner = curhatan, bukan postmortem",
+       "Severity nggak ditetapkan di 5 menit pertama → respons kacau"],
+ refs:[["Implementing SLOs","https://sre.google/workbook/implementing-slos/"],
+       ["Alerting on SLOs","https://sre.google/workbook/alerting-on-slos/"],
+       ["Error budget policy","https://sre.google/workbook/error-budget-policy/"],
+       ["Postmortem culture","https://sre.google/sre-book/postmortem-culture/"]]
+},
+{
+ n:13, m:4, slug:"Terraform dan Infrastructure as Code",
+ tujuan:"Membuat infrastruktur reproducible dan bisa direview melalui Git.",
+ konsep:["Terraform lisensi BUSL sejak 2023; IBM selesaikan akuisisi HashiCorp 27 Feb 2025",
+         "OpenTofu: fork MPL-2.0 di bawah Linux Foundation; sintaks sama persis",
+         "plan -out itu WAJIB: apply tanpa file plan bisa ngejalanin rencana yang belum lo review",
+         "State bisa berisi password database dalam teks biasa → backend terenkripsi, jangan di-commit",
+         "import block (TF 1.5+) lebih aman dari perintah terraform import"],
+ hari:[
+  ["Teori","Provider, resource, variable, output, state, dependency graph, drift","Terraform Tutorials / OpenTofu"],
+  ["Praktik","main.tf + variables.tf + outputs.tf buat lab","tofu fmt -check → init → validate → plan -out=tfplan"],
+  ["Eksperimen","Ubah konfigurasi, bandingkan plan","Drift detection: tofu plan -refresh-only","Import resource yang sudah ada pakai import block","Scan: trivy config ."],
+  ["Review","docs/infrastructure.md: provisioning, perubahan, cleanup, biaya","Pastikan state dan secret nggak ke-commit"]],
+ acc:["terraform/tofu validate lolos dan fmt -check bersih",
+      "Perubahan bisa direview lewat plan -out sebelum apply",
+      "Provisioning dan cleanup terdokumentasi; biaya dipahami sebelum apply",
+      "Nggak ada state file atau secret ke-commit"],
+ trap:["apply tanpa -out → yang dieksekusi bisa beda dari yang direview",
+       "Pakai workspace buat bedain dev/prod dalam satu state → blast radius gede",
+       "State di repo Git atau lokal → secret bocor plaintext",
+       "Provider tanpa version pin → init ulang di CI bisa narik versi yang nabrak",
+       "Lupa destroy → VPS dan NAT gateway jadi tagihan bulanan"],
+ refs:[["Terraform tutorials","https://developer.hashicorp.com/terraform/tutorials"],
+       ["OpenTofu","https://opentofu.org/"],
+       ["Trivy (pengganti tfsec)","https://github.com/aquasecurity/trivy"]]
+},
+{
+ n:14, m:4, slug:"Cloud networking dan security",
+ tujuan:"Memahami bagaimana service dijalankan di jaringan cloud yang aman.",
+ konsep:["Pola: LB di public subnet, aplikasi dan database di private subnet",
+         "Akses admin pakai SSM Session Manager, bukan SSH key yang menempel terus",
+         "IMDSv2 wajib (HttpTokens: required) biar SSRF nggak ngambil kredensial role",
+         "Least privilege: role dengan policy sempit, bukan Action: '*'",
+         "AWS Free Tier berubah 15 Juli 2025: kredit $100 (+$100), berlaku 6 bulan"],
+ hari:[
+  ["Teori","VPC, subnet, route table, security group, IAM, load balancer, object storage, managed DB","Pilih SATU provider. Jangan coba semuanya sekaligus"],
+  ["Praktik","Bikin diagram jaringan DULU sebelum nulis konfigurasi","Security group app cuma nerima dari security group LB","Instance di private subnet + IAM instance profile"],
+  ["Eksperimen","nmap dari luar: port 5432/6379 harus filtered/closed","Cek DNS dan TLS: dig + openssl s_client","Akses admin lewat SSM, bukan SSH publik","Pasang budget alert"],
+  ["Review","docs/security-review.md: attack surface, hak akses, eksposur jaringan, backup, biaya"]],
+ acc:["Cuma port yang dibutuhkan yang bisa diakses dari luar",
+      "Akses administrasi dibatasi (role + least privilege)",
+      "Diagram jaringan sesuai konfigurasi aktual",
+      "Budget alert aktif"],
+ trap:["Node di public subnet 'biar gampang SSH' → pakai private + SSM/NAT",
+       "IAM policy Action: '*' pas debugging, lupa dibalikin",
+       "Nggak pasang budget alert sebelum deploy",
+       "NAT gateway ditinggal nyala seminggu (~$0,045/jam + data)",
+       "Security group inbound 0.0.0.0/0 ke port database"],
+ refs:[["IMDSv2","https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html"],
+       ["AWS Free Tier update (2025)","https://aws.amazon.com/blogs/aws/aws-free-tier-update-new-customers-can-get-started-and-explore-aws-with-up-to-200-in-credits/"]]
+},
+{
+ n:15, m:4, slug:"Kubernetes dan orchestration",
+ tujuan:"Memahami konsep orchestration dan kapan Kubernetes diperlukan.",
+ konsep:["Deployment → ReplicaSet → Pod; Service buat akses stabil",
+         "startupProbe buat app lambat booting; readiness boleh cek dependency; liveness JANGAN",
+         "requests == limits → QoS Guaranteed. Salah satu doang → Burstable, jadi korban pertama saat node pressure",
+         "Ingress NGINX di-retire (best-effort sampai Maret 2026) → Gateway API",
+         "Pod Security Admission (restricted) menggantikan PSP"],
+ hari:[
+  ["Teori","Pod, Deployment, ReplicaSet, Service, ConfigMap, Secret, probe, requests/limits, rolling update","Kubernetes Basics"],
+  ["Praktik","kind create cluster --name sre --image kindest/node:v1.34.0","Deploy image API lo sendiri, jangan berhenti di nginx","Deployment + Service + HPA + PDB"],
+  ["Eksperimen","scale ke 5, hapus satu Pod, amati rekonsiliasi","set image ke versi rusak → rollout harus mandek","rollout undo → balik tanpa downtime","kubectl debug, kubectl logs --previous"],
+  ["Review","Tabel perbandingan Compose vs Kubernetes + overhead-nya","Jelasin kapan K8s benar-benar perlu dan kapan jadi beban"]],
+ acc:["Deployment dan Service jalan dengan image API milik lab",
+      "Pod yang dihapus diganti otomatis sesuai desired state",
+      "Rollout, rollback, dan probe failure bisa diamati dan dijelaskan",
+      "Non-root + readOnlyRootFilesystem + requests/limits terpasang"],
+ trap:["limits tanpa requests (atau sebaliknya) → QoS Burstable/BestEffort",
+       "Nggak ada startupProbe → CrashLoopBackOff palsu",
+       "Liveness = readiness → restart massal saat cuma overload",
+       "Masih pakai Ingress NGINX buat cluster baru (nggak dapat security fix)",
+       "Image :latest → rollout undo nggak deterministik"],
+ refs:[["Kubernetes Basics","https://kubernetes.io/docs/tutorials/kubernetes-basics/"],
+       ["v1.34 release","https://kubernetes.io/blog/2025/08/27/kubernetes-v1-34-release/"],
+       ["Configure probes","https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"]]
+},
+{
+ n:16, m:4, slug:"Load testing, chaos, dan final incident simulation",
+ tujuan:"Membuktikan mampu mengukur kapasitas, menemukan bottleneck, dan memulihkan sistem.",
+ konsep:["Little's Law: L = λ × W. Butuh 100 request in-flight buat 500 req/s di latency 200ms",
+         "Utilisasi ρ = λ/μ. Saat ρ mendekati 1, latency meledak eksponensial — itu definisi saturasi",
+         "Timeout budget menurun per hop; exponential backoff + JITTER (tanpa jitter semua retry bareng)",
+         "Circuit breaker + bulkhead biar satu dependency nggak ngeruntuhin semuanya",
+         "Chaos tanpa hipotesis dan abort condition bukan eksperimen — itu sabotase"],
+ hari:[
+  ["Teori","Capacity planning, Little's Law, queueing, saturasi, retry storm, backoff, timeout budget, circuit breaker","Google SRE Workbook"],
+  ["Praktik","k6 dengan skenario ramping-vus","Threshold p95 < 300ms dan error rate < 1% yang NGEGAGALKAN CI","Tabel: VU vs throughput vs p50/p95/p99 vs CPU vs koneksi DB"],
+  ["Eksperimen","Game day: traffic normal → rusak (DB lambat / Redis mati) → amati alert","Diagnosis lewat metrics → logs → trace","Mitigasi, pulih, ulangi setelah perbaikan"],
+  ["Review","Incident report + benchmark sebelum/sesudah","Batas kapasitas yang terukur + README final"]],
+ acc:["Load test bisa diulang dan punya threshold yang ngegagalkan CI",
+      "Bottleneck didukung data, bukan dugaan",
+      "Insiden bisa dideteksi, didiagnosis, dimitigasi, dipulihkan",
+      "Hasil sebelum/sesudah perbaikan bisa dibandingkan kuantitatif"],
+ trap:["Cuma ngukur rata-rata latency — yang penting p95/p99 dan error rate",
+       "Naikin VU terus tanpa cek utilisasi → cuma ngukur antrean, bukan kapasitas",
+       "Load test dari laptop → yang kebatas bandwidth lo sendiri",
+       "Chaos tanpa abort condition → malah bikin insiden beneran",
+       "Retry di 3 lapis tanpa jitter → amplifikasi sampai 27x"],
+ refs:[["Google SRE Workbook","https://sre.google/workbook/"],
+       ["k6 docs","https://grafana.com/docs/k6/latest/"],
+       ["Chaos Mesh","https://chaos-mesh.org/"],
+       ["toxiproxy","https://github.com/Shopify/toxiproxy"]]
+}
+];
+
+const MONTHS = {
+ 1:{t:"Bulan 1", s:"Linux, networking, dan diagnosis"},
+ 2:{t:"Bulan 2", s:"Deployment dan operasi production"},
+ 3:{t:"Bulan 3", s:"Observability dan SRE fundamentals"},
+ 4:{t:"Bulan 4", s:"Automation, cloud, dan reliability engineering"}
+};
+const MB = {1:"m1",2:"m2",3:"m3",4:"m4"};
+// Lab + repo terkait per minggu (sumber: production-reliability-lab/)
+const LAB = {
+  1:{folder:"week-01-linux", docs:[], repo:["runbooks/","app/"]},
+  2:{folder:"week-02-networking", docs:["architecture.md"], repo:["app/","docker/compose.yaml"]},
+  3:{folder:"week-03-docker", docs:[], repo:["docker/","app/"]},
+  4:{folder:"week-04-reverse-proxy", docs:["architecture.md"], repo:["nginx/default.conf","docker/compose.yaml"]},
+  5:{folder:"week-05-cicd", docs:["deployment.md"], repo:[".github/workflows/","tests/","Makefile"]},
+  6:{folder:"week-06-deployment", docs:["deployment.md"], repo:["docker/","app/"]},
+  7:{folder:"week-07-backup-recovery", docs:["disaster-recovery.md"], repo:["docker/"]},
+  8:{folder:"week-08-readiness", docs:["production-readiness.md","architecture.md"], repo:[]},
+  9:{folder:"week-09-prometheus", docs:[], repo:["observability/prometheus/","app/"]},
+  10:{folder:"week-10-grafana", docs:[], repo:["observability/grafana/","observability/prometheus/rules/"]},
+  11:{folder:"week-11-observability", docs:[], repo:["observability/loki/","observability/otel/","observability/tempo/"]},
+  12:{folder:"week-12-slo", docs:["slo.md","incident-response.md"], repo:["postmortems/incident-001.md","observability/prometheus/rules/slo.yml"]},
+  13:{folder:"week-13-terraform", docs:["infrastructure.md"], repo:["infra/terraform/"]},
+  14:{folder:"week-14-cloud", docs:["security-review.md","infrastructure.md"], repo:["infra/terraform/"]},
+  15:{folder:"week-15-kubernetes", docs:[], repo:["kubernetes/deployment.yaml"]},
+  16:{folder:"week-16-final-capstone", docs:["production-readiness.md","incident-response.md","security-review.md"], repo:["loadtest/loadtest.js","postmortems/","runbooks/"]}
+};
+const LAB_BASE = "production-reliability-lab/labs";
+const REPO_BASE = "production-reliability-lab";
+const DOC_BASE = "production-reliability-lab/docs";
+function labBox(w){
+  const e = LAB[w.n]; if(!e) return "";
+  const docs = e.docs.map(d=>`<li><span class="tag doc">DOK</span><a href="${DOC_BASE}/${d}" target="_blank" rel="noopener">docs/${d}</a></li>`).join("");
+  const repo = e.repo.map(r=>`<li><span class="tag repo">REPO</span><a href="${REPO_BASE}/${r}" target="_blank" rel="noopener">${r}</a></li>`).join("");
+  return `<div class="labbox">
+      <h3>📦 Bahan bacaan &amp; lab — production-reliability-lab/</h3>
+      <ul>
+        <li><span class="tag read">BACA</span><a href="${LAB_BASE}/${e.folder}/bahan-bacaan.md" target="_blank" rel="noopener">labs/${e.folder}/bahan-bacaan.md</a></li>
+        <li><span class="tag lab">LAB</span><a href="${LAB_BASE}/${e.folder}/lab.md" target="_blank" rel="noopener">labs/${e.folder}/lab.md</a>
+          &nbsp;·&nbsp; <a href="${LAB_BASE}/${e.folder}/README.md" target="_blank" rel="noopener">README</a></li>
+        ${docs}${repo}
+      </ul>
+    </div>`;
+}
+const KEY = "sre16-progress-v1";
+
+let done = JSON.parse(localStorage.getItem(KEY) || "{}");
+
+const nav = document.getElementById("nav");
+const weeksEl = document.getElementById("weeks");
+
+function buildNav(){
+  let html = "";
+  for(let m=1;m<=4;m++){
+    html += `<div class="month">${MONTHS[m].t} — ${MONTHS[m].s}</div>`;
+    DATA.filter(w=>w.m===m).forEach(w=>{
+      html += `<a href="#w${w.n}" data-w="${w.n}" class="${done[w.n]?'done':''}">
+        <span class="dot"></span><span class="n">M${w.n}</span><span>${w.slug}</span></a>`;
+    });
+  }
+  nav.innerHTML = html;
+  nav.querySelectorAll("a").forEach(a=>{
+    a.addEventListener("click", e=>{ e.preventDefault(); go(+a.dataset.w); });
+  });
+}
+
+function esc(s){ return String(s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+function buildWeeks(){
+  weeksEl.innerHTML = DATA.map(w=>`
+  <section class="week" id="w${w.n}">
+    <h2>Minggu ${w.n} · ${esc(w.slug)} <span class="badge ${MB[w.m]}">${MONTHS[w.m].t}</span></h2>
+    <p class="sub">${esc(w.tujuan)}</p>
+    ${labBox(w)}
+
+    <div class="donebar">
+      <label><input type="checkbox" data-done="${w.n}" ${done[w.n]?"checked":""}> Tandai minggu ini selesai</label>
+      <span class="hint">Cuma centang kalau semua acceptance criteria sudah lolos dengan bukti</span>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3><span class="ic">◆</span> Konsep kunci</h3>
+        <ul>${w.konsep.map(k=>`<li>${esc(k)}</li>`).join("")}</ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">▲</span> Jebakan umum</h3>
+        <ul>${w.trap.map(k=>`<li>${esc(k)}</li>`).join("")}</ul>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:22px 0 12px">Yang dikerjakan (4 hari × 2 jam)</h3>
+    <div class="days">
+      ${w.hari.map((h,i)=>`
+        <div class="day">
+          <div class="dh"><b>Hari ${i+1}</b><span>${esc(h[0])} · 2 jam</span></div>
+          <ul>${h.slice(1).map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+        </div>`).join("")}
+    </div>
+
+    <div class="acc">
+      <h3>✓ Acceptance criteria</h3>
+      <ol>${w.acc.map(a=>`<li>${esc(a)}</li>`).join("")}</ol>
+    </div>
+
+    <div class="refs">
+      <h3>Referensi utama</h3>
+      <ul>${w.refs.map(r=>`<li><a href="${r[1]}" target="_blank" rel="noopener">${esc(r[0])}</a></li>`).join("")}</ul>
+    </div>
+
+    <div class="navbtns">
+      <button class="btn" data-go="${w.n-1}" ${w.n===1?"disabled":""}>← Minggu ${w.n-1}</button>
+      <button class="btn" data-go="${w.n+1}" ${w.n===16?"disabled":""}>Minggu ${w.n+1} →</button>
+    </div>
+  </section>`).join("");
+
+  weeksEl.querySelectorAll("input[data-done]").forEach(cb=>{
+    cb.addEventListener("change", ()=>{
+      const n = cb.dataset.done;
+      if(cb.checked) done[n]=1; else delete done[n];
+      localStorage.setItem(KEY, JSON.stringify(done));
+      updateProgress(); buildNav(); applySearch();
+    });
+  });
+  weeksEl.querySelectorAll("button[data-go]").forEach(b=>{
+    b.addEventListener("click", ()=>go(+b.dataset.go));
+  });
+}
+
+function go(n){
+  if(n<0){ document.getElementById("w0").classList.add("active"); setActive(0); return; }
+  if(n>16) return;
+  document.querySelectorAll(".week").forEach(s=>s.classList.remove("active"));
+  const el = document.getElementById("w"+n);
+  if(el){ el.classList.add("active"); setActive(n); window.scrollTo({top:0,behavior:"smooth"}); }
+}
+
+function setActive(n){
+  nav.querySelectorAll("a").forEach(a=>a.classList.toggle("active", +a.dataset.w===n));
+}
+
+function updateProgress(){
+  const c = Object.keys(done).length;
+  document.getElementById("pct").textContent = `${c} / 16`;
+  document.getElementById("barfill").style.width = (c/16*100)+"%";
+}
+
+function applySearch(){
+  const q = (document.getElementById("q").value||"").toLowerCase().trim();
+  nav.querySelectorAll("a").forEach(a=>{
+    if(!q){ a.style.display=""; return; }
+    const w = DATA.find(x=>x.n===+a.dataset.w);
+    const hay = (w.slug+" "+w.tujuan+" "+w.konsep.join(" ")+" "+w.hari.flat().join(" ")
+      +" "+w.acc.join(" ")+" "+w.trap.join(" ")).toLowerCase();
+    a.style.display = hay.includes(q) ? "" : "none";
+  });
+}
+
+document.getElementById("q").addEventListener("input", applySearch);
+document.getElementById("start").addEventListener("click", ()=>go(1));
+document.getElementById("reset").addEventListener("click", ()=>{
+  if(confirm("Hapus semua progres yang tersimpan di browser?")){
+    done = {}; localStorage.removeItem(KEY);
+    document.querySelectorAll("input[data-done]").forEach(cb=>cb.checked=false);
+    updateProgress(); buildNav(); applySearch();
+  }
+});
+
+buildNav(); buildWeeks(); updateProgress();
+if(location.hash){
+  const m = location.hash.match(/^#w(\d+)$/);
+  if(m) go(+m[1]);
+}
+</script>
+</body>
+</html>

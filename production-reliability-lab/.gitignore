@@ -1,0 +1,40 @@
+# --- Rahasia ---
+.env
+*.pem
+*.key
+*.p12
+id_rsa*
+*.agekey
+secrets/
+!secrets/*.example
+
+# --- Terraform / OpenTofu ---
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+.terraformrc
+terraform.rc
+
+# --- Backup ---
+*.dump
+*.sql.gz
+backups/
+
+# --- Go ---
+sre-api
+bin/
+coverage.out
+coverage.html
+
+# --- Hasil pengujian ---
+loadtest/results.json
+loadtest/results/
+labs/*/evidence/raw-*.log
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

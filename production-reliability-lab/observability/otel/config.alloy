@@ -1,0 +1,89 @@
+// Grafana Alloy — pipeline log + trace.
+// CATATAN: Promtail EOL 2 Maret 2026. Jangan mulai lab baru pakai Promtail.
+
+// ---------- Log: kumpulin dari container Docker ----------
+loki.source.docker "local" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = [
+    {__meta_docker_container_name = "sre-lab-api-1",      job = "api"},
+    {__meta_docker_container_name = "sre-lab-nginx-1",    job = "nginx"},
+    {__meta_docker_container_name = "sre-lab-postgres-1", job = "postgres"},
+  ]
+  forward_to = [loki.process.json.receiver]
+}
+
+loki.process "json" {
+  stage.json {
+    expressions = {
+      level     = "level",
+      msg       = "msg",
+      trace_id  = "trace_id",
+      route     = "route",
+      status    = "status",
+    }
+  }
+
+  // level jadi label biar gampang difilter. Jangan jadiin trace_id label
+  // (kardinalitas meledak) — cukup sebagai field yang bisa dicari.
+  stage.labels {
+    values = { level = "", job = "" }
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// ---------- Trace: terima OTLP dari aplikasi ----------
+otelcol.receiver.otlp "default" {
+  grpc { endpoint = "0.0.0.0:4317" }
+  http { endpoint = "0.0.0.0:4318" }
+
+  output {
+    traces = [otelcol.processor.tail_sampling.default.input]
+  }
+}
+
+otelcol.processor.batch "default" {
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// Tail sampling: keputusan SETELAH trace lengkap.
+// Urutan policy penting: error dan lambat didahulukan, baseline terakhir.
+otelcol.processor.tail_sampling "default" {
+  decision_wait               = "10s"
+  num_traces                  = 100000
+  expected_new_traces_per_sec = 100
+
+  policy {
+    name = "keep-errors"
+    status_code { status_codes = ["ERROR"] }
+  }
+
+  policy {
+    name = "keep-slow"
+    latency { threshold_ms = 500 }
+  }
+
+  policy {
+    name = "baseline-1pct"
+    probabilistic { sampling_percentage = 1 }
+  }
+
+  output {
+    traces = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls { insecure = true }
+  }
+}

@@ -1,0 +1,103 @@
+# Aturan SLO + alerting (minggu 12).
+# Uji dengan:
+#   promtool check rules rules/slo.yml
+#   promtool test rules rules/slo_test.yml
+#
+# Pola: recording rule dulu, baru alerting rule.
+# Alert pakai multiwindow multi-burn-rate (Google SRE Workbook, "Alerting on SLOs").
+
+groups:
+  - name: slo-recording
+    interval: 30s
+    rules:
+      - record: job:slo_errors_per_request:ratio_rate5m
+        expr: |
+          sum(rate(http_server_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_server_requests_total[5m]))
+
+      - record: job:slo_errors_per_request:ratio_rate30m
+        expr: |
+          sum(rate(http_server_requests_total{status=~"5.."}[30m]))
+          / sum(rate(http_server_requests_total[30m]))
+
+      - record: job:slo_errors_per_request:ratio_rate1h
+        expr: |
+          sum(rate(http_server_requests_total{status=~"5.."}[1h]))
+          / sum(rate(http_server_requests_total[1h]))
+
+      - record: job:slo_errors_per_request:ratio_rate6h
+        expr: |
+          sum(rate(http_server_requests_total{status=~"5.."}[6h]))
+          / sum(rate(http_server_requests_total[6h]))
+
+      - record: job:slo_latency_p95:histogram_quantile5m
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le, route) (rate(http_server_request_duration_seconds_bucket[5m]))
+          )
+
+  - name: slo-alerting
+    rules:
+      # Angka 0.005 = budget error 0,5% (SLO availability 99,5%).
+      # Burn rate 14,4 -> 2% budget 30 hari habis dalam 1 jam.
+      - alert: HighErrorBudgetBurn
+        expr: |
+          (
+            job:slo_errors_per_request:ratio_rate1h  > (14.4 * 0.005)
+            and
+            job:slo_errors_per_request:ratio_rate5m  > (14.4 * 0.005)
+          )
+          or
+          (
+            job:slo_errors_per_request:ratio_rate6h  > (6 * 0.005)
+            and
+            job:slo_errors_per_request:ratio_rate30m > (6 * 0.005)
+          )
+        for: 2m
+        labels:
+          severity: page
+        annotations:
+          summary: "Burn rate tinggi: budget 30 hari bisa habis dalam hitungan jam"
+          description: "error ratio 1h={{ $value | humanizePercentage }}"
+          runbook_url: "https://github.com/<user>/production-reliability-lab/blob/main/runbooks/high-error-rate.md"
+
+      # Ticket, bukan page: pelan tapi nyata.
+      - alert: SlowErrorBudgetBurn
+        expr: |
+          job:slo_errors_per_request:ratio_rate6h > (1 * 0.005)
+          and
+          job:slo_errors_per_request:ratio_rate30m > (1 * 0.005)
+        for: 15m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Error budget terkuras pelan; perlu investigasi, jangan bangunkan orang"
+
+  - name: service-health
+    rules:
+      # Alert berbasis gejala: user nggak dilayani.
+      - alert: APIDown
+        expr: up{job="api"} == 0
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "API nggak bisa di-scrape — kemungkinan service mati"
+          runbook_url: "https://github.com/<user>/production-reliability-lab/blob/main/runbooks/api-down.md"
+
+      # Saturasi: sinyal paling sering mendahului insiden latency.
+      - alert: HighInFlightRequests
+        expr: http_server_requests_in_flight > 100
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Request menumpuk; cek saturasi CPU/DB sebelum latency rusak"
+
+      - alert: HighLatencyP95
+        expr: job:slo_latency_p95:histogram_quantile5m > 0.3
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "p95 latency > 300ms selama 10 menit"
