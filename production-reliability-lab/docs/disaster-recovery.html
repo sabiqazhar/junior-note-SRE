@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Disaster Recovery</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/docs/disaster-recovery.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#disaster-recovery">Disaster Recovery</a><ul>
+<li><a href="#target-lab">Target lab</a></li>
+<li><a href="#strategi-backup">Strategi backup</a></li>
+<li><a href="#perintah">Perintah</a></li>
+<li><a href="#prosedur-restore-runbook">Prosedur restore (runbook)</a></li>
+<li><a href="#drill-restore">Drill restore</a></li>
+<li><a href="#yang-sengaja-belum-ditangani">Yang sengaja belum ditangani</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="disaster-recovery">Disaster Recovery<a class="headerlink" href="#disaster-recovery" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Backup yang belum pernah di-restore bukan backup — cuma harapan.</p>
+</blockquote>
+<h2 id="target-lab">Target lab<a class="headerlink" href="#target-lab" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Metrik</th>
+<th>Target</th>
+<th>Alasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RPO</strong></td>
+<td>≤ 5 menit</td>
+<td>WAL diarsipkan dengan <code>archive_timeout=60s</code>; maksimal 1 file WAL hilang</td>
+</tr>
+<tr>
+<td><strong>RTO</strong></td>
+<td>≤ 30 menit</td>
+<td>Restore full backup + replay WAL + verifikasi, diukur saat drill</td>
+</tr>
+</tbody>
+</table>
+<p>Angka ini target latihan. Ukur yang sebenarnya, lalu bandingkan.</p>
+<h2 id="strategi-backup">Strategi backup<a class="headerlink" href="#strategi-backup" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>Tool</th>
+<th>Frekuensi</th>
+<th>Retensi</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Full backup</td>
+<td>pgBackRest</td>
+<td>Mingguan</td>
+<td>7</td>
+<td>Object storage (MinIO/S3), terenkripsi</td>
+</tr>
+<tr>
+<td>Incremental</td>
+<td>pgBackRest</td>
+<td>Harian</td>
+<td>14</td>
+<td>Sama</td>
+</tr>
+<tr>
+<td>WAL archive</td>
+<td>pgBackRest</td>
+<td>Kontinu (PITR)</td>
+<td>Mengikuti retensi full</td>
+<td>Sama, beda prefix</td>
+</tr>
+<tr>
+<td>Logical dump</td>
+<td><code>pg_dump -Fc</code></td>
+<td>Sebelum perubahan skema besar</td>
+<td>3</td>
+<td>Lokal, buat jaga-jaga</td>
+</tr>
+</tbody>
+</table>
+<p><code>pg_dump</code> <strong>tidak bisa PITR</strong>. PITR butuh base backup + WAL. Jangan tertukar.</p>
+<h2 id="perintah">Perintah<a class="headerlink" href="#perintah" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># Backup
+pgbackrest --stanza=app --type=full backup
+pgbackrest --stanza=app --type=incr backup
+pgbackrest --stanza=app info
+pgbackrest --stanza=app verify          # cek integritas repo
+
+# Restore ke instance BARU yang kosong
+pgbackrest --stanza=app --type=time \
+  --target=&quot;2026-10-12 10:00:00+00&quot; --target-action=promote restore
+
+# Logical (cara cepat buat sanity check)
+docker compose exec -T postgres pg_dump -U app -d sre_lab -Fc &gt; backup.dump
+pg_restore --list backup.dump
+</code></pre>
+<h2 id="prosedur-restore-runbook">Prosedur restore (runbook)<a class="headerlink" href="#prosedur-restore-runbook" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Isolasi.</strong> Pastikan instance target tidak menerima traffic.</li>
+<li><strong>Siapkan instance kosong.</strong> Jangan restore menimpa data yang masih bisa diselamatkan.</li>
+<li><strong>Restore</strong> dengan target waktu yang jelas.</li>
+<li><strong>Verifikasi</strong> — jangan berhenti di "exit code 0":
+   <code>sql
+   SELECT count(*) FROM orders;
+   SELECT md5(string_agg(id::text, ',' ORDER BY id)) FROM orders;  -- checksum
+   \d+ orders                                                      -- constraint &amp; index</code></li>
+<li><strong>Catat waktu.</strong> Berapa menit dari mulai restore sampai verifikasi selesai.</li>
+<li><strong>Bandingkan dengan RTO.</strong> Kalau lebir, tulis kenapa.</li>
+</ol>
+<h2 id="drill-restore">Drill restore<a class="headerlink" href="#drill-restore" title="Permanent link">&para;</a></h2>
+<p>Jadwalkan <strong>minimal sebulan sekali</strong>. Tanpa drill, lo tidak tahu backup-nya rusak sampai hari lo benar-benar butuh.</p>
+<table>
+<thead>
+<tr>
+<th>Tanggal drill</th>
+<th>Durasi restore</th>
+<th>Verifikasi lolos</th>
+<th>RTO terpenuhi</th>
+<th>Catatan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="yang-sengaja-belum-ditangani">Yang sengaja belum ditangani<a class="headerlink" href="#yang-sengaja-belum-ditangani" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Belum ada restore otomatis berkala (drill masih manual).</li>
+<li>Belum ada off-site ke region berbeda — backup dan WAL masih satu bucket.</li>
+<li>Belum diuji skenario "object storage-nya sendiri hilang".</li>
+<li>Belum ada object lock / immutability terhadap penghapusan tidak sengaja.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/docs/disaster-recovery.md</span><span><a href="../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 15 · Kubernetes dan Orchestration</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-15-kubernetes/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-15-kubernetes-dan-orchestration">Ringkasan — Minggu 15 · Kubernetes dan Orchestration</a><ul>
+<li><a href="#inti-5-kalimat">Inti 5 kalimat</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#perintah-kunci-output">Perintah kunci + output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan">Jebakan</a></li>
+<li><a href="#cheat-sheet-cepat">Cheat sheet cepat</a></li>
+<li><a href="#tanya-jawab-kilat">Tanya jawab kilat</a></li>
+<li><a href="#acceptance">Acceptance</a></li>
+<li><a href="#studi-kasus-mini">Studi kasus mini</a></li>
+<li><a href="#istilah-kunci-flashcard">Istilah kunci (flashcard)</a></li>
+<li><a href="#pertanyaan-wawancara">Pertanyaan wawancara</a></li>
+<li><a href="#pola-yang-sering-kelewat">Pola yang sering kelewat</a></li>
+<li><a href="#cek-cepat-sebelum-deploy">Cek cepat sebelum deploy</a></li>
+<li><a href="#satu-kalimat">Satu kalimat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-15-kubernetes-dan-orchestration">Ringkasan — Minggu 15 · Kubernetes dan Orchestration<a class="headerlink" href="#ringkasan-minggu-15-kubernetes-dan-orchestration" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman untuk dibaca ulang sebelum ujian/wawancara. Bukan pengganti bahan-bacaan.md.</p>
+</blockquote>
+<h2 id="inti-5-kalimat">Inti 5 kalimat<a class="headerlink" href="#inti-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Kubernetes menjaga <strong>desired state</strong>: lo bilang "3 replica", dan ReplicaSet bikin pengganti tiap Pod yang mati (self-healing).</li>
+<li>Tiga probe tugasnya beda — <strong>liveness cuma cek proses</strong>, readiness boleh cek dependency, startup kasih waktu booting.</li>
+<li><strong>requests/limits</strong> menentukan QoS: tanpa keduanya Pod jadi <code>BestEffort</code> dan mati duluan saat node kehabisan memori.</li>
+<li><strong>Rolling update</strong> (<code>maxSurge:1, maxUnavailable:0</code>) = nol downtime; <code>rollout undo</code> balikin ke versi sebelumnya.</li>
+<li>K8s itu <strong>mahal kognitif</strong> — pakai buat banyak service/auto-scale/self-healing, jangan buat 1 service sepi (Compose + VPS lebih murah).</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<pre><code>kubectl apply ──&gt; API Server
+   │
+   ├─ Deployment ──&gt; ReplicaSet ──&gt; Pod ──&gt; kubelet ──&gt; container
+   │                    │              │
+   │                    │              └─ probes: startup→readiness→liveness
+   │                    │              └─ resources: requests/limits → QoS
+   │                    └─ rollout status / undo
+   └─ Service (DNS svc/sre-api) ── Endpoint controller ──&gt; Pod Ready
+        HPA ── cpu util 70% ──&gt; scale replica
+        PDB ── minAvailable:2 ──&gt; jaga saat evict
+</code></pre>
+<h2 id="perintah-kunci-output">Perintah kunci + output<a class="headerlink" href="#perintah-kunci-output" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 1. Buat cluster lokal
+$ kind create cluster --name sre --image kindest/node:v1.34.0
+# output: Creating cluster &quot;sre&quot; ... done.
+# interpretasi: cluster 1 node lokal siap.
+
+# 2. Cek node
+$ kubectl get nodes
+# output: sre-control-plane   Ready   control-plane   1m
+# interpretasi: node sehat.
+
+# 3. Apply manifest
+$ kubectl apply -f kubernetes/
+# output: deployment.apps/sre-api created / service/sre-api created / hpa created
+# interpretasi: objek masuk desired state.
+
+# 4. Tunggu rollout
+$ kubectl rollout status deployment/sre-api
+# output: deployment &quot;sre-api&quot; successfully rolled out
+# interpretasi: 3 replica Ready, nol downtime.
+
+# 5. Lihat pod (3 replica)
+$ kubectl get pods
+# output: sre-api-xxx   Running   3/3   1m
+# interpretasi: desired 3 tercapai.
+
+# 6. Port-forward &amp; cek
+$ kubectl port-forward svc/sre-api 8080:80
+$ curl -fsS http://localhost:8080/readyz
+# output: ok
+# interpretasi: readiness lolos, trafik tembus.
+
+# 7. Self-healing
+$ kubectl delete pod &lt;pod-name&gt;
+$ kubectl get pods
+# output: pod baru muncul otomatis (tetap 3)
+# interpretasi: ReplicaSet ganti pod yang dihapus.
+
+# 8. Scale
+$ kubectl scale deployment sre-api --replicas=5
+# output: deployment.apps/sre-api scaled
+# interpretasi: jumlah replica naik jadi 5.
+
+# 9. Rollout gagal (image jelek)
+$ kubectl set image deployment/sre-api api=ghcr.io/&lt;user&gt;/sre-api:sha-bad123
+$ kubectl rollout status deployment/sre-api
+# output: Error: progress deadline exceeded
+# interpretasi: probe image baru gagal, rollout mandek.
+
+# 10. Rollback
+$ kubectl rollout undo deployment/sre-api
+# output: deployment.apps/sre-api rolled back
+# interpretasi: balik ke ReplicaSet sehat.
+
+# 11. Log crash
+$ kubectl logs &lt;pod&gt; --previous
+# output: panic: ... exited 1
+# interpretasi: penyebab crash container sebelumnya.
+
+# 12. Describe (sumber kebenaran)
+$ kubectl describe pod &lt;pod&gt;
+# output: Events: Back-off restarting failed container
+# interpretasi: lihat kenapa CrashLoopBackOff.
+
+# 13. Resource usage
+$ kubectl top pod --sort-by=memory
+# output: sre-api-xxx  12m   140Mi
+# interpretasi: cek apakah mendekati limits 256Mi.
+
+# 14. Cek QoS
+$ kubectl get pod &lt;pod&gt; -o jsonpath='{.status.qosClass}'
+# output: Burstable
+# interpretasi: req≠lim. Pastikan nggak BestEffort.
+
+# 15. CLEANUP wajib
+$ kubectl delete -f kubernetes/ &amp;&amp; kind delete cluster --name sre
+# output: deleted / Deleted cluster sre
+# interpretasi: lab lokal bersih, RAM bebas.
+</code></pre>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Penyebab</th>
+<th>Cek</th>
+<th>Penyelesaian</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CrashLoopBackOff</td>
+<td>app boot lama, liveness timeout</td>
+<td><code>kubectl describe pod</code> Events</td>
+<td>tambah startupProbe</td>
+</tr>
+<tr>
+<td>Pod nggak dapat trafik</td>
+<td>readiness gagal (path salah)</td>
+<td><code>kubectl get ep</code></td>
+<td>perbaiki <code>/readyz</code></td>
+</tr>
+<tr>
+<td>OOMKilled</td>
+<td>memory &gt; limits</td>
+<td><code>kubectl top pod</code>, logs <code>--previous</code></td>
+<td>naik limits/requests</td>
+</tr>
+<tr>
+<td>Rollout mandek</td>
+<td>probe image baru gagal</td>
+<td><code>kubectl rollout status</code></td>
+<td><code>rollout undo</code></td>
+</tr>
+<tr>
+<td>Restart massal</td>
+<td>liveness cek DB</td>
+<td>events</td>
+<td>pisah liveness/readiness</td>
+</tr>
+<tr>
+<td>PSA rejected</td>
+<td>container root/<code>latest</code></td>
+<td><code>kubectl apply</code> error</td>
+<td>non-root + tag immutable</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan">Jebakan<a class="headerlink" href="#jebakan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>limits</code> tanpa <code>requests</code> (atau sebaliknya) → QoS Burstable/BestEffort.</li>
+<li>Nggak ada startupProbe buat app boot lama → CrashLoopBackOff palsu.</li>
+<li>Liveness = readiness → restart massal saat overload.</li>
+<li>Masih pakai Ingress NGINX buat cluster baru (nggak dapet security fix).</li>
+<li>Image <code>:latest</code> → rollback nggak deterministik.</li>
+</ul>
+<h2 id="cheat-sheet-cepat">Cheat sheet cepat<a class="headerlink" href="#cheat-sheet-cepat" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mau ngapain</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cluster lokal</td>
+<td><code>kind create cluster --name sre --image kindest/node:v1.34.0</code></td>
+</tr>
+<tr>
+<td>Deploy</td>
+<td><code>kubectl apply -f kubernetes/</code></td>
+</tr>
+<tr>
+<td>Tunggu rollout</td>
+<td><code>kubectl rollout status deployment/sre-api</code></td>
+</tr>
+<tr>
+<td>Self-heal test</td>
+<td><code>kubectl delete pod &lt;pod&gt;</code></td>
+</tr>
+<tr>
+<td>Scale</td>
+<td><code>kubectl scale deployment sre-api --replicas=5</code></td>
+</tr>
+<tr>
+<td>Rollback</td>
+<td><code>kubectl rollout undo deployment/sre-api</code></td>
+</tr>
+<tr>
+<td>Debug</td>
+<td><code>kubectl logs --previous</code> / <code>describe pod</code></td>
+</tr>
+<tr>
+<td>Bersih</td>
+<td><code>kind delete cluster --name sre</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="tanya-jawab-kilat">Tanya jawab kilat<a class="headerlink" href="#tanya-jawab-kilat" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Q: Siapa pegang desired state?</strong> A: ReplicaSet (diatur Deployment).</li>
+<li><strong>Q: Liveness boleh cek DB?</strong> A: TIDAK — restart massal kalau DB down.</li>
+<li><strong>Q: Tanpa requests/limits?</strong> A: BestEffort, mati duluan saat node pressure.</li>
+<li><strong>Q: Kapan K8s overkill?</strong> A: 1 service sepi, tim kecil → Compose + VPS.</li>
+<li><strong>Q: Ingress NGINX 2025?</strong> A: di-retire; pakai Gateway API.</li>
+</ul>
+<h2 id="acceptance">Acceptance<a class="headerlink" href="#acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Deployment + Service jalan dengan image API lab (tag immutable, bukan <code>:latest</code>).</li>
+<li>Pod yang dihapus diganti otomatis (desired state).</li>
+<li>Rollout, rollback, probe failure bisa diamati &amp; dijelaskan.</li>
+<li>Non-root + <code>readOnlyRootFilesystem</code> + requests/limits; PSA <code>restricted</code> aktif.</li>
+</ol>
+<h2 id="studi-kasus-mini">Studi kasus mini<a class="headerlink" href="#studi-kasus-mini" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Kasus A:</strong> <code>livenessProbe</code> cek DB. Pas DB maintenance, semua pod restart massal → cascading failure. Pelajaran: liveness cuma cek proses.</li>
+<li><strong>Kasus B:</strong> tanpa <code>startupProbe</code>, app boot 40s → liveness (10s×3) timeout → CrashLoopBackOff palsu. Pelajaran: kasih startupProbe.</li>
+<li><strong>Kasus C:</strong> <code>limits</code> ada, <code>requests</code> nggak → Pod <code>BestEffort</code>, mati duluan saat node pressure. Pelajaran: set keduanya.</li>
+</ul>
+<h2 id="istilah-kunci-flashcard">Istilah kunci (flashcard)<a class="headerlink" href="#istilah-kunci-flashcard" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Pod</strong> = satuan terkecil, 1+ container.</li>
+<li><strong>ReplicaSet</strong> = jaga N pod (desired state).</li>
+<li><strong>Deployment</strong> = pengelola rollout/rollback.</li>
+<li><strong>Service</strong> = DNS stabil ke pod aktif.</li>
+<li><strong>Probe</strong> = startup / readiness / liveness.</li>
+<li><strong>requests</strong> = jatah dijamin (scheduling).</li>
+<li><strong>limits</strong> = batas atas (OOMKilled kalau lewat).</li>
+<li><strong>QoS</strong> = kelas saat node pressure.</li>
+<li><strong>HPA</strong> = auto-scale by metric.</li>
+<li><strong>PSA</strong> = kebijakan keamanan pod (restricted).</li>
+</ul>
+<h2 id="pertanyaan-wawancara">Pertanyaan wawancara<a class="headerlink" href="#pertanyaan-wawancara" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Siapa pegang desired state?</li>
+<li>Kenapa liveness nggak cek DB?</li>
+<li>Tanpa requests/limits gimana QoS-nya?</li>
+<li>Kapan K8s overkill?</li>
+<li>Kenapa Ingress NGINX di-retire?</li>
+</ol>
+<h2 id="pola-yang-sering-kelewat">Pola yang sering kelewat<a class="headerlink" href="#pola-yang-sering-kelewat" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>limits</code> tanpa <code>requests</code>.</li>
+<li>Nggak ada startupProbe.</li>
+<li>Liveness = readiness.</li>
+<li>Image <code>:latest</code>.</li>
+</ul>
+<h2 id="cek-cepat-sebelum-deploy">Cek cepat sebelum deploy<a class="headerlink" href="#cek-cepat-sebelum-deploy" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Cek</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rollout</td>
+<td><code>kubectl rollout status</code></td>
+</tr>
+<tr>
+<td>Self-heal</td>
+<td><code>kubectl delete pod</code></td>
+</tr>
+<tr>
+<td>Rollback</td>
+<td><code>kubectl rollout undo</code></td>
+</tr>
+<tr>
+<td>PSA</td>
+<td><code>kubectl apply</code> (tanpa warning)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="satu-kalimat">Satu kalimat<a class="headerlink" href="#satu-kalimat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Kubernetes itu manajer shift yang jaga jumlah pelayan tetap 3: Pod mati diganti, rollout bertahap, tapi cuma sepadan kalau kompleksitasnya emang lo butuh.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-15-kubernetes/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

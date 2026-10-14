@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Week 11 · Logs dan Distributed Tracing</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-11-observability/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-week-11-logs-dan-distributed-tracing">Ringkasan — Week 11 · Logs dan Distributed Tracing</a><ul>
+<li><a href="#inti-5-kalimat">Inti (5 kalimat)</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#query-perintah-kunci-output">Query / perintah kunci + output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan">Jebakan</a></li>
+<li><a href="#acceptance">Acceptance</a></li>
+<li><a href="#satu-kalimat">Satu kalimat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-week-11-logs-dan-distributed-tracing">Ringkasan — Week 11 · Logs dan Distributed Tracing<a class="headerlink" href="#ringkasan-week-11-logs-dan-distributed-tracing" title="Permanent link">&para;</a></h1>
+<h2 id="inti-5-kalimat">Inti (5 kalimat)<a class="headerlink" href="#inti-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Tiga alat jawab tiga pertanyaan: <strong>metrics</strong> "ada yang aneh?", <strong>logs</strong> "apa yang terjadi?", <strong>traces</strong> "di span mana waktunya habis?" — urutannya selalu metrics→logs→traces.</li>
+<li>Log harus <strong>terstruktur</strong> (JSON via <code>log/slog</code> Go) biar bisa di-query LogQL; <code>trace_id</code> wajib di-inject ke tiap log biar nyambung ke trace.</li>
+<li>Trace paling sering <strong>putus</strong> cuma karena lupa nerusin <code>context.Context</code> ke fungsi turunan (mis. <code>QueryRowContext</code>, bukan <code>QueryRow</code>).</li>
+<li><strong>Tail sampling</strong> (Alloy) simpan error+lambat 100%, baseline 1% — jangan simpan semua trace.</li>
+<li>Pipeline log jalan lewat <strong>Alloy → Loki</strong>, trace lewat <strong>OTel OTLP → Tempo</strong>; Promtail sudah EOL 2 Mar 2026.</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<pre><code>app (Go)
+ ├─ slog JSON stdout ──&gt; Alloy loki.source.docker ──parse──&gt; Loki  (LogQL)
+ └─ otelhttp span ─────&gt; Alloy otelcol.receiver.otlp
+                              │ tail_sampling (error/lambat 100%, 1% baseline)
+                              ▼
+                          Tempo  (trace by trace_id)
+Grafana: metrics panel ─klik trace_id─&gt; Loki + Tempo berdampingan
+</code></pre>
+<h2 id="query-perintah-kunci-output">Query / perintah kunci + output<a class="headerlink" href="#query-perintah-kunci-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah / Query</th>
+<th>Output</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>slog.InfoContext(...,"trace_id",span.TraceID())</code></td>
+<td>log JSON ber-trace_id</td>
+<td>korelasi log↔trace</td>
+</tr>
+<tr>
+<td><code>db.QueryRowContext(ctx, ...)</code></td>
+<td>span DB nyambung</td>
+<td>cegah trace putus</td>
+</tr>
+<tr>
+<td>LogQL: <code>{job="api"} \| json \| trace_id="abc"</code></td>
+<td>baris log tsb</td>
+<td>cari log by trace</td>
+</tr>
+<tr>
+<td>LogQL: <code>{job="api"} \| json \| level="error"</code></td>
+<td>error log</td>
+<td>filter level</td>
+</tr>
+<tr>
+<td>Alloy tail_sampling policy</td>
+<td>error+lambat 100%</td>
+<td>sampling benar</td>
+</tr>
+<tr>
+<td>OTLP receiver <code>:4317/:4318</code></td>
+<td>trace masuk</td>
+<td>app ekspor trace</td>
+</tr>
+<tr>
+<td>Tempo trace view</td>
+<td>pohon span + durasi</td>
+<td>lihat span lambat</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Penyebab</th>
+<th>Cek</th>
+<th>Mitigasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Log nggak masuk Loki</td>
+<td>Alloy mati / socket salah</td>
+<td><code>docker compose ps alloy</code></td>
+<td>pastikan Alloy Up, docker.sock benar</td>
+</tr>
+<tr>
+<td><code>trace_id</code> nggak nemu log</td>
+<td>lupa inject ke slog</td>
+<td>cek log JSON ada field?</td>
+<td>tambah <code>trace_id</code> di slog</td>
+</tr>
+<tr>
+<td>Trace putus di DB</td>
+<td><code>QueryRow</code> tanpa ctx</td>
+<td>cek handler pakai Context</td>
+<td>pakai <code>QueryRowContext(ctx,...)</code></td>
+</tr>
+<tr>
+<td>Trace nggak ada di Tempo</td>
+<td>sampling buang / OTLP gagal</td>
+<td>cek tail_sampling, receiver</td>
+<td>pastikan policy error/lambat</td>
+</tr>
+<tr>
+<td>LogQL berantakan</td>
+<td>level beda nama (<code>severity</code>)</td>
+<td><code>\| json</code> cek field</td>
+<td>samakan key <code>level</code></td>
+</tr>
+<tr>
+<td>Masih pakai Promtail</td>
+<td>EOL</td>
+<td><code>docker compose ps</code></td>
+<td>pakai Alloy</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan">Jebakan<a class="headerlink" href="#jebakan" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Trace putus karena <code>context</code> nggak diteruskan ke fungsi turunan.</li>
+<li>Correlation ID ada di header tapi lupa di-inject ke <code>slog</code>.</li>
+<li><code>trace_id</code> dijadikan label Loki → kardinalitas meledak.</li>
+<li>Tail sampling tanpa policy 100% untuk error → trace penting kebuang.</li>
+<li>Ngira semua semconv stabil — sebagian masih Mixed.</li>
+<li>Log JSON tapi <code>level</code> vs <code>severity</code> nggak konsisten → LogQL rusak.</li>
+<li>Masih pakai Promtail (EOL 2 Mar 2026).</li>
+</ul>
+<h2 id="acceptance">Acceptance<a class="headerlink" href="#acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Log terstruktur JSON, bisa difilter by trace/correlation ID. ✅ LogQL #1</li>
+<li>Trace nunjukin span app DAN dependency (Postgres/Redis). ✅ Tempo</li>
+<li>Request lambat bisa ditelusuri tanpa nebak. ✅ lab Hari 3</li>
+<li><code>traceparent</code> diteruskan, trace nggak putus. ✅ <code>QueryRowContext</code></li>
+</ol>
+<h2 id="satu-kalimat">Satu kalimat<a class="headerlink" href="#satu-kalimat" title="Permanent link">&para;</a></h2>
+<p>Metrics kasih tahu ada masalah, tapi cuma lewat logs (correlation ID) dan traces (context propagation) lo bisa telusuri request spesifik sampai ke span database-nya.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-11-observability/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 01 · Linux observability dan troubleshooting</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-01-linux/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-01-linux-observability-dan-troubleshooting">Lab — Minggu 01 · Linux observability dan troubleshooting</a><ul>
+<li><a href="#persiapan-1015-menit">Persiapan (10–15 menit)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a><ul>
+<li><a href="#langkah-11-baca-bahan-bacaan-sampai-selesai">Langkah 1.1 — Baca bahan bacaan sampai selesai</a></li>
+<li><a href="#langkah-12-baca-sumber-primer-cgroup-v2-psi">Langkah 1.2 — Baca sumber primer (cgroup v2 + PSI)</a></li>
+<li><a href="#langkah-13-pahami-urutan-oom">Langkah 1.3 — Pahami urutan OOM</a></li>
+<li><a href="#langkah-14-kenali-sinyal-lewat-man-page">Langkah 1.4 — Kenali sinyal lewat man page</a></li>
+<li><a href="#langkah-15-kenali-journalctl">Langkah 1.5 — Kenali journalctl</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a><ul>
+<li><a href="#langkah-21-baseline-kondisi-sehat">Langkah 2.1 — Baseline kondisi sehat</a></li>
+<li><a href="#langkah-22-build-dan-jalankan-aplikasi-lab">Langkah 2.2 — Build dan jalankan aplikasi lab</a></li>
+<li><a href="#langkah-23-identifikasi-proses-pakai-proc">Langkah 2.3 — Identifikasi proses pakai /proc</a></li>
+<li><a href="#langkah-24-buktikan-siapa-yang-listen-dan-apa-yang-dipegang">Langkah 2.4 — Buktikan siapa yang listen dan apa yang dipegang</a></li>
+<li><a href="#langkah-25-bedakan-healthz-dan-readyz">Langkah 2.5 — Bedakan healthz dan readyz</a></li>
+<li><a href="#langkah-26-kirim-sigterm-lihat-graceful-shutdown">Langkah 2.6 — Kirim SIGTERM, lihat graceful shutdown</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-kegagalan-2-jam">Hari 3 · Eksperimen kegagalan (2 jam)</a><ul>
+<li><a href="#langkah-31-cpu-tinggi-temukan-thread-nakalnya-dalam-5-menit">Langkah 3.1 — CPU tinggi: temukan thread nakalnya dalam 5 menit</a></li>
+<li><a href="#langkah-32-bikin-tekanan-memori-terukur-lalu-amati-psi">Langkah 3.2 — Bikin tekanan memori terukur, lalu amati PSI</a></li>
+<li><a href="#langkah-33-oom-cgroup-yang-terkendali-pakai-systemd-run">Langkah 3.3 — OOM cgroup yang terkendali (pakai systemd-run)</a></li>
+<li><a href="#langkah-34-systemd-unit-yang-sengaja-rusak">Langkah 3.4 — systemd unit yang sengaja rusak</a></li>
+<li><a href="#langkah-35-tiga-kondisi-yang-sering-ketuker">Langkah 3.5 — Tiga kondisi yang sering ketuker</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)</a><ul>
+<li><a href="#langkah-41-simpan-semua-bukti-ke-evidence">Langkah 4.1 — Simpan semua bukti ke evidence/</a></li>
+<li><a href="#langkah-42-tulis-3-runbook">Langkah 4.2 — Tulis 3 runbook</a></li>
+<li><a href="#langkah-43-lengkapin-commandsmd">Langkah 4.3 — Lengkapin commands.md</a></li>
+<li><a href="#langkah-44-update-readmemd">Langkah 4.4 — Update README.md</a></li>
+<li><a href="#langkah-45-commit">Langkah 4.5 — Commit</a></li>
+</ul>
+</li>
+<li><a href="#daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"</a></li>
+<li><a href="#cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-01-linux-observability-dan-troubleshooting">Lab — Minggu 01 · Linux observability dan troubleshooting<a class="headerlink" href="#lab-minggu-01-linux-observability-dan-troubleshooting" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti <strong>BERURUTAN</strong>, jangan lompat. Setiap langkah formatnya: perintah → Yang harus terjadi → Kalau gagal.
+Catatan: semua perintah diasumsikan dijalankan dari root repo <code>production-reliability-lab/</code>.</p>
+</blockquote>
+<hr />
+<h2 id="persiapan-1015-menit">Persiapan (10–15 menit)<a class="headerlink" href="#persiapan-1015-menit" title="Permanent link">&para;</a></h2>
+<p>Ceklist yang harus sudah beres sebelum mulai:</p>
+<ul>
+<li>[ ] Ubuntu 22.04 atau 24.04 (boleh VPS, boleh WSL2, boleh VM lokal). <strong>Jangan</strong> pakai macOS buat minggu ini — <code>/proc</code> dan <code>systemd</code>-nya beda.</li>
+<li>[ ] Akses <code>sudo</code>.</li>
+<li>[ ] Go 1.22+ terpasang.</li>
+<li>[ ] Tool observability terpasang (lihat verifikasi di bawah).</li>
+</ul>
+<p><strong>Verifikasi environment.</strong> Jalankan semua, dan pastikan nggak ada yang error:</p>
+<pre><code class="language-bash">lsb_release -a                 # Ubuntu 22.04.x atau 24.04.x
+uname -r                       # kernel 5.15 (22.04) atau 6.x (24.04)
+go version                     # go1.22 atau lebih baru
+sudo apt-get update -y
+sudo apt-get install -y sysstat lsof procps iproute2 curl jq
+which pidstat lsof ss curl jq  # keempatnya harus nemu path
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>go version</code> keluar <code>go1.2x.x linux/amd64</code>, dan <code>which</code> ngasih 4 path (mis. <code>/usr/bin/pidstat</code>, <code>/usr/bin/lsof</code>, <code>/usr/bin/ss</code>, <code>/usr/bin/curl</code>).</p>
+<p><strong>Kalau gagal:</strong>
+- <code>pidstat: command not found</code> → <code>sudo apt-get install -y sysstat</code>, lalu <strong>aktifkan</strong>: <code>sudo sed -i 's/ENABLED="false"/ENABLED="true"/' /etc/default/sysstat &amp;&amp; sudo systemctl restart sysstat</code>.
+- <code>ss: command not found</code> → <code>sudo apt-get install -y iproute2</code>.
+- Di WSL2, <code>systemd</code> mungkin nggak jalan. Cek dengan <code>systemctl is-system-running</code>. Kalau outputnya <code>offline</code>, pakai VM atau VPS buat Langkah 3.x.</p>
+<p><strong>Cek dulu apakah cgroup v2 aktif</strong> — ini nentuin apakah eksperimen OOM cgroup lo bisa jalan:</p>
+<pre><code class="language-bash">stat -fc %T /sys/fs/cgroup/     # harusnya &quot;cgroup2fs&quot;
+cat /sys/fs/cgroup/memory.max   # harusnya keluar angka atau &quot;max&quot;
+</code></pre>
+<p><strong>Kalau gagal:</strong> kalau outputnya <code>tmpfs</code>, berarti masih cgroup v1. Tambahin <code>systemd.unified_cgroup_hierarchy=1</code> ke boot param, atau pakai Ubuntu 24.04 bersih.</p>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-11-baca-bahan-bacaan-sampai-selesai">Langkah 1.1 — Baca bahan bacaan sampai selesai<a class="headerlink" href="#langkah-11-baca-bahan-bacaan-sampai-selesai" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># Buka file ini dan baca dari atas ke bawah. Serius, jangan discan.
+$EDITOR labs/week-01-linux/bahan-bacaan.md
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> lo selesai baca dan bisa jawab 7 pertanyaan di bagian <em>Self-check</em> tanpa buka Google.</p>
+<p><strong>Kalau gagal:</strong> kalau masih ada yang nggak bisa lo jawab, baca ulang bagian 2 dan 3 aja. Jangan lanjut ke Hari 2 sebelum <em>Self-check</em> nomor 1–4 kejawab.</p>
+<p><strong>Catat di notes.md:</strong> tulis ulang 8 konsep inti pakai kalimat lo sendiri, satu paragraf per konsep. Kalau lo nggak bisa nulis ulang, berarti belum paham.</p>
+<h3 id="langkah-12-baca-sumber-primer-cgroup-v2-psi">Langkah 1.2 — Baca sumber primer (cgroup v2 + PSI)<a class="headerlink" href="#langkah-12-baca-sumber-primer-cgroup-v2-psi" title="Permanent link">&para;</a></h3>
+<p>Buka dua halaman ini, fokus ke bagian yang disebut di tabel <code>bahan-bacaan.md</code> §5:</p>
+<ul>
+<li><a href="https://docs.kernel.org/admin-guide/cgroup-v2.html">Control Group v2 — Memory</a></li>
+<li><a href="https://docs.kernel.org/accounting/psi.html">PSI — Pressure Stall Information</a></li>
+</ul>
+<p><strong>Yang harus terjadi:</strong> lo bisa sebutin minimal 4 file antarmuka cgroup (<code>memory.max</code>, <code>memory.current</code>, <code>memory.events</code>, <code>memory.pressure</code>) dan bisa jelasin beda <code>some</code> vs <code>full</code>.</p>
+<p><strong>Kalau gagal:</strong> cari contoh output tiap file di mesin lo sendiri dengan <code>cat</code>. Angka nyata lebih gampang nempel daripada teks dokumen.</p>
+<p><strong>Catat di notes.md:</strong> daftar file <code>/sys/fs/cgroup/memory.*</code> yang lo temuin di mesin lo, plus arti satu kalimat tiap file.</p>
+<h3 id="langkah-13-pahami-urutan-oom">Langkah 1.3 — Pahami urutan OOM<a class="headerlink" href="#langkah-13-pahami-urutan-oom" title="Permanent link">&para;</a></h3>
+<p>Baca bagian 3 (<code>Mekanisme di balik layar</code>) bahan bacaan, lalu gambar ulang urutannya di kertas atau ASCII:</p>
+<pre><code>malloc → overcommit check → charge ke cgroup → lewat memory.max? → reklamasi
+  → masih lewat? → OOM cgroup → oom_badness() → skor tertinggi → SIGKILL
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> lo bisa jelasin ke orang lain kenapa OOM bisa muncul <em>tiba-tiba</em> padahal memori kelihatannya masih ada.</p>
+<p><strong>Kalau gagal:</strong> ingat satu kalimat ini: <em>kernel mengiyakan dulu (overcommit), nagih belakangan (OOM).</em></p>
+<p><strong>Catat di notes.md:</strong> urutan 6 langkah versi lo.</p>
+<h3 id="langkah-14-kenali-sinyal-lewat-man-page">Langkah 1.4 — Kenali sinyal lewat man page<a class="headerlink" href="#langkah-14-kenali-sinyal-lewat-man-page" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">man 7 signal | grep -A4 -E 'SIGTERM|SIGKILL'
+# atau kalau man page belum ada:
+curl -sS https://man7.org/linux/man-pages/man7/signal.7.html | sed 's/&lt;[^&gt;]*&gt;//g' | grep -E 'SIGTERM|SIGKILL' | head
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> lo nemu bahwa SIGTERM = 15 dan SIGKILL = 9, dan bahwa SIGKILL <strong>tidak bisa di-<em>catch</em>, di-<em>block</em>, atau di-<em>ignore</em></strong>.</p>
+<p><strong>Kalau gagal:</strong> <code>sudo apt-get install -y manpages manpages-dev</code> lalu ulangi.</p>
+<p><strong>Catat di notes.md:</strong> nomor + arti SIGTERM, SIGKILL, SIGINT, SIGHUP, SIGQUIT.</p>
+<h3 id="langkah-15-kenali-journalctl">Langkah 1.5 — Kenali journalctl<a class="headerlink" href="#langkah-15-kenali-journalctl" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">journalctl -b --no-pager | head -20
+journalctl -k --no-pager | head -10
+journalctl -p err -b --no-pager | head -20
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> ketiganya ngeluarin log. <code>-k</code> khusus cuma log kernel.</p>
+<p><strong>Kalau gagal:</strong> <code>journalctl: command not found</code> → berarti bukan systemd. Atau <code>No journal files were found</code> → <code>sudo mkdir -p /var/log/journal &amp;&amp; sudo systemd-tmpfiles --create --prefix /var/log/journal &amp;&amp; sudo systemctl restart systemd-journald</code>.</p>
+<p><strong>Catat di notes.md:</strong> jabaran 5 flag <code>journalctl</code> yang paling lo pakai (dari <a href="https://man7.org/linux/man-pages/man1/journalctl.1.html">journalctl(1)</a>).</p>
+<hr />
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-21-baseline-kondisi-sehat">Langkah 2.1 — Baseline kondisi sehat<a class="headerlink" href="#langkah-21-baseline-kondisi-sehat" title="Permanent link">&para;</a></h3>
+<p>Sebelum bisa nebak apa yang aneh, lo harus tahu yang normal kayak gimana.</p>
+<pre><code class="language-bash">uptime
+free -h
+df -h &amp;&amp; df -i
+vmstat 1 3
+cat /proc/pressure/cpu /proc/pressure/memory /proc/pressure/io
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>load average</code> di bawah jumlah core, <code>available</code> besar, <code>wa</code> di <code>vmstat</code> mendekati 0, dan PSI <code>avg300</code> di bawah 1.00.</p>
+<p><strong>Kalau gagal:</strong> kalau PSI <code>avg300</code> sudah di atas 5.00 di mesin nganggur, berarti mesin lo emang lagi ada beban lain. Catat sebagai baseline dan lanjut — nanti lo bandingkan dengan kondisi eksperimen.</p>
+<p><strong>Catat di notes.md:</strong> salin semua output ke <code>notes.md</code> di bawah judul <code>## Baseline (kondisi sehat)</code>.</p>
+<h3 id="langkah-22-build-dan-jalankan-aplikasi-lab">Langkah 2.2 — Build dan jalankan aplikasi lab<a class="headerlink" href="#langkah-22-build-dan-jalankan-aplikasi-lab" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">cd /workspace/production-reliability-lab      # sesuaikan path repo lo
+go mod tidy                                   # pertama kali aja; bikin go.sum
+go build -o /tmp/sre-api ./app
+</code></pre>
+<p>Jalanin dengan env dependency palsu. Ini aman karena <code>sql.Open()</code>dan <code>redis.NewClient()</code> di Go itu <strong>lazy</strong> — mereka nggak nyambung sampai dipakai.</p>
+<pre><code class="language-bash">DATABASE_URL='postgres://lab:lab@127.0.0.1:5432/lab?sslmode=disable' \
+REDIS_URL='redis://127.0.0.1:6379' \
+LOG_LEVEL=info \
+/tmp/sre-api &amp;
+API_PID=$!
+sleep 1
+echo &quot;PID aplikasi: $API_PID&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> aplikasi nyala tanpa error. Log <code>{"level":"INFO","msg":"server listening","addr":":8080"}</code>.</p>
+<p><strong>Kalau gagal:</strong>
+- <code>DATABASE_URL kosong</code> → env-nya belum kebaca. Pastikan nggak ada spasi sebelum <code>DATABASE_URL</code>.
+- <code>go: cannot find main module</code> → lo belum <code>cd</code> ke root repo.
+- Port 8080 kepakai → lihat Langkah 2.5.</p>
+<p><strong>Catat di notes.md:</strong> PID aplikasi dan waktu start.</p>
+<h3 id="langkah-23-identifikasi-proses-pakai-proc">Langkah 2.3 — Identifikasi proses pakai <code>/proc</code><a class="headerlink" href="#langkah-23-identifikasi-proses-pakai-proc" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">pgrep -af sre-api
+PID=$(pgrep -f '/tmp/sre-api' | head -1)
+cat /proc/$PID/status | grep -E 'Name|Threads|VmRSS|VmSize'
+cat /proc/$PID/limits | grep -E 'open files|Max processes'
+ls /proc/$PID/fd | wc -l
+cat /proc/$PID/cmdline | tr '\0' ' '; echo
+cat /proc/$PID/oom_score_adj
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>Threads</code> lebih dari 1 (runtime Go bikin beberapa thread OS), <code>open files</code> biasanya 1024 atau 1048576, jumlah fd belasan sampai puluhan.</p>
+<p><strong>Kalau gagal:</strong> <code>pgrep</code> kosong → aplikasi mati. Cek lagi log di terminal tempat lo jalanin.</p>
+<p><strong>Catat di notes.md:</strong> nilai <code>Threads</code>, <code>VmRSS</code>, jumlah fd, dan <code>oom_score_adj</code>.</p>
+<h3 id="langkah-24-buktikan-siapa-yang-listen-dan-apa-yang-dipegang">Langkah 2.4 — Buktikan siapa yang listen dan apa yang dipegang<a class="headerlink" href="#langkah-24-buktikan-siapa-yang-listen-dan-apa-yang-dipegang" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">ss -lntp | grep 8080
+lsof -i :8080
+lsof -p $PID | head -30
+</code></pre>
+<p><strong>Yang harus terjadi:</strong></p>
+<pre><code>LISTEN 0  4096  *:8080  *:*  users:((&quot;sre-api&quot;,pid=12345,fd=3))
+</code></pre>
+<p>dan <code>lsof -p $PID</code> nunjukin socket LISTEN plus file binary-nya.</p>
+<p><strong>Kalau gagal:</strong> <code>ss</code> kosong padahal aplikasi jalan → kemungkinan aplikasi bind ke <code>127.0.0.1</code> (bukan <code>*</code>). Cek <code>ss -lntp</code> tanpa grep, lihat kolom ke-4.</p>
+<p><strong>Catat di notes.md:</strong> output <code>ss -lntp</code> — <strong>ini bukti wajib</strong> buat acceptance criteria.</p>
+<h3 id="langkah-25-bedakan-healthz-dan-readyz">Langkah 2.5 — Bedakan healthz dan readyz<a class="headerlink" href="#langkah-25-bedakan-healthz-dan-readyz" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'healthz=%{http_code}\n' --max-time 3 http://127.0.0.1:8080/healthz
+curl -sS -o /dev/null -w 'readyz=%{http_code}\n'  --max-time 3 http://127.0.0.1:8080/readyz
+echo &quot;exit healthz: $?&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>healthz=200</code> dan <code>readyz=503</code>. Kenapa? Karena Postgres dan Redis nggak beneran ada — dan ini <strong>justru contoh sempurna</strong> dari "proses hidup tapi belum siap".</p>
+<p><strong>Kalau gagal:</strong> kalau dua-duanya <code>000</code>, prosesnya nggak listen — balik ke Langkah 2.2.</p>
+<p><strong>Catat di notes.md:</strong> tulis kenapa <code>healthz</code> 200 tapi <code>readyz</code> 503, dan kapan bedanya ini penting (petunjuk: minggu 8, readiness probe).</p>
+<h3 id="langkah-26-kirim-sigterm-lihat-graceful-shutdown">Langkah 2.6 — Kirim SIGTERM, lihat graceful shutdown<a class="headerlink" href="#langkah-26-kirim-sigterm-lihat-graceful-shutdown" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">kill -TERM $PID
+sleep 1
+pgrep -af sre-api || echo &quot;proses sudah keluar&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> di log muncul <code>shutdown signal received</code> lalu <code>shutdown selesai</code>. Proses keluar <strong>dengan sendirinya</strong> dalam 1 detik (karena <code>Shutdown()</code> langsung balas saat nggak ada request in-flight).</p>
+<p><strong>Kalau gagal:</strong> kalau proses nggak keluar juga, cek apakah <code>$PID</code> salah. Jangan langsung <code>kill -9</code>.</p>
+<p><strong>Catat di notes.md:</strong> dua baris log shutdown. Ini bukti acceptance criteria nomor 4.</p>
+<hr />
+<h2 id="hari-3-eksperimen-kegagalan-2-jam">Hari 3 · Eksperimen kegagalan (2 jam)<a class="headerlink" href="#hari-3-eksperimen-kegagalan-2-jam" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Aturan Hari 3:</strong> setiap langkah WAJIB punya cara balikin ke kondisi normal. Jangan tutup sesi sebelum semua cleanup jalan.</p>
+</blockquote>
+<h3 id="langkah-31-cpu-tinggi-temukan-thread-nakalnya-dalam-5-menit">Langkah 3.1 — CPU tinggi: temukan thread nakalnya dalam 5 menit<a class="headerlink" href="#langkah-31-cpu-tinggi-temukan-thread-nakalnya-dalam-5-menit" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">yes &gt; /dev/null &amp;
+BAD=$!
+sleep 2
+top -H -b -n 1 -p $BAD | head -20
+pidstat -urd -p $BAD 1 5
+ps -eLo pid,tid,pcpu,comm --sort=-pcpu | head -5
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>%CPU</code> mendekati 100 untuk thread <code>yes</code>. <code>pidstat</code> baris ke-2 dst nunjukin <code>%usr</code> tinggi.</p>
+<p><strong>Kalau gagal:</strong> <code>top -H</code> nggak nunjukin thread → pastikan flag <code>-H</code> ada dan jangan pakai <code>-b</code> kalau mau interaktif.</p>
+<p><strong>Cara mengembalikan:</strong></p>
+<pre><code class="language-bash">kill -TERM $BAD
+sleep 1
+pgrep -af '^yes' || echo &quot;bersih&quot;
+# verifikasi load turun:
+uptime
+</code></pre>
+<h3 id="langkah-32-bikin-tekanan-memori-terukur-lalu-amati-psi">Langkah 3.2 — Bikin tekanan memori terukur, lalu amati PSI<a class="headerlink" href="#langkah-32-bikin-tekanan-memori-terukur-lalu-amati-psi" title="Permanent link">&para;</a></h3>
+<p>Jangan bikin host OOM beneran. Bikin tekanan dengan proses yang alokasi memori perlahan:</p>
+<pre><code class="language-bash"># Alokasi ~256MB dan tahan (butuh python3; kalau nggak ada, pakai `stress`)
+python3 -c &quot;
+import time
+b = bytearray(256 * 1024 * 1024)
+time.sleep(60)
+&quot; &amp;
+HOG=$!
+sleep 3
+cat /proc/pressure/memory
+cat /sys/fs/cgroup/memory.current
+free -h
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>some avg10</code> di memory PSI naik dari 0, <code>memory.current</code> naik, <code>available</code> di <code>free -h</code> turun.</p>
+<p><strong>Kalau gagal:</strong> kalau <code>avg10</code> tetap <code>0.00</code>, berarti alokasinya kecepetan selesai atau mesin lo kegedean. Naikin jadi <code>1024 * 1024 * 1024</code> atau tambah durasi sleep.</p>
+<p><strong>Cara mengembalikan:</strong></p>
+<pre><code class="language-bash">kill -TERM $HOG
+sleep 2
+cat /proc/pressure/memory     # avg300 akan pelan-pelan turun, avg10 turun lebih cepat
+free -h
+</code></pre>
+<h3 id="langkah-33-oom-cgroup-yang-terkendali-pakai-systemd-run">Langkah 3.3 — OOM cgroup yang terkendali (pakai systemd-run)<a class="headerlink" href="#langkah-33-oom-cgroup-yang-terkendali-pakai-systemd-run" title="Permanent link">&para;</a></h3>
+<p>Ini cara paling aman ngebuktiin OOM tanpa ngerusak host. <code>systemd-run</code> bikin cgroup sementara dengan batas memori.</p>
+<pre><code class="language-bash">sudo systemd-run --unit=sre-oom-lab --slice=sre-oom-lab.slice \
+  -p MemoryMax=64M -p MemorySwapMax=0 \
+  /usr/bin/python3 -c &quot;
+import time
+b = bytearray(256 * 1024 * 1024)
+time.sleep(120)
+&quot;
+</code></pre>
+<p>Langsung cek buktinya:</p>
+<pre><code class="language-bash">sleep 5
+systemctl status sre-oom-lab.service --no-pager
+sudo journalctl -u sre-oom-lab.service -n 20 --no-pager
+sudo journalctl -k --no-pager | grep -i -E 'out of memory|killed process'
+</code></pre>
+<p>Baca counter cgroup-nya (path-nya beda tergantung versi systemd):</p>
+<pre><code class="language-bash">CG=$(find /sys/fs/cgroup -type d -name 'sre-oom-lab*' | head -1)
+echo &quot;cgroup: $CG&quot;
+cat &quot;$CG/memory.events&quot;
+cat &quot;$CG/memory.max&quot;
+cat &quot;$CG/memory.current&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> service berstatus <code>failed</code>, dan salah satu dari ini muncul:
+- Baris <code>Memory cgroup out of memory: Killed process ...</code> di <code>journalctl -k</code>, <strong>atau</strong>
+- <code>oom_kill</code> di <code>memory.events</code> bernilai <code>1</code> atau lebih.</p>
+<p><strong>Kalau gagal:</strong>
+- <code>systemd-run</code> nggak nemu <code>MemoryMax</code> → systemd terlalu tua, atau cgroup v1. Cek Langkah Persiapan.
+- Proses nggak mati → <code>bytearray</code> mungkin nggak kena touch semua halaman. Tambahin loop <code>for i in range(0, len(b), 4096): b[i] = 1</code>.</p>
+<p><strong>Cara mengembalikan (WAJIB):</strong></p>
+<pre><code class="language-bash">sudo systemctl stop sre-oom-lab.service 2&gt;/dev/null || true
+sudo systemctl reset-failed sre-oom-lab.service 2&gt;/dev/null || true
+sudo systemctl stop sre-oom-lab.slice 2&gt;/dev/null || true
+systemctl status sre-oom-lab.service --no-pager   # harusnya &quot;not-found&quot; atau &quot;inactive&quot;
+</code></pre>
+<h3 id="langkah-34-systemd-unit-yang-sengaja-rusak">Langkah 3.4 — systemd unit yang sengaja rusak<a class="headerlink" href="#langkah-34-systemd-unit-yang-sengaja-rusak" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">sudo tee /etc/systemd/system/sre-lab.service &gt; /dev/null &lt;&lt;'EOF'
+[Unit]
+Description=SRE Lab (sengaja rusak)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/tmp/binary-yang-tidak-ada
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl start sre-lab.service
+sleep 5
+systemctl status sre-lab.service --no-pager
+systemctl --failed --no-pager
+sudo journalctl -u sre-lab.service -n 30 --no-pager
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> status <code>failed</code> dengan <code>status=203/EXEC</code> (file nggak ada), dan <code>systemctl --failed</code> nyantumin unit ini. Karena <code>Restart=always</code>, lo bakal lihat beberapa kali percobaan gagal di journal — ini nunjukin kenapa service bisa "restart terus".</p>
+<p><strong>Kalau gagal:</strong> <code>systemd is-system-running: offline</code> → bukan systemd (WSL2 tanpa systemd). Lewati langkah ini, baca outputnya dari teman atau VPS.</p>
+<p><strong>Cara mengembalikan (WAJIB):</strong></p>
+<pre><code class="language-bash">sudo systemctl stop sre-lab.service
+sudo systemctl disable sre-lab.service
+sudo rm -f /etc/systemd/system/sre-lab.service
+sudo systemctl daemon-reload
+sudo systemctl reset-failed
+systemctl --failed --no-pager     # harusnya kosong
+</code></pre>
+<h3 id="langkah-35-tiga-kondisi-yang-sering-ketuker">Langkah 3.5 — Tiga kondisi yang sering ketuker<a class="headerlink" href="#langkah-35-tiga-kondisi-yang-sering-ketuker" title="Permanent link">&para;</a></h3>
+<p>Bikin tabel perbandingan. Ini artefak yang bakal lo pakai sepanjang karier.</p>
+<pre><code class="language-bash"># Kondisi A: proses mati
+kill -TERM $PID 2&gt;/dev/null; sleep 1
+pgrep -af '/tmp/sre-api' || echo &quot;A: pgrep kosong&quot;
+ss -lntp | grep 8080 || echo &quot;A: ss kosong&quot;
+curl -sS -o /dev/null --max-time 3 http://127.0.0.1:8080/healthz; echo &quot;A: exit=$?&quot;
+
+# Kondisi B: proses hidup, port nggak listen (jalanin binary dengan PORT lain lalu cek port 8080)
+DATABASE_URL='postgres://x@127.0.0.1:5432/x?sslmode=disable' REDIS_URL='redis://127.0.0.1:6379' \
+  APP_PORT=9999 /tmp/sre-api &amp;
+B_PID=$!
+sleep 1
+pgrep -af '/tmp/sre-api' | head -2     # B: ada PID
+ss -lntp | grep 8080 || echo &quot;B: port 8080 nggak ada yang listen&quot;
+curl -sS -o /dev/null --max-time 3 http://127.0.0.1:8080/healthz; echo &quot;B: exit=$?&quot;
+kill -TERM $B_PID
+
+# Kondisi C: listen tapi nggak responsif (endpoint /slow)
+DATABASE_URL='postgres://x@127.0.0.1:5432/x?sslmode=disable' REDIS_URL='redis://127.0.0.1:6379' \
+  /tmp/sre-api &amp;
+C_PID=$!
+sleep 1
+curl -sS -o /dev/null --max-time 2 &quot;http://127.0.0.1:8080/slow?ms=30000&quot;; echo &quot;C: exit=$?&quot;
+kill -TERM $C_PID
+</code></pre>
+<p><strong>Yang harus terjadi:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th><code>pgrep</code></th>
+<th><code>ss -lntp</code></th>
+<th>exit code curl</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A: proses mati</td>
+<td>kosong</td>
+<td>kosong</td>
+<td><code>7</code> (refused)</td>
+</tr>
+<tr>
+<td>B: hidup, nggak listen di port itu</td>
+<td>ada</td>
+<td>kosong</td>
+<td><code>7</code> (refused)</td>
+</tr>
+<tr>
+<td>C: listen, nggak responsif</td>
+<td>ada</td>
+<td>ada</td>
+<td><code>28</code> (timeout)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Kalau gagal:</strong> exit <code>7</code> di kondisi C berarti aplikasi mati sebelum request nyampe. Ulangi, tambah <code>sleep 2</code> setelah start.</p>
+<p><strong>Cara mengembalikan:</strong></p>
+<pre><code class="language-bash">pkill -TERM -f '/tmp/sre-api' 2&gt;/dev/null || true
+sleep 1
+pgrep -af '/tmp/sre-api' || echo &quot;semua bersih&quot;
+</code></pre>
+<hr />
+<h2 id="hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)<a class="headerlink" href="#hari-4-review-dokumentasi-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-41-simpan-semua-bukti-ke-evidence">Langkah 4.1 — Simpan semua bukti ke <code>evidence/</code><a class="headerlink" href="#langkah-41-simpan-semua-bukti-ke-evidence" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">mkdir -p labs/week-01-linux/evidence
+{
+  echo &quot;=== $(date -u +%FT%TZ) ===&quot;
+  echo &quot;--- uname ---&quot;; uname -a
+  echo &quot;--- uptime ---&quot;; uptime
+  echo &quot;--- free ---&quot;; free -h
+  echo &quot;--- PSI ---&quot;; cat /proc/pressure/cpu /proc/pressure/memory /proc/pressure/io
+  echo &quot;--- ss -lntp ---&quot;; ss -lntp
+  echo &quot;--- memory.events ---&quot;; cat /sys/fs/cgroup/memory.events
+} &gt; labs/week-01-linux/evidence/01-baseline.txt
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> file <code>01-baseline.txt</code> kebentuk dan isinya lengkap.</p>
+<p><strong>Kalau gagal:</strong> permission denied → pastikan lo <code>cd</code> di root repo dan punya akses tulis.</p>
+<p><strong>Catat di notes.md:</strong> path tiap file bukti.</p>
+<h3 id="langkah-42-tulis-3-runbook">Langkah 4.2 — Tulis 3 runbook<a class="headerlink" href="#langkah-42-tulis-3-runbook" title="Permanent link">&para;</a></h3>
+<p>Bikin tiga file di <code>labs/week-01-linux/runbooks/</code>. Masing-masing wajib punya: Gejala, Cara deteksi, Diagnosis (decision tree), Mitigasi, Pencegahan.</p>
+<pre><code class="language-bash">$EDITOR labs/week-01-linux/runbooks/high-cpu.md       # load tinggi, request lambat
+$EDITOR labs/week-01-linux/runbooks/oom-symptoms.md   # container restart mendadak
+$EDITOR labs/week-01-linux/runbooks/service-down.md   # endpoint nggak bisa diakses
+</code></pre>
+<p>Isi minimum:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Yang harus ada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>high-cpu.md</code></td>
+<td>Cara nemu thread nakal &lt; 5 menit; keputusan kapan scale vs kapan perbaiki kode</td>
+</tr>
+<tr>
+<td><code>oom-symptoms.md</code></td>
+<td>Beda kernel <code>oom-kill</code> vs <code>systemd-oomd</code>; beda OOM host vs OOM cgroup</td>
+</tr>
+<tr>
+<td><code>service-down.md</code></td>
+<td>Decision tree: proses hidup? port listen? aplikasi responsif? dependency sehat?</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Yang harus terjadi:</strong> tiga file ada, masing-masing minimal punya 5 bagian wajib.</p>
+<p><strong>Kalau gagal:</strong> kalau lo nggak bisa nulis "cara deteksi" tanpa buka catatan, berarti Hari 2–3 belum nempel. Ulangi Langkah 3.5.</p>
+<h3 id="langkah-43-lengkapin-commandsmd">Langkah 4.3 — Lengkapin <code>commands.md</code><a class="headerlink" href="#langkah-43-lengkapin-commandsmd" title="Permanent link">&para;</a></h3>
+<p>Isi <code>labs/week-01-linux/commands.md</code> dengan semua perintah yang lo jalanin Hari 2 dan Hari 3, lengkap dengan output tersanitasi dan interpretasinya. Minimal 15 perintah.</p>
+<p><strong>Yang harus terjadi:</strong> <code>commands.md</code> punya dua bagian (<code>Hari 2</code> dan <code>Hari 3</code>), tiap entri ada perintah + output + interpretasi.</p>
+<p><strong>Kalau gagal:</strong> copy polanya dari <code>ringkasan.md</code> bagian "Perintah kunci".</p>
+<h3 id="langkah-44-update-readmemd">Langkah 4.4 — Update <code>README.md</code><a class="headerlink" href="#langkah-44-update-readmemd" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">$EDITOR labs/week-01-linux/README.md
+</code></pre>
+<p>Ganti <code>&gt; Status: TODO</code> jadi <code>&gt; Status: DONE</code>, dan centang semua kotak di bagian "Yang dikerjakan".</p>
+<p><strong>Yang harus terjadi:</strong> status <code>DONE</code> dan 4 kotak ke-centang.</p>
+<p><strong>Kalau gagal:</strong> jangan centang kalau acceptance criteria belum kebukti. Minggu ini belum selesai.</p>
+<h3 id="langkah-45-commit">Langkah 4.5 — Commit<a class="headerlink" href="#langkah-45-commit" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git add labs/week-01-linux/
+git status --short          # pastikan nggak ada file .env atau data sensitif ikut
+git commit -m &quot;week-01: linux observability — evidence, runbooks, commands&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> commit kebentuk, dan <code>git status --short</code> sebelum commit <strong>tidak</strong> ngandung file berisi password/IP internal.</p>
+<p><strong>Kalau gagal:</strong> kalau ada file yang kebawa padahal harusnya nggak, <code>git reset</code> dulu, tambahin ke <code>.gitignore</code>, baru commit ulang.</p>
+<hr />
+<h2 id="daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"<a class="headerlink" href="#daftar-periksa-minggu-ini-selesai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Bisa nemu thread penyebab CPU tinggi dalam &lt; 5 menit (bukti: <code>evidence/</code>)</li>
+<li>[ ] Pernah lihat sendiri OOM cgroup: <code>memory.events</code> <code>oom_kill &gt; 0</code> <strong>atau</strong> baris journal <code>systemd-oomd</code></li>
+<li>[ ] Punya tabel tiga kondisi (mati / nggak listen / nggak responsif) lengkap dengan exit code</li>
+<li>[ ] Bisa jelasin beda <code>kill -TERM</code> dan <code>kill -KILL</code>, dengan bukti log shutdown</li>
+<li>[ ] Bisa bedain load average karena CPU vs karena IO (<code>vmstat</code> + PSI)</li>
+<li>[ ] <code>notes.md</code> terisi (bukan cuma template)</li>
+<li>[ ] <code>commands.md</code> minimal 15 perintah + output</li>
+<li>[ ] 3 runbook di <code>runbooks/</code></li>
+<li>[ ] <code>README.md</code> status <code>DONE</code>, bagian <code>## Referensi</code> terisi link nyata</li>
+<li>[ ] Semua eksperimen Hari 3 sudah dibersihin (<code>systemctl --failed</code> kosong, nggak ada <code>yes</code>/<code>python3</code> nyisa)</li>
+</ul>
+<hr />
+<h2 id="cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer<a class="headerlink" href="#cara-membuktikan-ke-reviewer" title="Permanent link">&para;</a></h2>
+<p>Jalanin blok ini dari root repo. Outputnya harus konsisten dan bisa lo ulang kapan aja.</p>
+<pre><code class="language-bash"># 1. Semua artefak ada
+ls -1 labs/week-01-linux/{bahan-bacaan.md,ringkasan.md,lab.md,commands.md,notes.md,README.md}
+ls -1 labs/week-01-linux/runbooks/
+ls -1 labs/week-01-linux/evidence/
+
+# 2. Bukti OOM (salah satu harus nonzero)
+cat /sys/fs/cgroup/memory.events
+sudo journalctl -k --no-pager | grep -ci 'out of memory'
+
+# 3. Bukti bisa bedain tiga kondisi
+grep -E '^\| (A|B|C):' labs/week-01-linux/notes.md
+
+# 4. Kondisi host sudah bersih setelah eksperimen
+systemctl --failed --no-pager
+pgrep -af 'yes|sre-oom-lab' || echo &quot;tidak ada sisa eksperimen&quot;
+
+# 5. Commit terakhir minggu ini
+git log --oneline -3 -- labs/week-01-linux/
+</code></pre>
+<blockquote>
+<p>Kalau reviewer nanya "kenapa lo yakin ini OOM, bukan crash biasa?", jawabannya harus: <strong>"karena <code>oom_kill</code> di <code>memory.events</code> naik dari 0 jadi 1"</strong> — bukan "kayaknya".</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-01-linux/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

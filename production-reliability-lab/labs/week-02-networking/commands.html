@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 02 · Networking untuk backend engineer</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-02-networking/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-02-networking-untuk-backend-engineer">Perintah — Week 02 · Networking untuk backend engineer</a><ul>
+<li><a href="#hari-2-kondisi-normal">Hari 2 (kondisi normal)</a></li>
+<li><a href="#hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-02-networking-untuk-backend-engineer">Perintah — Week 02 · Networking untuk backend engineer<a class="headerlink" href="#perintah-week-02-networking-untuk-backend-engineer" title="Permanent link">&para;</a></h1>
+<p>Format: <code>perintah</code> → output yang diharap → interpretasi. Output disanitasi (IP/waktu diganti placeholder). Jalankan di Ubuntu 22.04/24.04 + Docker Compose v2 dengan stack lab jalan.</p>
+<hr />
+<h2 id="hari-2-kondisi-normal">Hari 2 (kondisi normal)<a class="headerlink" href="#hari-2-kondisi-normal" title="Permanent link">&para;</a></h2>
+<p><strong>1. Alamat IP &amp; interface</strong></p>
+<pre><code class="language-bash">ip addr
+</code></pre>
+<p>→ <code>2: eth0: &lt;BROADCAST,...&gt; inet 192.168.1.20/24 ...</code>
+→ Lo tau IP lo dan interface yang aktif.</p>
+<p><strong>2. Tabel routing</strong></p>
+<pre><code class="language-bash">ip route
+</code></pre>
+<p>→ <code>default via 192.168.1.1 dev eth0</code> + subnet lokal.
+→ Ke mana traffic dilempar kalau tujuan bukan lokal.</p>
+<p><strong>3. Port yang listen + pemilik proses</strong></p>
+<pre><code class="language-bash">ss -lntp
+</code></pre>
+<p>→ <code>LISTEN 0 4096 *:8080 users:(("sre-api",pid=9001,fd=3))</code>
+→ <code>pid=9001</code> = proses Go lo. Bukti port listen &amp; siapa pemiliknya.</p>
+<p><strong>4. Resolusi DNS eksternal (cuma jawaban)</strong></p>
+<pre><code class="language-bash">dig +short example.com
+</code></pre>
+<p>→ <code>93.184.216.34</code>
+→ Jawaban DNS mentah dari resolver publik.</p>
+<p><strong>5. Jejak resolusi DNS lengkap</strong></p>
+<pre><code class="language-bash">dig example.com +trace
+</code></pre>
+<p>→ baris <code>A</code> dari root (<code>.</code>) → TLD (<code>com.</code>) → authoritative.
+→ Lihat persis di mana resolusi terjadi.</p>
+<p><strong>6. Resolusi ala aplikasi (Docker internal)</strong></p>
+<pre><code class="language-bash">docker compose exec api getent hosts redis
+</code></pre>
+<p>→ <code>172.20.0.3 redis</code>
+→ Ini yang dipakai aplikasi beneran, bukan <code>dig</code> di host.</p>
+<p><strong>7. 5 fase latency ke publik</strong></p>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'dns=%{time_namelookup} tcp=%{time_connect} tls=%{time_appconnect} ttfb=%{time_starttransfer} total=%{time_total} ver=%{http_version}\n' https://example.com
+</code></pre>
+<p>→ <code>dns=0.04 tcp=0.06 tls=0.09 ttfb=0.25 total=0.26 ver=2</code>
+→ <code>tls&gt;tcp</code> (TLS butuh TCP), <code>ttfb-tls</code> = server mikir, <code>total-ttfb</code> = transfer body.</p>
+<p><strong>8. Latency ke service lokal</strong></p>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'dns=%{time_namelookup} tcp=%{time_connect} ttfb=%{time_starttransfer} total=%{time_total}\n' http://localhost:8080/health
+</code></pre>
+<p>→ <code>dns=0.00 tcp=0.00 ttfb=0.002 total=0.003</code>
+→ <code>dns~0</code> karena localhost ada di <code>/etc/hosts</code>.</p>
+<p><strong>9. Protokol + kode via curl</strong></p>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'http=%{http_code} ver=%{http_version} exit=%{exitcode}\n' https://example.com
+</code></pre>
+<p>→ <code>http=200 ver=2 exit=0</code>
+→ <code>ver=2</code> = HTTP/2. <code>exit=0</code> = sukses.</p>
+<hr />
+<h2 id="hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)<a class="headerlink" href="#hari-3-eksperimen-kegagalan" title="Permanent link">&para;</a></h2>
+<p><strong>10. Port salah → connection refused (exit 7)</strong></p>
+<pre><code class="language-bash">curl --connect-timeout 3 http://localhost:9999; echo &quot;exit=$?&quot;
+</code></pre>
+<p>→ <code>curl: (7) Failed to connect ... Connection refused</code> <code>exit=7</code>
+→ Nggak ada yang listen di 9999.</p>
+<p><strong>11. Service mati → refused (exit 7)</strong></p>
+<pre><code class="language-bash">docker compose stop api
+curl --connect-timeout 3 http://localhost:8080/health; echo &quot;exit=$?&quot;
+docker compose start api
+</code></pre>
+<p>→ <code>Connection refused</code> <code>exit=7</code>, lalu <code>docker compose start</code> kembalikan state.
+→ Bukti: matiin container = refused.</p>
+<p><strong>12. DNS gagal → could not resolve (exit 6)</strong></p>
+<pre><code class="language-bash">docker compose exec api curl -v --connect-timeout 3 http://nope-service:8080; echo &quot;exit=$?&quot;
+</code></pre>
+<p>→ <code>Could not resolve host: nope-service</code> <code>exit=6</code>
+→ Host nggak ada di DNS internal.</p>
+<p><strong>13. Timeout (DROP) → exit 28</strong></p>
+<pre><code class="language-bash">sudo iptables -A INPUT -p tcp --dport 8080 -j DROP
+curl --connect-timeout 3 http://localhost:8080/health; echo &quot;exit=$?&quot;
+sudo iptables -D INPUT -p tcp --dport 8080 -j DROP
+</code></pre>
+<p>→ hang lalu <code>exit=28</code> (Timeout), lalu <code>iptables -D</code> kembalikan normal.
+→ DROP = diam → client nunggu sampai timeout.</p>
+<p><strong>14. Versi TLS + ALPN (h2)</strong></p>
+<pre><code class="language-bash">openssl s_client -connect example.com:443 -servername example.com -tls1_3 -alpn h2 -brief
+</code></pre>
+<p>→ <code>Verify return code: 0 (ok)</code> + <code>TLSv1.3</code> + <code>ALPN protocol: h2</code>
+→ Bukti server nerima TLS 1.3 &amp; HTTP/2.</p>
+<p><strong>15. SNI salah → sertifikat berbeda</strong></p>
+<pre><code class="language-bash">openssl s_client -connect example.com:443 -brief 2&gt;/dev/null | grep -E 'subject|issuer'
+</code></pre>
+<p>→ <code>subject=CN=example.com</code> (tanpa <code>-servername</code> bisa dapet default vhost).
+→ Bukti SNI ngaruh ke sertifikat yang dikembalikan.</p>
+<p><strong>16. DNS lokal vs resolver</strong></p>
+<pre><code class="language-bash">cat /etc/resolv.conf
+getent hosts localhost
+</code></pre>
+<p>→ <code>nameserver 127.0.0.53</code> (systemd-resolved stub) + <code>127.0.0.1 localhost</code>.
+→ Jelasin kenapa <code>dig</code> dan aplikasi bisa beda hasil.</p>
+<p><strong>17. Cek exit code setelah curl</strong></p>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'code=%{http_code} exit=%{exitcode}\n' http://localhost:8080/health
+</code></pre>
+<p>→ <code>code=200 exit=0</code> (sehat) / <code>code=000 exit=7</code> (refused).
+→ <code>http_code=000</code> = curl gagal sebelum response HTTP.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-02-networking/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

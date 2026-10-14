@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 4 · DNS, TLS, dan Reverse Proxy</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-04-reverse-proxy/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-4-dns-tls-dan-reverse-proxy">Lab — Minggu 4 · DNS, TLS, dan Reverse Proxy</a><ul>
+<li><a href="#persiapan-10-menit">Persiapan (10 menit)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a><ul>
+<li><a href="#langkah-11-pahami-posisi-proxy">Langkah 1.1 — Pahami posisi proxy</a></li>
+<li><a href="#langkah-12-baca-dokumentasi-primer">Langkah 1.2 — Baca dokumentasi primer</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a><ul>
+<li><a href="#langkah-21-tambah-nginx-ke-compose-jalankan">Langkah 2.1 — Tambah Nginx ke compose &amp; jalankan</a></li>
+<li><a href="#langkah-22-verifikasi-header-forwarding">Langkah 2.2 — Verifikasi header forwarding</a></li>
+<li><a href="#langkah-23-buktikan-port-db-tertutup">Langkah 2.3 — Buktikan port DB tertutup</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-kegagalan-2-jam-failure-matrix">Hari 3 · Eksperimen kegagalan (2 jam) — FAILURE MATRIX</a><ul>
+<li><a href="#langkah-31-502-upstream-mati">Langkah 3.1 — 502 (upstream mati)</a></li>
+<li><a href="#langkah-32-504-upstream-lambat">Langkah 3.2 — 504 (upstream lambat)</a></li>
+<li><a href="#langkah-33-499-client-kabur-duluan">Langkah 3.3 — 499 (client kabur duluan)</a></li>
+<li><a href="#langkah-34-tls-handshake-gagal-bonus">Langkah 3.4 — TLS handshake gagal (bonus)</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)</a><ul>
+<li><a href="#langkah-41-buat-sertifikat-lokal">Langkah 4.1 — Buat sertifikat lokal</a></li>
+<li><a href="#langkah-42-update-diagram-failure-matrix">Langkah 4.2 — Update diagram &amp; failure matrix</a></li>
+<li><a href="#langkah-43-commit">Langkah 4.3 — Commit</a></li>
+</ul>
+</li>
+<li><a href="#daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"</a></li>
+<li><a href="#cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-4-dns-tls-dan-reverse-proxy">Lab — Minggu 4 · DNS, TLS, dan Reverse Proxy<a class="headerlink" href="#lab-minggu-4-dns-tls-dan-reverse-proxy" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti <strong>berurutan</strong>, jangan lompat. Setiap langkah: perintah → <strong>Yang harus terjadi</strong> → <strong>Kalau gagal</strong>.</p>
+</blockquote>
+<h2 id="persiapan-10-menit">Persiapan (10 menit)<a class="headerlink" href="#persiapan-10-menit" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Docker + Docker Compose v2 jalan (<code>docker compose version</code>).</li>
+<li>[ ] Stack minggu 3 jalan: <code>docker compose up -d --build &amp;&amp; docker compose ps</code> → <code>api</code>, <code>postgres</code>, <code>redis</code> status <code>healthy</code>/<code>running</code>.</li>
+<li>[ ] <code>nginx/default.conf</code> sudah ada (lihat repo).</li>
+</ul>
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-11-pahami-posisi-proxy">Langkah 1.1 — Pahami posisi proxy<a class="headerlink" href="#langkah-11-pahami-posisi-proxy" title="Permanent link">&para;</a></h3>
+<p>Baca <code>nginx/default.conf</code> di repo.
+<strong>Yang harus terjadi:</strong> lo paham tiap blok: <code>upstream api</code>, <code>location /</code>, <code>proxy_pass</code>, dan 3 timeout.
+<strong>Kalau gagal:</strong> balik ke <code>bahan-bacaan.md</code> bagian 2.1–2.4.
+<strong>Catat di notes.md:</strong> bedanya forward vs reverse proxy.</p>
+<h3 id="langkah-12-baca-dokumentasi-primer">Langkah 1.2 — Baca dokumentasi primer<a class="headerlink" href="#langkah-12-baca-dokumentasi-primer" title="Permanent link">&para;</a></h3>
+<p>Buka <a href="https://nginx.org/en/docs/beginners_guide.html">NGINX Beginner's Guide</a> &amp; <a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html">ngx_http_proxy_module</a>.
+<strong>Yang harus terjadi:</strong> lo tahu fungsi <code>proxy_set_header</code>, <code>proxy_next_upstream</code>, dan 3 timeout.
+<strong>Catat di notes.md:</strong> tabel timeout default (60s) vs nilai lab (5s/30s/30s).</p>
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-21-tambah-nginx-ke-compose-jalankan">Langkah 2.1 — Tambah Nginx ke compose &amp; jalankan<a class="headerlink" href="#langkah-21-tambah-nginx-ke-compose-jalankan" title="Permanent link">&para;</a></h3>
+<p><code>docker compose up -d &amp;&amp; curl -v http://localhost/health</code>
+<strong>Yang harus terjadi:</strong> balasan <code>200 OK</code> dari proxy di port 80.
+<strong>Kalau gagal:</strong> <code>docker compose exec nginx nginx -t</code> → perbaiki syntax; <code>docker compose logs nginx</code>.</p>
+<h3 id="langkah-22-verifikasi-header-forwarding">Langkah 2.2 — Verifikasi header forwarding<a class="headerlink" href="#langkah-22-verifikasi-header-forwarding" title="Permanent link">&para;</a></h3>
+<p><code>curl -s http://localhost/health -i | head</code> dan cek log aplikasi.
+<strong>Yang harus terjadi:</strong> aplikasi lihat <code>X-Forwarded-Proto</code>, <code>X-Forwarded-For</code>, <code>Host</code>.
+<strong>Kalau gagal:</strong> header nggak muncul → cek <code>proxy_set_header</code> di <code>default.conf</code>.</p>
+<h3 id="langkah-23-buktikan-port-db-tertutup">Langkah 2.3 — Buktikan port DB tertutup<a class="headerlink" href="#langkah-23-buktikan-port-db-tertutup" title="Permanent link">&para;</a></h3>
+<p><code>ss -lntp | grep -E '5432|6379'</code> (di host) → harus <strong>kosong</strong>.
+<code>nmap localhost</code> → cuma port 80 (dan 22) yang kebuka.
+<strong>Yang harus terjadi:</strong> 5432/6379 nggak listen di host.
+<strong>Kalau gagal:</strong> ada <code>ports:</code> di <code>postgres</code>/<code>redis</code> di compose → hapus.</p>
+<h2 id="hari-3-eksperimen-kegagalan-2-jam-failure-matrix">Hari 3 · Eksperimen kegagalan (2 jam) — FAILURE MATRIX<a class="headerlink" href="#hari-3-eksperimen-kegagalan-2-jam-failure-matrix" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-31-502-upstream-mati">Langkah 3.1 — 502 (upstream mati)<a class="headerlink" href="#langkah-31-502-upstream-mati" title="Permanent link">&para;</a></h3>
+<p><code>docker compose stop api &amp;&amp; curl -sS -o /dev/null -w '%{http_code}\n' http://localhost/health</code>
+<strong>Yang harus terjadi:</strong> <code>502</code>. <code>docker compose exec nginx tail -5 /var/log/nginx/error.log</code> → <code>connect() failed (111: Connection refused)</code>.
+<strong>Kembali normal:</strong> <code>docker compose start api</code>.</p>
+<h3 id="langkah-32-504-upstream-lambat">Langkah 3.2 — 504 (upstream lambat)<a class="headerlink" href="#langkah-32-504-upstream-lambat" title="Permanent link">&para;</a></h3>
+<p>Buat endpoint lambat di app (atau <code>docker compose exec api sh -c '...'</code>), lalu:
+<code>curl -sS -o /dev/null -w '%{http_code}\n' 'http://localhost/slow?ms=60000'</code>
+<strong>Yang harus terjadi:</strong> <code>504</code> setelah 30 detik. <code>error.log</code> → <code>upstream timed out</code>.
+<strong>Kembali normal:</strong> hentikan request lambat.</p>
+<h3 id="langkah-33-499-client-kabur-duluan">Langkah 3.3 — 499 (client kabur duluan)<a class="headerlink" href="#langkah-33-499-client-kabur-duluan" title="Permanent link">&para;</a></h3>
+<p><code>curl --max-time 2 -sS -o /dev/null -w '%{http_code}\n' 'http://localhost/slow?ms=60000'</code>
+<strong>Yang harus terjadi:</strong> curl berhenti di 2 detik; <code>access.log</code> Nginx catat status <code>499</code>.
+<strong>Kembali normal:</strong> selesai.</p>
+<h3 id="langkah-34-tls-handshake-gagal-bonus">Langkah 3.4 — TLS handshake gagal (bonus)<a class="headerlink" href="#langkah-34-tls-handshake-gagal-bonus" title="Permanent link">&para;</a></h3>
+<p><code>curl --tls-max 1.1 https://localhost</code> (kalau TLS sudah dipasang).
+<strong>Yang harus terjadi:</strong> gagal handshake karena server cuma terima TLS 1.2/1.3.</p>
+<h2 id="hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)<a class="headerlink" href="#hari-4-review-dokumentasi-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-41-buat-sertifikat-lokal">Langkah 4.1 — Buat sertifikat lokal<a class="headerlink" href="#langkah-41-buat-sertifikat-lokal" title="Permanent link">&para;</a></h3>
+<p><code>mkcert -install &amp;&amp; mkcert app.local 127.0.0.1 ::1</code>
+<strong>Yang harus terjadi:</strong> file <code>.pem</code> + <code>.key</code> dibuat; CA lokal masuk trust store.
+<strong>Kalau gagal:</strong> <code>mkcert</code> belum install → <code>brew install mkcert</code> / <code>apt install mkcert</code>.</p>
+<h3 id="langkah-42-update-diagram-failure-matrix">Langkah 4.2 — Update diagram &amp; failure matrix<a class="headerlink" href="#langkah-42-update-diagram-failure-matrix" title="Permanent link">&para;</a></h3>
+<p>Salin tabel failure matrix (502/504/499/TLS) ke <code>evidence/</code> lengkap dengan log asli.
+<strong>Yang harus terjadi:</strong> tiap kode punya bukti log.</p>
+<h3 id="langkah-43-commit">Langkah 4.3 — Commit<a class="headerlink" href="#langkah-43-commit" title="Permanent link">&para;</a></h3>
+<p><code>git add labs/week-04-reverse-proxy &amp;&amp; git commit -m "week4: reverse proxy + failure matrix"</code></p>
+<h2 id="daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"<a class="headerlink" href="#daftar-periksa-minggu-ini-selesai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] API cuma bisa diakses lewat proxy (port 80).</li>
+<li>[ ] 5432/6379 nggak kebuka di host.</li>
+<li>[ ] 502/504/499 direproduksi &amp; dijelaskan dari log.</li>
+<li>[ ] TLS lokal (<code>mkcert</code>) jalan &amp; bisa diverifikasi.</li>
+<li>[ ] Header forwarding terbukti sampai ke aplikasi.</li>
+</ul>
+<h2 id="cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer<a class="headerlink" href="#cara-membuktikan-ke-reviewer" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">docker compose exec nginx nginx -t
+curl -sS -o /dev/null -w 'proxy=%{http_code}\n' http://localhost/health
+docker compose stop api &amp;&amp; curl -sS -o /dev/null -w '502=%{http_code}\n' http://localhost/health
+docker compose start api
+ss -lntp | grep -E '5432|6379'   # harus kosong
+</code></pre>
+<div class="foot"><span>production-reliability-lab/labs/week-04-reverse-proxy/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

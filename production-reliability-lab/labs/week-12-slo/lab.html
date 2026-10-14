@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Week 12 · SLI, SLO, Error Budget, dan Incident Response</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-12-slo/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-week-12-sli-slo-error-budget-dan-incident-response">Lab — Week 12 · SLI, SLO, Error Budget, dan Incident Response</a><ul>
+<li><a href="#persiapan-wajib">Persiapan (wajib)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam-definisikan-uji-rules">Hari 2 · Praktik (2 jam) — definisikan &amp; uji rules</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-simulasi-insiden-burn-rate">Hari 3 · Eksperimen (2 jam) — simulasi insiden + burn-rate</a></li>
+<li><a href="#hari-4-review-2-jam-postmortem-blameless">Hari 4 · Review (2 jam) — postmortem blameless</a></li>
+<li><a href="#daftar-periksa-checklist">Daftar periksa (checklist)</a></li>
+<li><a href="#cara-buktikan-acceptance">Cara buktikan (acceptance)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-week-12-sli-slo-error-budget-dan-incident-response">Lab — Week 12 · SLI, SLO, Error Budget, dan Incident Response<a class="headerlink" href="#lab-week-12-sli-slo-error-budget-dan-incident-response" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Target: mikir kayak SRE, bukan cuma operator monitoring.
+Waktu: 4 hari × 2 jam. Stack: <code>api</code>, <code>prometheus</code> (rules/slo.yml), <code>k6</code> (load).</p>
+</blockquote>
+<h2 id="persiapan-wajib">Persiapan (wajib)<a class="headerlink" href="#persiapan-wajib" title="Permanent link">&para;</a></h2>
+<pre><code>docker compose ps
+</code></pre>
+<p>Pastikan <code>sre-lab-api-1</code> &amp; <code>sre-lab-prometheus-1</code> Up. Buka <code>rules/slo.yml</code>
+sudah ter-mount (<code>rule_files: /etc/prometheus/rules/*.yml</code>). Di Prometheus UI →
+Status → Rules, lihat <code>job:slo_errors_per_request:ratio_rate*</code> dan alert
+<code>HighErrorBudgetBurn</code>/<code>SlowErrorBudgetBurn</code> terdaftar (mungkin <code>inactive</code>).</p>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Baca <code>bahan-bacaan.md</code> seksi 1–7 + <code>docs/slo.md</code> &amp; <code>docs/incident-response.md</code>.</li>
+<li>Catat di <code>notes.md</code>: tabel SLI/SLO/SLA + rumus burn rate + policy budget.</li>
+<li>Hitung manual: SLO 99,5%, error ratio 1 jam = 3,6% → burn rate berapa?</li>
+</ul>
+<p><strong>Yang harus terjadi:</strong> lo bisa hitung burn rate &amp; jelasin kenapa diukur dari proxy.</p>
+<p><strong>Kalau gagal:</strong> balik ke <code>bahan-bacaan.md</code> 2.1, 2.4.</p>
+<p><strong>Catat notes:</strong> tulis 1 contoh SLO lab (availability 99,5%) + eksklusinya.</p>
+<hr />
+<h2 id="hari-2-praktik-2-jam-definisikan-uji-rules">Hari 2 · Praktik (2 jam) — definisikan &amp; uji rules<a class="headerlink" href="#hari-2-praktik-2-jam-definisikan-uji-rules" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Validasi rule dengan promtool:
+   <code>promtool check rules observability/prometheus/rules/slo.yml</code>
+   <strong>Yang harus terjadi:</strong> <code>SUCCESS: N rules found</code>.
+   <strong>Kalau gagal:</strong> cek indent YAML &amp; nama metrik (<code>http_server_requests_total</code>).</p>
+</li>
+<li>
+<p>(Opsional) buat unit test:
+   <code>promtool test rules observability/prometheus/rules/slo_test.yml</code>
+   <strong>Yang harus terjadi:</strong> semua test case <code>SUCCESS</code>.</p>
+</li>
+<li>
+<p>Cek recording rule jalan di Prometheus:
+   <code>curl -fsS "http://localhost:9090/api/v1/query?query=job:slo_errors_per_request:ratio_rate5m"</code>
+   <strong>Yang harus terjadi:</strong> nilai error ratio (mis. ~0).</p>
+</li>
+</ol>
+<p><strong>Catat notes:</strong> simpan output <code>promtool check</code> ke <code>evidence/</code>.</p>
+<hr />
+<h2 id="hari-3-eksperimen-2-jam-simulasi-insiden-burn-rate">Hari 3 · Eksperimen (2 jam) — simulasi insiden + burn-rate<a class="headerlink" href="#hari-3-eksperimen-2-jam-simulasi-insiden-burn-rate" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Traffic normal dulu (k6 ringan / curl loop):
+   <code>for i in $(seq 1 200); do curl -sS -o /dev/null http://localhost/orders; done</code></li>
+<li>
+<p>Rusak sesuatu — matiin Redis (dependency) atau bikin query lambat:
+   <code>docker compose stop redis</code>
+   <strong>Yang harus terjadi:</strong> error ratio naik, <code>HighErrorBudgetBurn</code>/<code>SlowErrorBudgetBurn</code>
+   firing (lihat Prometheus → Alerts). Catat <strong>waktu alert nyala</strong>.
+   <strong>Kalau gagal:</strong> cek recording rule aktif &amp; burn-rate threshold (14.4×0.005).</p>
+</li>
+<li>
+<p>Catat <strong>timeline</strong> (UTC): mulai rusak → alert firing → mitigasi → pulih.
+   Hitung error budget terpakai:
+   <code>curl -fsS "http://localhost:9090/api/v1/query?query=job:slo_errors_per_request:ratio_rate1h"</code></p>
+</li>
+<li>
+<p><strong>CARA KEMBALI NORMAL (wajib):</strong>
+   <code>docker compose start redis        # kembalikan dependency yang di-stop
+   # atau rollback deploy kalau rusaknya dari versi baru
+   curl -fsS http://localhost:9090/api/v1/query?query=up{job=%22api%22}</code>
+   <strong>Yang harus terjadi:</strong> <code>up{job="api"}</code> = 1, error ratio turun ke baseline,
+   alert kembali <code>inactive</code>. Bukan rollback image sembarangan — pulihkan dependency
+   / rollback versi, lalu verifikasi dengan angka (bukan perasaan).</p>
+</li>
+</ol>
+<p><strong>Catat notes:</strong> isi tabel timeline + berapa % budget terpakai.</p>
+<hr />
+<h2 id="hari-4-review-2-jam-postmortem-blameless">Hari 4 · Review (2 jam) — postmortem blameless<a class="headerlink" href="#hari-4-review-2-jam-postmortem-blameless" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Salin <code>postmortems/incident-001.md</code> jadi <code>incident-002.md</code>, isi dengan data
+   simulasi Hari 3: impact, timeline, root cause (1 kalimat mekanisme), 5-whys,
+   what went well/wrong, action item <strong>ber-owner &amp; tenggat</strong>.</li>
+<li>Pastikan blameless: nggak ada nama orang sebagai penyebab.</li>
+<li>Commit <code>incident-002.md</code> + <code>commands.md</code> + <code>evidence/</code>.</li>
+</ol>
+<p><strong>Catat notes:</strong> 1 pelajaran yang bisa dipakai orang lain.</p>
+<hr />
+<h2 id="daftar-periksa-checklist">Daftar periksa (checklist)<a class="headerlink" href="#daftar-periksa-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>promtool check rules</code> SUCCESS</li>
+<li>[ ] Recording rule <code>job:slo_*</code> aktif di Prometheus</li>
+<li>[ ] Alert burn-rate (14.4/6/1) terdaftar</li>
+<li>[ ] Simulasi: error ratio naik → alert firing</li>
+<li>[ ] Timeline insiden tercatat (UTC)</li>
+<li>[ ] Cara kembali normal sudah dicoba &amp; diverifikasi angka</li>
+<li>[ ] Postmortem blameless lengkap (owner+tenggat)</li>
+<li>[ ] <code>docs/slo.md</code> &amp; <code>docs/incident-response.md</code> sudah ada</li>
+</ul>
+<h2 id="cara-buktikan-acceptance">Cara buktikan (acceptance)<a class="headerlink" href="#cara-buktikan-acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>promtool check</code> output → <code>evidence/</code>.</li>
+<li>Screenshot Prometheus Alerts firing → <code>evidence/</code>.</li>
+<li>Timeline + % budget → <code>incident-002.md</code>.</li>
+<li>Postmortem action item ber-owner → <code>evidence/</code>.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-12-slo/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

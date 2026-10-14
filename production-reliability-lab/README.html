@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Production Reliability Lab</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/README.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#production-reliability-lab">Production Reliability Lab</a><ul>
+<li><a href="#kenapa-satu-repo">Kenapa satu repo</a></li>
+<li><a href="#cara-jalanin-dari-nol">Cara jalanin dari nol</a></li>
+<li><a href="#perintah-yang-tersedia">Perintah yang tersedia</a></li>
+<li><a href="#stack">Stack</a></li>
+<li><a href="#aturan-bukti-yang-gue-pegang">Aturan bukti yang gue pegang</a></li>
+<li><a href="#peta-repository">Peta repository</a></li>
+<li><a href="#progress">Progress</a></li>
+<li><a href="#catatan-keamanan-lab">Catatan keamanan lab</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="production-reliability-lab">Production Reliability Lab<a class="headerlink" href="#production-reliability-lab" title="Permanent link">&para;</a></h1>
+<p>Satu repository berisi <strong>production-like service + automated deployment + monitoring + alerting + simulasi insiden + dokumentasi reliability</strong>.</p>
+<p>Tujuan: portofolio buat melamar <strong>SRE / Platform Engineer</strong>. Bukan kumpulan tutorial, tapi bukti bahwa gue bisa mengoperasikan sistem.</p>
+<h2 id="kenapa-satu-repo">Kenapa satu repo<a class="headerlink" href="#kenapa-satu-repo" title="Permanent link">&para;</a></h2>
+<p>Reviewer bisa ngikutin progres dari Linux dasar sampai incident response tanpa buka 16 repo kecil.</p>
+<h2 id="cara-jalanin-dari-nol">Cara jalanin dari nol<a class="headerlink" href="#cara-jalanin-dari-nol" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">git clone &lt;repo&gt; &amp;&amp; cd production-reliability-lab
+cp .env.example .env          # isi password yang aman
+make up                       # build + jalanin semua service, tunggu sampai healthy
+make health                   # cek /health dan /readyz
+</code></pre>
+<h2 id="perintah-yang-tersedia">Perintah yang tersedia<a class="headerlink" href="#perintah-yang-tersedia" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">make up          # build dan jalankan semuanya (tunggu healthcheck)
+make down        # stop, data tetap ada
+make reset       # stop + hapus volume (DATA HILANG)
+make logs        # log semua service
+make test        # unit test
+make test-int    # integration test (butuh service jalan)
+make lint        # go vet + golangci-lint
+make loadtest    # k6 load test
+make backup      # backup database
+</code></pre>
+<h2 id="stack">Stack<a class="headerlink" href="#stack" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Teknologi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aplikasi</td>
+<td>Go HTTP API</td>
+</tr>
+<tr>
+<td>Dependency</td>
+<td>PostgreSQL + Redis</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>Docker Compose</td>
+</tr>
+<tr>
+<td>Reverse proxy</td>
+<td>Nginx</td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td>GitHub Actions</td>
+</tr>
+<tr>
+<td>Metrics</td>
+<td>Prometheus</td>
+</tr>
+<tr>
+<td>Dashboard &amp; alert</td>
+<td>Grafana</td>
+</tr>
+<tr>
+<td>Logs</td>
+<td>Loki + Grafana Alloy</td>
+</tr>
+<tr>
+<td>Tracing</td>
+<td>OpenTelemetry + Tempo</td>
+</tr>
+<tr>
+<td>Load test</td>
+<td>k6</td>
+</tr>
+<tr>
+<td>IaC</td>
+<td>OpenTofu / Terraform</td>
+</tr>
+<tr>
+<td>Orchestration</td>
+<td>Kubernetes (kind)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="aturan-bukti-yang-gue-pegang">Aturan bukti yang gue pegang<a class="headerlink" href="#aturan-bukti-yang-gue-pegang" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Setiap minggu punya <strong>acceptance criteria</strong> yang harus lolos dengan bukti, bukan perasaan.</li>
+<li>Output yang mengandung IP internal, token, password, atau data pribadi <strong>disanitasi</strong> sebelum di-commit.</li>
+<li>Setiap kegagalan yang pernah gue temui harus punya <strong>runbook</strong>.</li>
+<li>Minggu dianggap selesai kalau: bisa direproduksi, ada buktinya, bisa dijelaskan, ada runbook-nya.</li>
+</ol>
+<h2 id="peta-repository">Peta repository<a class="headerlink" href="#peta-repository" title="Permanent link">&para;</a></h2>
+<pre><code>app/                     Go HTTP API (graceful shutdown, /healthz, /readyz, /metrics, OTel)
+docker/                  Dockerfile multi-stage + compose.yaml
+nginx/                   konfigurasi reverse proxy
+.github/workflows/       CI: test, lint, build image ber-tag commit SHA
+observability/           prometheus, grafana provisioning, loki, alloy (OTel)
+infra/terraform/         OpenTofu/Terraform buat lab cloud
+kubernetes/              manifest Deployment, Service, HPA, PDB
+loadtest/                skenario k6
+labs/week-01 .. week-16  bukti per minggu: notes, commands, runbook, evidence
+runbooks/                cara memperbaiki kegagalan
+postmortems/             laporan insiden blameless
+docs/                    architecture, slo, deployment, disaster-recovery, security-review
+</code></pre>
+<h2 id="progress">Progress<a class="headerlink" href="#progress" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Bulan</th>
+<th>Tema</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Linux, networking, container, reverse proxy</td>
+<td>0/4</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CI/CD, secret, backup, production readiness</td>
+<td>0/4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Metrics, alert, log, trace, SLO</td>
+<td>0/4</td>
+</tr>
+<tr>
+<td>4</td>
+<td>IaC, cloud, Kubernetes, load test &amp; chaos</td>
+<td>0/4</td>
+</tr>
+</tbody>
+</table>
+<h2 id="catatan-keamanan-lab">Catatan keamanan lab<a class="headerlink" href="#catatan-keamanan-lab" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Port database dan Redis <strong>tidak diekspos</strong> ke host; cuma Nginx yang punya <code>ports:</code>.</li>
+<li><code>.env</code> ada di <code>.gitignore</code>; yang ke-commit cuma <code>.env.example</code>.</li>
+<li>Backup terenkripsi dan disimpan terpisah dari volume database.</li>
+<li>Eksperimen kegagalan cuma dilakukan di environment lab yang disposable.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/README.md</span><span><a href="../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

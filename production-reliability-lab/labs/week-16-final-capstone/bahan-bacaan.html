@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 16 · Load Testing, Chaos, dan Final Incident Simulation — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-16-final-capstone/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-16-load-testing-chaos-dan-final-incident-simulation-bahan-bacaan">Minggu 16 · Load Testing, Chaos, dan Final Incident Simulation — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-penting">1. Kenapa penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-littles-law-l-w">2.1 Little's Law: L = λ × W</a></li>
+<li><a href="#22-utilisasi-saturasi">2.2 Utilisasi &amp; saturasi: ρ = λ / μ</a></li>
+<li><a href="#23-retry-storm">2.3 Retry storm</a></li>
+<li><a href="#24-timeout-budget">2.4 Timeout budget</a></li>
+<li><a href="#25-circuit-breaker">2.5 Circuit breaker</a></li>
+<li><a href="#26-k6-v2x-load-test-ber-threshold">2.6 k6 v2.x &amp; load test ber-threshold</a></li>
+<li><a href="#27-chaos-experiment-chaos-mesh-litmuschaos-toxiproxy">2.7 Chaos experiment (Chaos Mesh / LitmusChaos / toxiproxy)</a></li>
+<li><a href="#28-membaca-hasil-k6-menentukan-slo">2.8 Membaca hasil k6 &amp; menentukan SLO</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check">6. Self-check</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-16-load-testing-chaos-dan-final-incident-simulation-bahan-bacaan">Minggu 16 · Load Testing, Chaos, dan Final Incident Simulation — Bahan Bacaan<a class="headerlink" href="#minggu-16-load-testing-chaos-dan-final-incident-simulation-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><em>"Lo nggak tahu kapasitas sistem lo sampai lo ukur; dan lo nggak tahu dia pulih kalau lo nggak pernah ngerusaknya."</em> — prinsip minggu ini.</p>
+</blockquote>
+<hr />
+<h2 id="1-kenapa-penting">1. Kenapa penting<a class="headerlink" href="#1-kenapa-penting" title="Permanent link">&para;</a></h2>
+<p>Dua pertanyaan yang harus lo bisa jawab di minggu ke-16: <strong>"sistem ini sanggup berapa req/detik sebelum p95 rusak, dan bottleneck-nya apa?"</strong> serta <strong>"kalau rusak jam 3 pagi, apa yang bikin dia pulih sendiri?"</strong>. Tanpa load test, "server kita kuat" cuma mitos. Tanpa chaos experiment, "kalau DB mati aman" cuma harapan.</p>
+<p>Kenapa ini penting buat junior SRE: mayoritas insiden produksi bukan karena kode error, tapi karena <strong>sistem kelebihan beban</strong> atau <strong>dependency lambat</strong> yang memicu efek berantai. Lo harus bisa <strong>mengukur</strong> kapasitas dan <strong>membuktikan</strong> mekanisme pemulihan, bukan cuma ngandelin firasat.</p>
+<p>Analognya: load test itu kayak <strong>minta kasir dikasih antrean makin panjang</strong> buat tahu kapan dia mulai telat. Little's Law ngasih tahu berapa banyak "orang ngantre" (request in-flight) yang harus lo siapin. Chaos experiment itu <strong>sengaja matiin satu kompor di dapur</strong> pas jam sibuk, buat tau apakah pesanan lain masih jalan — dan yang paling penting, ada tombol berhenti kalau kebakaran makin parah.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-littles-law-l-w">2.1 Little's Law: L = λ × W<a class="headerlink" href="#21-littles-law-l-w" title="Permanent link">&para;</a></h3>
+<p>Jumlah request di dalam sistem (L) = kedatangan per detik (λ) × waktu di sistem (W). Kalau target 500 req/detik dengan latency 200ms (0,2 detik), lo butuh minimal <code>500 × 0,2 = 100</code> request in-flight (concurrency). Ini yang nentuin berapa VU/koneksi lo butuhkan.</p>
+<h3 id="22-utilisasi-saturasi">2.2 Utilisasi &amp; saturasi: ρ = λ / μ<a class="headerlink" href="#22-utilisasi-saturasi" title="Permanent link">&para;</a></h3>
+<p>ρ = kedatangan / kapasitas layanan. <strong>Saat ρ mendekati 1, latency meledak eksponensial, bukan linear.</strong> Itu definisi <strong>saturasi</strong>. "Server kuat 800 req/detik" itu omong kosong kalau nggak nyebut latency di angka itu — di 801 req/detik, p95 bisa loncat 10×.</p>
+<h3 id="23-retry-storm">2.3 Retry storm<a class="headerlink" href="#23-retry-storm" title="Permanent link">&para;</a></h3>
+<p>Pas dependency lambat, tiap lapisan (client, LB, app) retry otomatis. Tanpa <strong>jitter</strong>, semua retry terjadi <strong>pada detik yang sama</strong> → traffic jadi "gerombolan" yang makin nabrak. Retry di 3 lapis tanpa jitter = amplifikasi sampai 27×. Pembuatannya: <code>min(2^n × base, cap)</code> + jitter acak.</p>
+<pre><code class="language-js">// backoff eksponensial + jitter (konsep, bukan k6)
+const wait = Math.min(2 ** n * base, cap) * (0.5 + Math.random());
+</code></pre>
+<h3 id="24-timeout-budget">2.4 Timeout budget<a class="headerlink" href="#24-timeout-budget" title="Permanent link">&para;</a></h3>
+<p>Request nggak boleh nunggu selamanya. Total budget menurun per hop: proxy 2s → app→DB 1s → app→Redis 200ms. Lebih baik <strong>gagal cepat</strong> daripada numpuk koneksi mati. Di k6, <code>timeout: '2s'</code> itu budget per request.</p>
+<pre><code class="language-js">const res = http.get(`${BASE}/orders`, { timeout: '2s', tags: { endpoint: 'orders' } });
+</code></pre>
+<h3 id="25-circuit-breaker">2.5 Circuit breaker<a class="headerlink" href="#25-circuit-breaker" title="Permanent link">&para;</a></h3>
+<p>Kalau dependency jelas mati, berhenti nembak dia sebentar. Buka setelah 50% error dalam 10s, setengah-buka (coba sedikit) setelah 30s. Ini cegah lo ngebakar resource ke service yang udah drop.</p>
+<h3 id="26-k6-v2x-load-test-ber-threshold">2.6 k6 v2.x &amp; load test ber-threshold<a class="headerlink" href="#26-k6-v2x-load-test-ber-threshold" title="Permanent link">&para;</a></h3>
+<p>k6 <strong>v1.0 rilis 6 Mei 2025</strong> (native TS, SemVer); sekarang <strong>v2.x</strong> — <strong>pin versi di CI</strong> karena beda major bisa ubah perilaku. Threshold bikin load test <strong>bisa gagalkan CI</strong>:</p>
+<pre><code class="language-js">export const options = {
+  scenarios: { ramp: {
+    executor: 'ramping-vus',
+    startVUs: 0,
+    stages: [
+      { duration: '1m', target: 50 },
+      { duration: '3m', target: 50 },   // steady state = baseline
+      { duration: '1m', target: 0 },
+    ],
+  }},
+  thresholds: {
+    http_req_duration: ['p(95)&lt;300', 'p(99)&lt;800'],
+    http_req_failed:   ['rate&lt;0.01'],
+  },
+};
+</code></pre>
+<h3 id="27-chaos-experiment-chaos-mesh-litmuschaos-toxiproxy">2.7 Chaos experiment (Chaos Mesh / LitmusChaos / toxiproxy)<a class="headerlink" href="#27-chaos-experiment-chaos-mesh-litmuschaos-toxiproxy" title="Permanent link">&para;</a></h3>
+<p>Jangan asal ngerusak. Chaos = eksperimen berhipotesis + <strong>abort condition</strong>. Alat: <strong>toxiproxy</strong> (inject latency/timeout di level proxy), <strong>Chaos Mesh</strong> / <strong>LitmusChaos</strong> (pod kill, network partition di K8s). Tanpa hipotesis &amp; abort condition, itu sabotase, bukan eksperimen.</p>
+<hr />
+<h3 id="28-membaca-hasil-k6-menentukan-slo">2.8 Membaca hasil k6 &amp; menentukan SLO<a class="headerlink" href="#28-membaca-hasil-k6-menentukan-slo" title="Permanent link">&para;</a></h3>
+<p>k6 mencetak ringkasan di akhir: <code>http_reqs</code> (total), <code>http_req_failed</code> (rate error), dan <code>http_req_duration</code> dengan persentil <code>p(50)/p(95)/p(99)</code>. <strong>Jangan cuma lihat rata-rata</strong> — rata-rata menyembunyikan ekor. p95 itu "95% request lebih cepat dari angka ini"; p99 buat nangkep kasus terburuk. Di lab ini threshold ditetapkan <code>p(95)&lt;300</code> dan <code>p(99)&lt;800</code> serta <code>error&lt;1%</code>; kalau melanggar, k6 keluar dengan status non-zero sehingga <strong>CI gagal</strong>.</p>
+<p>Cara nentuin angka SLO-nya: mulai dari harapan user (misal "halaman order harus balas &lt; 300ms untuk mayoritas"), lalu ukur baseline, lalu pasang threshold sedikit di atas baseline sehat. Jangan pasang terlalu longgar (nggak terdeteksi nyata) atau terlalu ketat (flaky tiap CI). <code>handleSummary</code> di <code>loadtest/loadtest.js</code> juga nulis <code>results.json</code> supaya lo bisa plot tabel beban dan lihat <strong>di VU berapa p95 mulai melengkung</strong> — itu titik saturasi yang dicari di Hari 2.</p>
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Gimana load test + chaos jalan, step by step:</p>
+<ol>
+<li><strong>Baseline:</strong> k6 di 30 VU → catat p95, error rate, CPU, koneksi DB.</li>
+<li><strong>Naik beban:</strong> ramp ke 50, 100, 200 VU → di tiap tahap catat tabel. Cari titik p95 naik tajam padahal throughput datar = <strong>saturasi</strong>.</li>
+<li><strong>Rusak (chaos):</strong> inject latency 200ms ke Redis (toxiproxy) atau <code>SELECT pg_sleep(0.5)</code>.</li>
+<li><strong>Amati:</strong> alert apa nyala, berapa lama, dashboard mana kepakai.</li>
+<li><strong>Diagnosis:</strong> metrics → logs → trace. Catat menit yang lo butuh.</li>
+<li><strong>Mitigasi &amp; pulih:</strong> rollback/restart/failover; bandingkan angka sebelum vs sesudah.</li>
+</ol>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti singkat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Little's Law</td>
+<td>L = λ × W; hubungkan concurrency, throughput, latency</td>
+</tr>
+<tr>
+<td>Utilisasi (ρ)</td>
+<td>λ / μ; mendekati 1 = saturasi</td>
+</tr>
+<tr>
+<td>Saturasi</td>
+<td>Titik latency meledak eksponensial</td>
+</tr>
+<tr>
+<td>Retry storm</td>
+<td>Retry beramai-ramai tanpa jitter menabrak sistem</td>
+</tr>
+<tr>
+<td>Backoff + jitter</td>
+<td>Penundaan eksponensial + acak cegah gerombolan</td>
+</tr>
+<tr>
+<td>Timeout budget</td>
+<td>Batas waktu per hop, menurun ke bawah</td>
+</tr>
+<tr>
+<td>Circuit breaker</td>
+<td>Hentikan trafik ke dependency yang mati</td>
+</tr>
+<tr>
+<td>Threshold (k6)</td>
+<td>Syarat yang gagalkan load test / CI</td>
+</tr>
+<tr>
+<td>Steady state</td>
+<td>Keadaan normal sebelum di-rusak (baseline)</td>
+</tr>
+<tr>
+<td>Abort condition</td>
+<td>Syarat hentikan chaos otomatis</td>
+</tr>
+<tr>
+<td>toxiproxy</td>
+<td>Proxy buat inject latency/timeout</td>
+</tr>
+<tr>
+<td>Chaos Mesh</td>
+<td>Alat chaos di Kubernetes</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>SRE Workbook</strong> — https://sre.google/workbook/ (capacity, postmortem, error budget)</li>
+<li><strong>k6 Documentation</strong> — https://grafana.com/docs/k6/latest/ (threshold, scenarios, v2.x)</li>
+<li><strong>k6 Docs (k6.io)</strong> — https://k6.io/docs/ (panduan praktis load test)</li>
+<li><strong>Chaos Mesh</strong> — https://chaos-mesh.org/ (chaos experiment di K8s)</li>
+<li><strong>toxiproxy</strong> — https://github.com/Shopify/toxiproxy (inject latency/timeout)</li>
+<li><strong>SRE Book: Postmortem Culture</strong> — https://sre.google/sre-book/postmortem-culture/ (format insiden)</li>
+</ol>
+<hr />
+<h2 id="6-self-check">6. Self-check<a class="headerlink" href="#6-self-check" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Pakai Little's Law, kalau λ=500 req/detik dan W=200ms, berapa L (concurrency)?</li>
+<li>Kenapa "kuat 800 req/detik" tanpa sebut latency itu omong kosong?</li>
+<li>Apa itu saturasi, dan kapan terjadi secara matematis?</li>
+<li>Kenapa retry tanpa jitter bisa jadi 27× amplifikasi di 3 lapis?</li>
+<li>Apa itu timeout budget, dan kenapa menurun per hop?</li>
+<li>Kapan circuit breaker "setengah-buka", dan kenapa?</li>
+<li>Kenapa chaos tanpa hipotesis + abort condition = sabotase?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>"Cukup ukur rata-rata latency."</strong> Yang penting p95/p99 &amp; error rate — rata-rata nyembunyiin ekor.</li>
+<li><strong>"Naikin VU terus sampai error."</strong> Lo cuma ngukur antrean, bukan kapasitas. Cek utilisasi CPU/DB tiap tahap.</li>
+<li><strong>"Load test dari laptop."</strong> Yang kebatas bandwidth lo sendiri, bukan sistem. Jalankan dekat target.</li>
+<li><strong>"Chaos tanpa abort condition."</strong> Malah bikin insiden beneran. Selalu ada tombol berhenti.</li>
+<li><strong>"Retry di tiap lapis tanpa jitter."</strong> Amplifikasi 27× saat dependency pulih barengan.</li>
+<li><strong>"k6 versi bebas."</strong> v1.0 (Mei 2025) → v2.x; pin versi di CI, beda major bisa ubah perilaku.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-16-final-capstone/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

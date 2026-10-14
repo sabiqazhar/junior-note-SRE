@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 06 · Secrets, konfigurasi, dan deployment</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-06-deployment/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-06-secrets-konfigurasi-dan-deployment">Lab — Minggu 06 · Secrets, konfigurasi, dan deployment</a><ul>
+<li><a href="#persiapan-10-menit">Persiapan (10 menit)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a><ul>
+<li><a href="#langkah-11-baca-bahan-bacaan">Langkah 1.1 — Baca bahan bacaan</a></li>
+<li><a href="#langkah-12-bedah-appmaingo">Langkah 1.2 — Bedah app/main.go</a></li>
+<li><a href="#langkah-13-baca-docsdeploymentmd">Langkah 1.3 — Baca docs/deployment.md</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a><ul>
+<li><a href="#langkah-21-enkripsi-file-env-pakai-sops-age">Langkah 2.1 — Enkripsi file env pakai SOPS + age</a></li>
+<li><a href="#langkah-22-dekripsi-balik">Langkah 2.2 — Dekripsi balik</a></li>
+<li><a href="#langkah-23-jalankan-cek-kedua-endpoint">Langkah 2.3 — Jalankan &amp; cek kedua endpoint</a></li>
+<li><a href="#langkah-24-lihat-exec-form-di-dockerfile">Langkah 2.4 — Lihat exec form di Dockerfile</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-kegagalan-2-jam-wajib-cara-kembali-normal">Hari 3 · Eksperimen kegagalan (2 jam) — WAJIB cara kembali normal</a><ul>
+<li><a href="#langkah-31-graceful-shutdown-0-request-gagal-saat-sigterm">Langkah 3.1 — Graceful shutdown: 0 request gagal saat SIGTERM</a></li>
+<li><a href="#langkah-32-simulasi-dependency-mati-redis-down">Langkah 3.2 — Simulasi dependency mati (Redis down)</a></li>
+<li><a href="#langkah-33-simulasi-startup-gagal-password-db-salah">Langkah 3.3 — Simulasi startup gagal (password DB salah)</a></li>
+<li><a href="#langkah-34-rollback-ke-digest-sebelumnya">Langkah 3.4 — Rollback ke digest sebelumnya</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)</a><ul>
+<li><a href="#langkah-41-isi-docsdeploymentmd-sudah-ada-lengkapi">Langkah 4.1 — Isi docs/deployment.md (sudah ada, lengkapi)</a></li>
+<li><a href="#langkah-42-lengkapi-commandsmd">Langkah 4.2 — Lengkapi commands.md</a></li>
+<li><a href="#langkah-43-runbook-kegagalan">Langkah 4.3 — Runbook kegagalan</a></li>
+<li><a href="#langkah-44-acceptance-test-ulang-commit">Langkah 4.4 — Acceptance test ulang &amp; commit</a></li>
+</ul>
+</li>
+<li><a href="#daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"</a></li>
+<li><a href="#cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-06-secrets-konfigurasi-dan-deployment">Lab — Minggu 06 · Secrets, konfigurasi, dan deployment<a class="headerlink" href="#lab-minggu-06-secrets-konfigurasi-dan-deployment" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti BERURUTAN. Setiap langkah: perintah → Yang harus terjadi → Kalau gagal → Catat notes.</p>
+</blockquote>
+<h2 id="persiapan-10-menit">Persiapan (10 menit)<a class="headerlink" href="#persiapan-10-menit" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>docker compose version</code> → <code>Docker Compose version v2.x</code>.</li>
+<li>[ ] <code>go version</code> → 1.22+.</li>
+<li>[ ] <code>sops --version</code> terpasang (atau <code>brew install sops</code> / <code>go install github.com/getsops/sops/v3/cmd/sops@latest</code>).</li>
+<li>[ ] Punya age key: <code>age-keygen -o ~/.config/sops/age/keys.txt</code> → simpan public key.</li>
+<li>[ ] Repo jalan: <code>make up</code> lalu <code>make health</code> → <code>/health</code> &amp; <code>/readyz</code> 200.</li>
+</ul>
+<pre><code class="language-bash">docker compose -f docker/compose.yaml config &gt;/dev/null &amp;&amp; echo &quot;compose valid&quot;
+curl -fsS http://localhost/health &amp;&amp; echo &quot; health ok&quot;
+curl -fsS http://localhost/readyz &amp;&amp; echo &quot; readyz ok&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> ketiga perintah keluar tanpa error.
+<strong>Kalau gagal:</strong> <code>make logs api</code> buat lihat kenapa container nggak sehat.
+<strong>Catat di notes.md:</strong> cara lo bikin age key dan public key-nya.</p>
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-11-baca-bahan-bacaan">Langkah 1.1 — Baca bahan bacaan<a class="headerlink" href="#langkah-11-baca-bahan-bacaan" title="Permanent link">&para;</a></h3>
+<p>Buka <code>bahan-bacaan.md</code>, baca sampai selesai.</p>
+<p><strong>Yang harus terjadi:</strong> lo bisa jawab 6 self-check tanpa Google.
+<strong>Kalau gagal:</strong> ulangi bagian 2 (konsep inti), khususnya tabel probe.
+<strong>Catat di notes.md:</strong> 1 kalimat beda liveness vs readiness dengan bahasa lo.</p>
+<h3 id="langkah-12-bedah-appmaingo">Langkah 1.2 — Bedah <code>app/main.go</code><a class="headerlink" href="#langkah-12-bedah-appmaingo" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">sed -n '94,119p' app/main.go
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> lo lihat <code>signal.NotifyContext</code>, <code>srv.Shutdown(c)</code>, <code>db.Close()</code>.
+<strong>Kalau gagal:</strong> buka <code>app/main.go</code> langsung, cari fungsi <code>main</code>.
+<strong>Catat di notes.md:</strong> baris mana yang ngejamin timeout shutdown &lt; grace period.</p>
+<h3 id="langkah-13-baca-docsdeploymentmd">Langkah 1.3 — Baca <code>docs/deployment.md</code><a class="headerlink" href="#langkah-13-baca-docsdeploymentmd" title="Permanent link">&para;</a></h3>
+<p>Fokus ke tabel "Kriteria rollback".</p>
+<p><strong>Yang harus terjadi:</strong> lo tahu ambang error rate (2%) dan p95 (2× baseline).
+<strong>Kalau gagal:</strong> baca lagi bagian 4 bahan-bacaan.
+<strong>Catat di notes.md:</strong> 3 kondisi yang wajib rollback.</p>
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-21-enkripsi-file-env-pakai-sops-age">Langkah 2.1 — Enkripsi file env pakai SOPS + age<a class="headerlink" href="#langkah-21-enkripsi-file-env-pakai-sops-age" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">age-keygen -o ~/.config/sops/age/keys.txt
+export AGE_PUBLIC=$(grep -o 'age1[^ ]*' ~/.config/sops/age/keys.txt)
+sops --encrypt --age &quot;$AGE_PUBLIC&quot; .env.example &gt; .env.enc
+file .env.enc
+head -c 80 .env.enc; echo
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>.env.enc</code> isinya terenkripsi (bukan plaintext).
+<strong>Kalau gagal:</strong> <code>age-keygen</code> error → cek folder <code>~/.config/sops</code> writable.
+<strong>Catat di notes.md:</strong> perintah dekripsi yang akan lo pakai di CI.</p>
+<h3 id="langkah-22-dekripsi-balik">Langkah 2.2 — Dekripsi balik<a class="headerlink" href="#langkah-22-dekripsi-balik" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">sops --decrypt .env.enc &gt; /tmp/.env.dec
+diff &lt;(grep -v '^#' .env.example) &lt;(grep -v '^#' /tmp/.env.dec) &amp;&amp; echo &quot;isi sama&quot;
+rm /tmp/.env.dec
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>isi sama</code> → dekripsi menghasilkan isi identik.
+<strong>Kalau gagal:</strong> <code>AGE_SECRET_KEY</code> belum diset → <code>export AGE_SECRET_KEY=$(grep -o 'AGE-SECRET-KEY[^ ]*' ~/.config/sops/age/keys.txt)</code>.
+<strong>Catat di notes.md:</strong> bukti round-trip enkripsi berhasil.</p>
+<h3 id="langkah-23-jalankan-cek-kedua-endpoint">Langkah 2.3 — Jalankan &amp; cek kedua endpoint<a class="headerlink" href="#langkah-23-jalankan-cek-kedua-endpoint" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">make up
+curl -s -o /dev/null -w &quot;healthz=%{http_code}\n&quot; http://localhost/health
+curl -s -o /dev/null -w &quot;readyz=%{http_code}\n&quot; http://localhost/readyz
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> keduanya <code>200</code>.
+<strong>Kalau gagal:</strong> <code>make logs api</code> → cek apakah <code>DATABASE_URL</code>/<code>REDIS_URL</code> salah.
+<strong>Catat di notes.md:</strong> behaviour normal sebagai baseline.</p>
+<h3 id="langkah-24-lihat-exec-form-di-dockerfile">Langkah 2.4 — Lihat exec form di Dockerfile<a class="headerlink" href="#langkah-24-lihat-exec-form-di-dockerfile" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">grep -n 'ENTRYPOINT\|CMD' docker/Dockerfile
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> baris <code>["/app/sre-api"]</code> (exec form, bukan shell).
+<strong>Kalau gagal:</strong> kalau pakai <code>/app/sre-api</code> tanpa array → sinyal nggak nyampe; ubah ke exec form.
+<strong>Catat di notes.md:</strong> kenapa exec form penting buat graceful shutdown.</p>
+<h2 id="hari-3-eksperimen-kegagalan-2-jam-wajib-cara-kembali-normal">Hari 3 · Eksperimen kegagalan (2 jam) — WAJIB cara kembali normal<a class="headerlink" href="#hari-3-eksperimen-kegagalan-2-jam-wajib-cara-kembali-normal" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Aturan: tiap eksperimen punya langkah pemulihan. Jangan tinggalin sistem dalam kondisi rusak.</p>
+</blockquote>
+<h3 id="langkah-31-graceful-shutdown-0-request-gagal-saat-sigterm">Langkah 3.1 — Graceful shutdown: 0 request gagal saat SIGTERM<a class="headerlink" href="#langkah-31-graceful-shutdown-0-request-gagal-saat-sigterm" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># Sesi A: bombardir endpoint
+hey -z 30s -c 50 http://localhost/orders &amp;
+# Sesi B: kirim SIGTERM
+docker compose stop api
+# hitung 5xx
+docker compose logs api 2&gt;&amp;1 | grep -c 'level&quot;:&quot;error&quot;' || true
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> hampir nol 5xx; container exit bersih setelah request selesai.
+<strong>Kalau gagal:</strong> banyak 5xx → timeout <code>srv.Shutdown</code> &gt; <code>stop_grace_period</code>; kecilkan.
+<strong>Catat di notes.md:</strong> berapa lama dari SIGTERM sampai proses exit (lihat log <code>shutdown selesai</code>).</p>
+<h3 id="langkah-32-simulasi-dependency-mati-redis-down">Langkah 3.2 — Simulasi dependency mati (Redis down)<a class="headerlink" href="#langkah-32-simulasi-dependency-mati-redis-down" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker compose stop redis
+sleep 3
+curl -s -o /dev/null -w &quot;readyz=%{http_code}\n&quot; http://localhost/readyz
+curl -s -o /dev/null -w &quot;healthz=%{http_code}\n&quot; http://localhost/health
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>readyz=503</code>, tapi <code>healthz=200</code> (proses tetap hidup, cuma lepas dari LB).
+<strong>Kalau gagal:</strong> kalau <code>healthz</code> ikut 503 → berarti lo salah taruh cek dependency di <code>/healthz</code>.
+<strong>Catat di notes.md:</strong> beda respon ini penting — bukti probe terpisah.</p>
+<p><strong>Cara kembali normal (wajib):</strong></p>
+<pre><code class="language-bash">docker compose start redis
+sleep 3
+curl -s -o /dev/null -w &quot;readyz=%{http_code}\n&quot; http://localhost/readyz   # harus 200 lagi
+</code></pre>
+<h3 id="langkah-33-simulasi-startup-gagal-password-db-salah">Langkah 3.3 — Simulasi startup gagal (password DB salah)<a class="headerlink" href="#langkah-33-simulasi-startup-gagal-password-db-salah" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># di .env, ubah POSTGRES_PASSWORD jadi salah, lalu restart api
+sed -i.bak 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=salah123/' .env
+docker compose up -d api
+sleep 5
+curl -s -o /dev/null -w &quot;readyz=%{http_code}\n&quot; http://localhost/readyz
+docker compose ps api
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>readyz=503</code>, dan container TIDAK pernah dibilang healthy (status <code>unhealthy</code>/<code>starting</code>).
+<strong>Kalau gagal:</strong> kalau malah <code>healthy</code> → aplikasi nggak ngecek DB beneran; periksa <code>handleReadyz</code>.
+<strong>Catat di notes.md:</strong> bukti readiness nggak bohong.</p>
+<p><strong>Cara kembali normal (wajib):</strong></p>
+<pre><code class="language-bash">mv .env.bak .env
+docker compose up -d api
+sleep 5
+curl -s -o /dev/null -w &quot;readyz=%{http_code}\n&quot; http://localhost/readyz   # 200
+</code></pre>
+<h3 id="langkah-34-rollback-ke-digest-sebelumnya">Langkah 3.4 — Rollback ke digest sebelumnya<a class="headerlink" href="#langkah-34-rollback-ke-digest-sebelumnya" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># lihat digest yang lagi jalan
+docker inspect --format='{{index .RepoDigests 0}}' production-reliability-lab-api
+# asumsi versi sebelumnya ada di GHCR:
+docker pull ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api@sha256:&lt;digest-lama&gt;
+# ganti image di compose, lalu:
+docker compose up -d --wait
+curl -s -o /dev/null -w &quot;readyz=%{http_code}\n&quot; http://localhost/readyz
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> sistem balik ke versi lama, <code>readyz=200</code>.
+<strong>Kalau gagal:</strong> digest lama nggak ada → retensi image belum diatur (temuan).
+<strong>Catat di notes.md:</strong> perintah rollback final.</p>
+<p><strong>Cara kembali normal (wajib):</strong> pastikan compose menunjuk digest/versi yang benar, <code>docker compose up -d --wait</code>, verifikasi <code>readyz=200</code>.</p>
+<h2 id="hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)<a class="headerlink" href="#hari-4-review-dokumentasi-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-41-isi-docsdeploymentmd-sudah-ada-lengkapi">Langkah 4.1 — Isi <code>docs/deployment.md</code> (sudah ada, lengkapi)<a class="headerlink" href="#langkah-41-isi-docsdeploymentmd-sudah-ada-lengkapi" title="Permanent link">&para;</a></h3>
+<p>Pastikan checklist sebelum/sesudah deploy + tabel kriteria rollback lengkap.</p>
+<p><strong>Yang harus terjadi:</strong> dokumen menjawab "gimana deploy versi tertentu" + "kapan rollback".
+<strong>Kalau gagal:</strong> lihat lagi <code>bahan-bacaan.md</code> bagian 2.6.</p>
+<h3 id="langkah-42-lengkapi-commandsmd">Langkah 4.2 — Lengkapi <code>commands.md</code><a class="headerlink" href="#langkah-42-lengkapi-commandsmd" title="Permanent link">&para;</a></h3>
+<p>Salin perintah Hari 2 &amp; 3 ke <code>commands.md</code> (format: perintah → output → interpretasi).</p>
+<p><strong>Yang harus terjadi:</strong> minimal 15 perintah.
+<strong>Kalau gagal:</strong> lo kurang nyatet → balik ke Hari 2/3.</p>
+<h3 id="langkah-43-runbook-kegagalan">Langkah 4.3 — Runbook kegagalan<a class="headerlink" href="#langkah-43-runbook-kegagalan" title="Permanent link">&para;</a></h3>
+<p>Tulis di <code>runbooks/README.md</code>: (1) Redis mati → readyz 503; (2) password DB salah → startup gagal; (3) rollback digagalkan karena digest hilang.</p>
+<p><strong>Yang harus terjadi:</strong> tiap skenario punya gejala → bukti → pemulihan.
+<strong>Kalau gagal:</strong> contohin dari <code>docs/deployment.md</code>.</p>
+<h3 id="langkah-44-acceptance-test-ulang-commit">Langkah 4.4 — Acceptance test ulang &amp; commit<a class="headerlink" href="#langkah-44-acceptance-test-ulang-commit" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">make down &amp;&amp; make up
+curl -fsS http://localhost/health &amp;&amp; curl -fsS http://localhost/readyz
+git add labs/week-06-deployment docs/deployment.md .env.enc
+git commit -m &quot;week 06: deployment, graceful shutdown, SOPS&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> health &amp; readyz 200, commit masuk, README Referensi terisi.
+<strong>Kalau gagal:</strong> jangan <code>--force</code> push.</p>
+<h2 id="daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"<a class="headerlink" href="#daftar-periksa-minggu-ini-selesai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>app/main.go</code> berhenti graceful saat SIGTERM; 0 (atau ~0) 5xx saat restart.</li>
+<li>[ ] <code>/readyz</code> 503 saat Redis/DB mati, <code>/healthz</code> tetap 200.</li>
+<li>[ ] Startup gagal (password salah) → container nggak pernah healthy.</li>
+<li>[ ] <code>.env.enc</code> terenkripsi; dekripsi round-trip sukses.</li>
+<li>[ ] Rollback by digest diuji (atau retensi image dicatat sebagai temuan).</li>
+<li>[ ] <code>docs/deployment.md</code> punya kriteria rollback objektif.</li>
+<li>[ ] <code>commands.md</code> ≥ 15 perintah; README Referensi terisi.</li>
+</ul>
+<h2 id="cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer<a class="headerlink" href="#cara-membuktikan-ke-reviewer" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>docker compose logs api</code> saat SIGTERM → tunjuk <code>shutdown selesai</code> tanpa error 5xx.</li>
+<li><code>readyz=503</code> + <code>healthz=200</code> pas Redis mati (screenshot/log).</li>
+<li><code>.env.enc</code> isinya terenkripsi, bukan plaintext.</li>
+<li><code>docs/deployment.md</code> → tabel kriteria rollback.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-06-deployment/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

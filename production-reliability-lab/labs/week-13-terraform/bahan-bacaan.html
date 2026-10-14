@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 13 · Terraform dan Infrastructure as Code — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-13-terraform/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-13-terraform-dan-infrastructure-as-code-bahan-bacaan">Minggu 13 · Terraform dan Infrastructure as Code — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-penting">1. Kenapa penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-provider-resource-variable-output">2.1 Provider, resource, variable, output</a></li>
+<li><a href="#22-state-sumber-kebenaran-lokal">2.2 State: sumber kebenaran lokal</a></li>
+<li><a href="#23-drift-keadaan-aktual-vs-harapan">2.3 Drift: keadaan aktual vs harapan</a></li>
+<li><a href="#24-plan-kontrak-sebelum-apply">2.4 Plan: kontrak sebelum apply</a></li>
+<li><a href="#25-provider-pinning-cegah-breaking-change-dadakan">2.5 Provider pinning: cegah breaking change dadakan</a></li>
+<li><a href="#26-opentofu-vs-terraform-pilih-mana">2.6 OpenTofu vs Terraform: pilih mana?</a></li>
+<li><a href="#27-import-block-scan-keamanan">2.7 Import block &amp; scan keamanan</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check">6. Self-check</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-13-terraform-dan-infrastructure-as-code-bahan-bacaan">Minggu 13 · Terraform dan Infrastructure as Code — Bahan Bacaan<a class="headerlink" href="#minggu-13-terraform-dan-infrastructure-as-code-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><em>"Infrastruktur yang nggak bisa lo bangun ulang dari nol dalam 1 jam itu bukan infrastruktur, itu warisan budaya."</em> — filosofi lab ini.</p>
+</blockquote>
+<hr />
+<h2 id="1-kenapa-penting">1. Kenapa penting<a class="headerlink" href="#1-kenapa-penting" title="Permanent link">&para;</a></h2>
+<p>Bayangin lo punya server produksi yang diutak-atik manual lewat console cloud selama setahun. Suatu hari server itu mati. Lo buka console, dan nggak ada satupun orang yang ingat persis: port apa saja yang dibuka, security group mana yang nyolok ke mana, subnet-nya private atau public. Lo cuma punya firasat. Itulah mimpi buruk yang disebut <strong>configuration drift</strong> — keadaan aktual di cloud udah nggak cocok lagi sama apa yang lo pikir lo punya.</p>
+<p>Infrastructure as Code (IaC) itu cara lo nerjemahin "bentuk infrastruktur" jadi teks yang bisa di-commit ke Git. Kalau server mati, lo tinggal <code>apply</code> lagi dan dapet infrastruktur yang persis sama. Lo bisa review perubahan lewat Pull Request, persis kayak review kode. Dan lo bisa rollback ke versi minggu lalu kalau ternyata perubahan kemarin bikin rusak.</p>
+<p>Analognya gini: Terraform/OpenTofu itu kayak <strong>resep masak</strong>, bukan foto hasil masakan. Foto cuma nunjukin "tampaknya begini", tapi resep nunjukin "langkah pasti biar hasilnya selalu sama". Kalau dapurnya kebakar, lo tinggal masak ulang dari resep — bukan nebak-nebak "tadi garamnya segenggam apa segini ya?". State file itu catatan "kemarin masaknya sampe langkah berapa", supaya besok lo lanjut, bukan mulai dari nol atau malah bikin dua porsi dobel.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-provider-resource-variable-output">2.1 Provider, resource, variable, output<a class="headerlink" href="#21-provider-resource-variable-output" title="Permanent link">&para;</a></h3>
+<p>Provider itu "driver" ke cloud lo (AWS, GCP, dll). Resource itu satuan infrastruktur: satu VPC, satu instance, satu security group. Variable buat input (region, environment), output buat nilai yang lo butuh setelah <code>apply</code> (ID VPC, IP).</p>
+<pre><code class="language-hcl">resource &quot;aws_vpc&quot; &quot;main&quot; {
+  cidr_block           = &quot;10.20.0.0/16&quot;
+  enable_dns_hostnames = true
+  tags = { Name = &quot;${var.environment}-vpc&quot;, Env = var.environment }
+}
+
+output &quot;vpc_id&quot; {
+  value       = aws_vpc.main.id
+  description = &quot;ID VPC lab&quot;
+}
+</code></pre>
+<h3 id="22-state-sumber-kebenaran-lokal">2.2 State: sumber kebenaran lokal<a class="headerlink" href="#22-state-sumber-kebenaran-lokal" title="Permanent link">&para;</a></h3>
+<p>State (<code>terraform.tfstate</code>) nyimpen pemetaan "resource di kode → objek asli di cloud". Tanpa state, Terraform nggak tahu mana yang sudah dibuat dan mana yang belum. <strong>Bahaya:</strong> state bisa berisi password database dalam teks biasa. Makanya state harus di backend <strong>remote + terenkripsi</strong>, dan <strong>jangan pernah di-commit ke Git</strong>.</p>
+<h3 id="23-drift-keadaan-aktual-vs-harapan">2.3 Drift: keadaan aktual vs harapan<a class="headerlink" href="#23-drift-keadaan-aktual-vs-harapan" title="Permanent link">&para;</a></h3>
+<p>Drift terjadi kalau ada yang ngubah infrastruktur <strong>di luar</strong> Terraform — misal lo hapus security group lewat console. <code>tofu plan</code> bakal ngedeteksi: "resource ini ada di state, tapi di cloud bentuknya beda". Deteksi rutin pakai <code>tofu plan -refresh-only</code>.</p>
+<pre><code class="language-bash">tofu plan -refresh-only        # cuma bandingkan, jangan ubah
+tofu state list                 # lihat resource yang dikelola state
+tofu state show aws_instance.app
+</code></pre>
+<h3 id="24-plan-kontrak-sebelum-apply">2.4 Plan: kontrak sebelum apply<a class="headerlink" href="#24-plan-kontrak-sebelum-apply" title="Permanent link">&para;</a></h3>
+<p><code>plan</code> itu simulasi "apa yang bakal berubah". Simpan hasilnya ke file (<code>-out=tfplan</code>) lalu <code>apply</code> pakai file itu. Kenapa? Karena <code>apply</code> tanpa <code>-out</code> <strong>menghitung ulang rencana saat itu juga</strong> — kalau di antaranya ada yang berubah (provider update, resource diubah manual), yang dieksekusi bukan yang lo review.</p>
+<pre><code class="language-bash">tofu fmt -check
+tofu init
+tofu validate
+tofu plan -out=tfplan
+tofu show -json tfplan &gt; plan.json    # review pakai jq
+tofu apply tfplan                     # JANGAN apply ulang tanpa file ini
+</code></pre>
+<h3 id="25-provider-pinning-cegah-breaking-change-dadakan">2.5 Provider pinning: cegah breaking change dadakan<a class="headerlink" href="#25-provider-pinning-cegah-breaking-change-dadakan" title="Permanent link">&para;</a></h3>
+<p>Pin versi provider dan Terraform itu wajib. <code>init</code> ulang di CI bisa narik versi baru yang nabrak konfigurasi lo.</p>
+<pre><code class="language-hcl">terraform {
+  required_version = &quot;~&gt; 1.9&quot;        # cuma terima 1.9.x
+  required_providers {
+    aws = {
+      source  = &quot;hashicorp/aws&quot;
+      version = &quot;~&gt; 6.0&quot;             # pinning wajib
+    }
+  }
+}
+</code></pre>
+<h3 id="26-opentofu-vs-terraform-pilih-mana">2.6 OpenTofu vs Terraform: pilih mana?<a class="headerlink" href="#26-opentofu-vs-terraform-pilih-mana" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Terraform</th>
+<th>OpenTofu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lisensi</td>
+<td>BUSL 1.1 (bukan open source) sejak 2023</td>
+<td>MPL-2.0 (open source, Linux Foundation)</td>
+</tr>
+<tr>
+<td>Kepemilikan</td>
+<td>HashiCorp — diakuisisi IBM selesai 27 Feb 2025</td>
+<td>Komunitas</td>
+</tr>
+<tr>
+<td>Fitur khas</td>
+<td>HCP Terraform, Sentinel</td>
+<td>State encryption fleksibel, OCI registry (sejak 1.10, Jun 2025)</td>
+</tr>
+</tbody>
+</table>
+<p>Buat lab: OpenTofu lebih bebas. Di kantor: kemungkinan besar Terraform. <strong>Sintaks keduanya identik</strong> — perintah <code>tofu</code> ganti jadi <code>terraform</code>, sisanya sama.</p>
+<h3 id="27-import-block-scan-keamanan">2.7 Import block &amp; scan keamanan<a class="headerlink" href="#27-import-block-scan-keamanan" title="Permanent link">&para;</a></h3>
+<p>Jangan pakai <code>terraform import</code> CLI (state langsung berubah tanpa review). Pakai <code>import</code> block sejak TF 1.5, lalu <code>plan</code> untuk lihat apa yang ditulis:</p>
+<pre><code class="language-hcl">import {
+  to = aws_vpc.main
+  id = &quot;vpc-0abc123&quot;
+}
+</code></pre>
+<p>Scan keamanan IaC (tfsec sudah dilebur ke Trivy):</p>
+<pre><code class="language-bash">trivy config .
+terraform state show ... | grep -i password
+</code></pre>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Gimana sebenarnya <code>tofu apply</code> jalan, step by step:</p>
+<ol>
+<li><strong><code>init</code></strong> — unduh provider (AWS) dan setup backend. Provider disimpen di <code>.terraform/</code>, bukan di state.</li>
+<li><strong>Build dependency graph</strong> — Terraform baca semua <code>.tf</code>, bangun graf siapa nunggu siapa (VPC harus ada dulu sebelum subnet).</li>
+<li><strong>Refresh state</strong> — bandingkan state lama vs keadaan aktual di cloud (nah di sinilah drift kelihatan).</li>
+<li><strong>Plan / diff</strong> — hitung resource yang perlu <code>create</code>, <code>update</code>, atau <code>destroy</code>. Untuk update, Terraform cari <strong>diff minimal</strong> (misal cuma ganti tag, bukan bikin ulang).</li>
+<li><strong>Apply</strong> — eksekusi graph sesuai urutan topological. Tiap resource di-lock biar nggak dobel jalan (kalau backend pakai DynamoDB lock).</li>
+<li><strong>Update state</strong> — tulis hasil akhir ke state (remote+encrypt) supaya besok jadi acuan refresh.</li>
+</ol>
+<p>Kuncinya: state bukan sekadar "log", tapi <strong>input untuk langkah berikutnya</strong>. Makanya state rusak = bencana, karena Terraform kehilangan peta.</p>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti singkat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provider</td>
+<td>Plugin penghubung ke cloud/platform (aws, gcp, kubernetes)</td>
+</tr>
+<tr>
+<td>Resource</td>
+<td>Satu objek infrastruktur yang dikelola (vpc, instance)</td>
+</tr>
+<tr>
+<td>State</td>
+<td>File pemetaan resource kode ↔ objek asli di cloud</td>
+</tr>
+<tr>
+<td>Drift</td>
+<td>Selisih antara keadaan aktual cloud vs konfigurasi</td>
+</tr>
+<tr>
+<td>Plan</td>
+<td>Simulasi perubahan sebelum dieksekusi</td>
+</tr>
+<tr>
+<td>Apply</td>
+<td>Eksekusi rencana untuk bikin/ubah/destroy resource</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Tempat state disimpan (lokal atau remote, misal S3)</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>Kumpulan resource yang bisa dipakai ulang</td>
+</tr>
+<tr>
+<td>Pinning</td>
+<td>Mengunci versi provider/Terraform biar stabil</td>
+</tr>
+<tr>
+<td>Import</td>
+<td>Masukin resource yang sudah ada ke dalam state</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>OpenTofu Documentation</strong> — https://opentofu.org/ (open source fork, panduan <code>tofu</code> resmi)</li>
+<li><strong>Terraform Tutorials</strong> — https://developer.hashicorp.com/terraform/tutorials (lab resmi HashiCorp)</li>
+<li><strong>Terraform Language Docs</strong> — https://developer.hashicorp.com/terraform/language (referensi HCL: resource, state, backend)</li>
+<li><strong>Trivy Configuration Scanning</strong> — https://trivy.dev/latest/docs/configuration/ (scan keamanan IaC)</li>
+<li><strong>AWS VPC Docs</strong> — https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html (konteks resource cloud)</li>
+<li><strong>SRE Book: Postmortem Culture</strong> — https://sre.google/sre-book/postmortem-culture/ (kenapa reproducibility penting)</li>
+</ol>
+<hr />
+<h2 id="6-self-check">6. Self-check<a class="headerlink" href="#6-self-check" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa bedanya <code>plan</code> dan <code>apply</code>, dan kenapa <code>apply</code> tanpa <code>-out</code> bahaya?</li>
+<li>Kenapa state nggak boleh di-commit ke Git? Apa risikonya?</li>
+<li>Gimana caranya lo deteksi drift yang terjadi karena ada yang hapus resource lewat console?</li>
+<li>Apa fungsi <code>required_providers { version = "~&gt; 6.0" }</code> dan apa yang terjadi kalau lo hapus?</li>
+<li>Kapan lo pakai <code>import</code> block, dan kenapa nggak <code>terraform import</code> CLI?</li>
+<li>Bedanya OpenTofu vs Terraform dari sisi lisensi — dan kenapa di kantor lo bisa ketemu yang satu padahal di lab pakai yang lain?</li>
+<li>Kenapa nggak boleh pakai workspace buat pisah dev/prod dalam satu state?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>"State itu cuma log."</strong> Salah. State adalah input kritis untuk <code>plan</code> berikutnya. State rusak/hilang = Terraform ngerasa semua resource belum dibuat → bikin duplikat atau gagal.</li>
+<li><strong>"<code>apply</code> aja langsung, plan mah lambat."</strong> Ini penyebab insiden nomor satu. Rencana yang lo lihat bisa beda dari yang dieksekusi kalau ada perubahan di antaranya.</li>
+<li><strong>"Workspace buat pisah environment."</strong> Blast radius-nya gede banget — satu state rusak, dev DAN prod kena. Pakai directory per environment + backend terpisah.</li>
+<li><strong>"Provider tanpa pin aman, toh versi stabil."</strong> CI yang <code>init</code> ulang bisa narik minor version baru yang nabrak. Pin itu pagar pengaman, bukan birokrasi.</li>
+<li><strong>"Lupa <code>destroy</code>, besok aja."</strong> VPC dan NAT gateway jadi tagihan bulanan. Matikan pas lab selesai.</li>
+<li><strong>"OpenTofu dan Terraform beda banget."</strong> Secara konsep dan sintaks nyaris identik. Lo cukup paham satu, bisa pakai dua.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-13-terraform/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 02 · Networking untuk backend engineer</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-02-networking/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-02-networking-untuk-backend-engineer">Lab — Minggu 02 · Networking untuk backend engineer</a><ul>
+<li><a href="#persiapan-1015-menit">Persiapan (10–15 menit)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-kegagalan-2-jam-wajib-ada-cara-kembali-ke-normal">Hari 3 · Eksperimen kegagalan (2 jam) — WAJIB ada cara kembali ke normal</a></li>
+<li><a href="#hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)</a></li>
+<li><a href="#daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"</a></li>
+<li><a href="#cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-02-networking-untuk-backend-engineer">Lab — Minggu 02 · Networking untuk backend engineer<a class="headerlink" href="#lab-minggu-02-networking-untuk-backend-engineer" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Target: lo bisa memecah satu request jadi fase DNS→TCP→TLS→HTTP→body, dan mereproduksi 4 kegagalan klasik dengan bukti.</p>
+</blockquote>
+<h2 id="persiapan-1015-menit">Persiapan (10–15 menit)<a class="headerlink" href="#persiapan-1015-menit" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Pastiin stack lab jalan</strong> → perintah: <code>docker compose -f docker/compose.yaml up -d --build --wait</code> → Yang harus terjadi: <code>docker compose ps</code> nunjukin <code>api</code>, <code>postgres</code>, <code>redis</code> sehat. → Kalau gagal: baca <code>docker compose logs api</code>. → Catat di notes.md.</li>
+<li><strong>Cek tool ada</strong> → perintah: <code>command -v curl dig ss openssl</code> → Yang harus terjadi: keempatnya ada di PATH. → Kalau gagal: <code>sudo apt install -y dnsutils iproute2 openssl</code>. → Catat di notes.md.</li>
+<li><strong>Catat IP &amp; port</strong> → perintah: <code>ip addr | grep 'inet '</code> dan <code>ss -lntp | grep 8080</code> → Yang harus terjadi: lo tau interface dan port 8080 listen. → Kalau gagal: API belum jalan, balik ke langkah 1. → Catat di notes.md.</li>
+</ol>
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Baca bahan bacaan</strong> → perintah: <code>cat labs/week-02-networking/bahan-bacaan.md</code> → Yang harus terjadi: lo paham 5 fase latency &amp; beda exit code. → Kalau gagal: baca ulang bagian #2. → Catat di notes.md.</li>
+<li><strong>Pahami model OSI vs TCP/IP</strong> → perintah: buka <a href="https://www.cloudflare.com/learning/network-layer/">Cloudflare Learning Center</a> → Yang harus terjadi: lo bisa sebutin tiap fase request ada di layer mana. → Kalau gagal: fokus ke DNS &amp; TCP dulu. → Catat di notes.md.</li>
+<li><strong>Kenali tool curl -w</strong> → perintah: <code>curl --help | grep -A2 write-out</code> → Yang harus terjadi: lo lihat flag <code>-w</code> ada. → Kalau gagal: update curl (<code>sudo apt install -y curl</code>). → Catat di notes.md.</li>
+<li><strong>Catat versi OpenSSL</strong> → perintah: <code>openssl version</code> → Yang harus terjadi: keluar <code>OpenSSL 3.x</code>. Lo tahu 3.5 LTS rilis 8 Apr 2025. → Kalau gagal: nggak kritis, cuma catat versinya. → Catat di notes.md.</li>
+<li><strong>Sketsa request flow</strong> → perintah: gambar client→DNS→TCP→TLS→nginx→API→PG/Redis di <code>notes.md</code> → Yang harus terjadi: lo punya peta mental sebelum praktik. → Kalau gagal: lihat ringkasan.md bagian Peta konsep. → Catat di notes.md.</li>
+</ol>
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Interface &amp; route</strong> → perintah: <code>ip addr</code> lalu <code>ip route</code> → Yang harus terjadi: lo lihat IP lo &amp; default gateway. → Kalau gagal: cek koneksi VM. → Catat di notes.md.</li>
+<li><strong>Port yang listen</strong> → perintah: <code>ss -lntp</code> → Yang harus terjadi: <code>:8080</code> milik <code>sre-api</code>, <code>:80</code> milik <code>nginx</code> (kalau sudah di-setup minggu 4). → Kalau gagal: API belum jalan. → Catat di notes.md.</li>
+<li><strong>Resolusi DNS eksternal</strong> → perintah: <code>dig +short example.com</code> dan <code>dig example.com +trace</code> → Yang harus terjadi: dapet IP; <code>+trace</code> nunjukin root→TLD→authoritative. → Kalau gagal: cek <code>/etc/resolv.conf</code>. → Catat di notes.md.</li>
+<li><strong>Resolusi ala aplikasi</strong> → perintah: <code>docker compose exec api getent hosts redis</code> → Yang harus terjadi: dapet IP internal <code>172.x.x.x redis</code>. → Kalau gagal: container belum di jaringan sama. → Catat di notes.md.</li>
+<li><strong>Ukur 5 fase latency (publik)</strong> → perintah:
+   <code>bash
+   curl -sS -o /dev/null -w 'dns=%{time_namelookup} tcp=%{time_connect} tls=%{time_appconnect} ttfb=%{time_starttransfer} total=%{time_total} http=%{http_code} ver=%{http_version}\n' https://example.com</code>
+   → Yang harus terjadi: <code>dns</code> kecil-kecil, <code>ttfb</code> &gt; <code>appconnect</code>, <code>ver</code> = <code>2</code> atau <code>3</code>. → Kalau gagal: cek koneksi internet. → Catat di notes.md.</li>
+<li><strong>Ukur ke service lokal</strong> → perintah:
+   <code>bash
+   curl -sS -o /dev/null -w 'dns=%{time_namelookup} tcp=%{time_connect} ttfb=%{time_starttransfer} total=%{time_total}\n' http://localhost:8080/health</code>
+   → Yang harus terjadi: <code>dns</code> ~0 (localhost di /etc/hosts), <code>total</code> &lt;50ms. → Kalau gagal: API mati, balik persiapan. → Catat di notes.md (jalankan 5x, bandingkan).</li>
+</ol>
+<h2 id="hari-3-eksperimen-kegagalan-2-jam-wajib-ada-cara-kembali-ke-normal">Hari 3 · Eksperimen kegagalan (2 jam) — WAJIB ada cara kembali ke normal<a class="headerlink" href="#hari-3-eksperimen-kegagalan-2-jam-wajib-ada-cara-kembali-ke-normal" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Kondisi A: port salah → refused</strong> → perintah: <code>curl --connect-timeout 3 http://localhost:9999; echo "exit=$?"</code> → Yang harus terjadi: <code>Connection refused</code>, <code>exit=7</code>. → Kalau gagal: port 9999 kebetulan ada yang listen; ganti port acak. → Catat di notes.md. <strong>Kembali normal:</strong> nggak perlu (request gagal sendiri), lanjut langkah 2.</li>
+<li><strong>Kondisi B: service mati</strong> → perintah: <code>docker compose stop api &amp;&amp; curl --connect-timeout 3 http://localhost:8080/health; echo "exit=$?"</code> → Yang harus terjadi: <code>Connection refused</code>, <code>exit=7</code>. → Kalau gagal: nginx masih reply (seharusnya nggak kalau api mati &amp; proxy ke api). → Catat di notes.md. <strong>Kembali normal (WAJIB):</strong> <code>docker compose start api &amp;&amp; docker compose ps</code> → tunggu <code>api</code> sehat sebelum lanjut.</li>
+<li><strong>Kondisi C: DNS gagal</strong> → perintah: <code>docker compose exec api curl -v --connect-timeout 3 http://nope-service:8080; echo "exit=$?"</code> → Yang harus terjadi: <code>Could not resolve host</code>, <code>exit=6</code>. → Kalau gagal: kebetulan ada service itu; ganti nama absurd. → Catat di notes.md. <strong>Kembali normal:</strong> nggak ada perubahan state, lanjut.</li>
+<li><strong>Kondisi D: timeout (DROP)</strong> → perintah: <code>iptables -A INPUT -p tcp --dport 8080 -j DROP &amp;&amp; curl --connect-timeout 3 http://localhost:8080/health; echo "exit=$?"</code> → Yang harus terjadi: hang lalu <code>exit=28</code> (Timeout). → Kalau gagal: pastiin <code>iptables</code> ada &amp; lo punya akses root; kalau nggak, simulasi dengan endpoint <code>/slow</code> di app. → Catat di notes.md. <strong>Kembali normal (WAJIB):</strong> <code>iptables -D INPUT -p tcp --dport 8080 -j DROP</code> lalu verifikasi <code>curl</code> balik normal.</li>
+<li><strong>Bukti versi TLS + ALPN</strong> → perintah: <code>openssl s_client -connect example.com:443 -servername example.com -tls1_3 -alpn h2 -brief</code> → Yang harus terjadi: <code>Verify return code: 0</code> + <code>TLSv1.3</code>. → Kalau gagal: host nggak support TLS 1.3; coba host lain. → Catat di notes.md.</li>
+<li><strong>Isi tabel failure</strong> → perintah: salin hasil A–D ke <code>commands.md</code> (bagian Hari 3) → Yang harus terjadi: tabel exit code lengkap. → Kalau gagal: ulang langkah 1–4. → Catat di notes.md.</li>
+</ol>
+<h2 id="hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)<a class="headerlink" href="#hari-4-review-dokumentasi-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Diagram request flow</strong> → perintah: gambar di <code>notes.md</code> (ASCII/Mermaid): client→DNS→TCP→TLS→nginx→API→PG/Redis. → Yang harus terjadi: diagram ada &amp; lo bisa jelasin. → Kalau gagal: lihat ringkasan Peta konsep. → Catat di notes.md.</li>
+<li><strong>Decision tree</strong> → perintah: tulis decision tree (exit 6/7/28/0+5xx) di <code>notes.md</code>. → Yang harus terjadi: tree mencakup 4 cabang. → Kalau gagal: lihat ringkasan Failure matrix. → Catat di notes.md.</li>
+<li><strong>Lengkapi commands.md</strong> → perintah: isi bagian Hari 2 &amp; Hari 3 dengan output asli. → Yang harus terjadi: ≥15 perintah terdokumentasi. → Kalau gagal: tambah percobaan. → Catat di notes.md.</li>
+<li><strong>Update README</strong> → perintah: isi <code>## Referensi</code> di README.md. → Yang harus terjadi: 5–8 link primer nyata. → Kalau gagal: lihat bahan bacaan #5. → Catat di notes.md.</li>
+<li><strong>Commit</strong> → perintah: <code>git add labs/week-02-networking &amp;&amp; git commit -m "week 02 networking lab"</code> → Yang harus terjadi: commit masuk. → Kalau gagal: cek <code>.gitignore</code> jangan ke-commit secret. → Catat di notes.md.</li>
+</ol>
+<h2 id="daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"<a class="headerlink" href="#daftar-periksa-minggu-ini-selesai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Lo bisa jelasin 5 fase latency dan tunjuk angkanya di <code>curl -w</code>.</li>
+<li>[ ] Lo bisa reproduksi exit 6 (DNS), 7 (refused), 28 (timeout).</li>
+<li>[ ] Lo paham beda <code>dig</code> vs <code>getent hosts</code>.</li>
+<li>[ ] Lo bisa buktiin versi TLS &amp; ALPN pakai <code>openssl s_client</code>.</li>
+<li>[ ] <code>commands.md</code> punya ≥15 perintah + output + <code>notes.md</code> punya diagram &amp; decision tree.</li>
+<li>[ ] <code>iptables DROP</code> SUDAH DIHAPUS (state bersih).</li>
+</ul>
+<h2 id="cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer<a class="headerlink" href="#cara-membuktikan-ke-reviewer" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 1. Bukti fase latency (jalankan, tunjukkan angka)
+curl -sS -o /dev/null -w 'dns=%{time_namelookup} tcp=%{time_connect} tls=%{time_appconnect} ttfb=%{time_starttransfer} total=%{time_total}\n' https://example.com
+
+# 2. Bukti exit code (3 kondisi)
+curl --connect-timeout 3 http://localhost:9999; echo &quot;refused exit=$?&quot;   # 7
+docker compose stop api; curl --connect-timeout 3 http://localhost:8080/health; echo &quot;exit=$?&quot;; docker compose start api  # 7 lalu kembalikan
+docker compose exec api curl --connect-timeout 3 http://nope-service:8080; echo &quot;dns-exit=$?&quot;  # 6
+
+# 3. Bukti TLS
+openssl s_client -connect example.com:443 -servername example.com -tls1_3 -alpn h2 -brief
+
+# 4. State bersih
+sudo iptables -C INPUT -p tcp --dport 8080 -j DROP 2&gt;/dev/null &amp;&amp; echo &quot;MASIH DROP!&quot; || echo &quot;bersih&quot;
+docker compose ps
+</code></pre>
+<div class="foot"><span>production-reliability-lab/labs/week-02-networking/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

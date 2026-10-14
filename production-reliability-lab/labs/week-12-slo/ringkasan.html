@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Week 12 · SLI, SLO, Error Budget, dan Incident Response</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-12-slo/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-week-12-sli-slo-error-budget-dan-incident-response">Ringkasan — Week 12 · SLI, SLO, Error Budget, dan Incident Response</a><ul>
+<li><a href="#inti-5-kalimat">Inti (5 kalimat)</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#query-perintah-kunci-output">Query / perintah kunci + output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan">Jebakan</a></li>
+<li><a href="#acceptance">Acceptance</a></li>
+<li><a href="#satu-kalimat">Satu kalimat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-week-12-sli-slo-error-budget-dan-incident-response">Ringkasan — Week 12 · SLI, SLO, Error Budget, dan Incident Response<a class="headerlink" href="#ringkasan-week-12-sli-slo-error-budget-dan-incident-response" title="Permanent link">&para;</a></h1>
+<h2 id="inti-5-kalimat">Inti (5 kalimat)<a class="headerlink" href="#inti-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>SLI</strong> = angka dari sisi user (Availability: non-5xx; Latency: &lt;300ms), <strong>SLO</strong> = targetnya (99,5% / 95%), <strong>SLA</strong> = janji ber-denda.</li>
+<li><strong>Error budget</strong> = <code>1 − SLO</code> (0,5% = 5.000 gagal/1 juta); <strong>burn rate</strong> = <code>error_ratio / (1−SLO)</code> = kecepatan ngabisin budget.</li>
+<li>Alert pakai <strong>multiwindow multi-burn-rate</strong> (14,4 page / 6 page / 1 ticket) biar cepat tapi anti-false-positive di traffic rendah.</li>
+<li><strong>Error budget policy</strong> ubah "boleh rilis?" jadi angka: budget habis → freeze rilis, kerjaan pindah ke reliabilitas.</li>
+<li>Insiden: <strong>tetapkan severity di 5 menit</strong>, <strong>mitigasi dulu</strong> baru cari root cause, lalu <strong>postmortem blameless</strong> ber-action-item ber-owner.</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<pre><code>http_server_requests_total (proxy)
+   │ recording rule (30s)
+   ▼
+job:slo_errors_per_request:ratio_rate{5m,30m,1h,6h}
+   │ alerting rule: burn_rate × 0.005
+   ▼
+HighErrorBudgetBurn (page 14.4/6) / SlowErrorBudgetBurn (ticket 1)
+   │
+   ▼
+Insiden: detect → triage(SEV) → MITIGASI → diagnosis → recover → postmortem
+Error budget policy: &gt;50% bebas | 25-50% normal | &lt;25% stop fitur | 0 freeze
+</code></pre>
+<h2 id="query-perintah-kunci-output">Query / perintah kunci + output<a class="headerlink" href="#query-perintah-kunci-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah</th>
+<th>Output</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sum(rate(http_server_requests_total{status=~"5.."}[5m]))/sum(rate(...[5m]))</code></td>
+<td><code>0.013</code></td>
+<td>error ratio 1,3%</td>
+</tr>
+<tr>
+<td><code>job:slo_errors_per_request:ratio_rate1h</code></td>
+<td><code>0.013</code></td>
+<td>recording rule (SLO)</td>
+</tr>
+<tr>
+<td><code>job:slo_latency_p95:histogram_quantile5m</code></td>
+<td><code>0.18</code></td>
+<td>p95 180ms</td>
+</tr>
+<tr>
+<td><code>promtool check rules rules/slo.yml</code></td>
+<td><code>SUCCESS</code></td>
+<td>sintaks rule ok</td>
+</tr>
+<tr>
+<td><code>promtool test rules rules/slo_test.yml</code></td>
+<td><code>SUCCESS</code></td>
+<td>unit test rule ok</td>
+</tr>
+<tr>
+<td><code>up{job="api"} == 0</code></td>
+<td><code>0</code></td>
+<td>API down → page</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Penyebab</th>
+<th>Cek</th>
+<th>Mitigasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>promtool check</code> gagal</td>
+<td>YAML salah/indent</td>
+<td>jalankan check</td>
+<td>perbaiki expr/indent</td>
+</tr>
+<tr>
+<td>Alert nggak nyala</td>
+<td>burn-rate kebesaran / for: lama</td>
+<td>cek recording rule</td>
+<td>turunkan threshold sementara</td>
+</tr>
+<tr>
+<td>False positive di traffic rendah</td>
+<td>alert statis, bukan burn-rate</td>
+<td>pakai multiwindow</td>
+<td>ganti ke burn-rate</td>
+</tr>
+<tr>
+<td>Severity telat</td>
+<td>nggak ada IC</td>
+<td>tetapkan di 5 mnt</td>
+<td>assign IC tiap insiden</td>
+</tr>
+<tr>
+<td>Mitigasi lambat</td>
+<td>nyari root cause dulu</td>
+<td>MITIGASI dulu</td>
+<td>rollback/scale dulu</td>
+</tr>
+<tr>
+<td>Postmortem mandek</td>
+<td>action item tanpa owner</td>
+<td>isi owner+tenggat</td>
+<td>wajib ber-owner</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan">Jebakan<a class="headerlink" href="#jebakan" title="Permanent link">&para;</a></h2>
+<ul>
+<li>SLO diukur dari metrik internal, bukan proxy → crash nggak kehitung.</li>
+<li>Alert statis "error &gt; 1%" → false positive di traffic rendah.</li>
+<li>Traffic rendah butuh aturan khusus (1 gagal = burn 1000×).</li>
+<li>Postmortem tanpa owner &amp; tenggat = curhatan.</li>
+<li>Severity telat ditentukan → respons kacau.</li>
+<li>Recording rule dilewati → alert lambat &amp; <code>rate()</code> berulang.</li>
+</ul>
+<h2 id="acceptance">Acceptance<a class="headerlink" href="#acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>SLI dihitung dari metrics (sumber + window jelas). ✅ <code>docs/slo.md</code></li>
+<li>SLO punya periode evaluasi &amp; eksklusi request. ✅ <code>docs/slo.md</code></li>
+<li>Alert burn-rate terpasang &amp; diuji <code>promtool test rules</code>. ✅ <code>rules/slo.yml</code></li>
+<li>Postmortem blameless: impact, timeline, root cause, 5-whys, action item. ✅ <code>postmortems/</code></li>
+</ol>
+<h2 id="satu-kalimat">Satu kalimat<a class="headerlink" href="#satu-kalimat" title="Permanent link">&para;</a></h2>
+<p>SLO dan error budget ngubah debat "boleh rilis nggak?" dari opini jadi angka, dan insiden cuma bisa ditangani kalau lo mitigasi dulu, baru cari penyebab, lalu tulis postmortem tanpa nyalahin orang.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-12-slo/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

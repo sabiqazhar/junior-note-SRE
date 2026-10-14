@@ -675,14 +675,14 @@ const REPO_BASE = "production-reliability-lab";
 const DOC_BASE = "production-reliability-lab/docs";
 function labBox(w){
   const e = LAB[w.n]; if(!e) return "";
-  const docs = e.docs.map(d=>`<li><span class="tag doc">DOK</span><a href="${DOC_BASE}/${d}" target="_blank" rel="noopener">docs/${d}</a></li>`).join("");
+  const docs = e.docs.map(d=>`<li><span class="tag doc">DOK</span><a href="${DOC_BASE}/${d.replace(/\.md$/,".html")}">${DOC_BASE}/${d}</a></li>`).join("");
   const repo = e.repo.map(r=>`<li><span class="tag repo">REPO</span><a href="${REPO_BASE}/${r}" target="_blank" rel="noopener">${r}</a></li>`).join("");
   return `<div class="labbox">
       <h3>📦 Bahan bacaan &amp; lab — production-reliability-lab/</h3>
       <ul>
-        <li><span class="tag read">BACA</span><a href="${LAB_BASE}/${e.folder}/bahan-bacaan.md" target="_blank" rel="noopener">labs/${e.folder}/bahan-bacaan.md</a></li>
-        <li><span class="tag lab">LAB</span><a href="${LAB_BASE}/${e.folder}/lab.md" target="_blank" rel="noopener">labs/${e.folder}/lab.md</a>
-          &nbsp;·&nbsp; <a href="${LAB_BASE}/${e.folder}/README.md" target="_blank" rel="noopener">README</a></li>
+        <li><span class="tag read">BACA</span><a href="${LAB_BASE}/${e.folder}/bahan-bacaan.html">labs/${e.folder}/bahan-bacaan.md</a> <span style="font-size:11px;color:var(--fg2)">(render HTML)</span></li>
+        <li><span class="tag lab">LAB</span><a href="${LAB_BASE}/${e.folder}/lab.html">labs/${e.folder}/lab.md</a> <span style="font-size:11px;color:var(--fg2)">(render HTML)</span>
+          &nbsp;·&nbsp; <a href="${LAB_BASE}/${e.folder}/README.html">README</a></li>
         ${docs}${repo}
       </ul>
     </div>`;

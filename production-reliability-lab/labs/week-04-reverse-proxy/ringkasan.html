@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 4 · DNS, TLS, dan Reverse Proxy</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-04-reverse-proxy/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-4-dns-tls-dan-reverse-proxy">Ringkasan — Minggu 4 · DNS, TLS, dan Reverse Proxy</a><ul>
+<li><a href="#inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan-umum">Jebakan umum</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-4-dns-tls-dan-reverse-proxy">Ringkasan — Minggu 4 · DNS, TLS, dan Reverse Proxy<a class="headerlink" href="#ringkasan-minggu-4-dns-tls-dan-reverse-proxy" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman buat dibaca ulang sebelum wawancara/ujian. Bukan pengganti <code>bahan-bacaan.md</code>.</p>
+</blockquote>
+<h2 id="inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat<a class="headerlink" href="#inti-minggu-ini-dalam-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Reverse proxy (Nginx) duduk di depan aplikasi; cuma dia yang boleh kebuka ke publik.</li>
+<li>Tiga timeout (<code>connect</code>/<code>read</code>/<code>send</code>) default 60s — turunin, dan pastikan client timeout &lt; <code>proxy_read_timeout</code>.</li>
+<li>Header <code>Host</code> + <code>X-Forwarded-*</code> wajib diset biar backend nggak salah behavior.</li>
+<li><strong>502</strong> = upstream nolak, <strong>504</strong> = upstream kelamaan, <strong>499</strong> = client kabur duluan (bukan standar HTTP).</li>
+<li>TLS 2025 = sertifikat umur 6 hari → renewal otomatis harian wajib (lab pakai <code>mkcert</code>).</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Reverse proxy</li>
+<li>upstream (daftar backend) + <code>proxy_next_upstream</code></li>
+<li>proxy headers: <code>Host</code>, <code>X-Real-IP</code>, <code>X-Forwarded-For</code>, <code>X-Forwarded-Proto</code></li>
+<li>timeout: <code>connect</code> / <code>read</code> / <code>send</code></li>
+<li>keep-alive: <code>keepalive</code> + <code>proxy_http_version 1.1</code> + <code>Connection ""</code></li>
+<li>TLS</li>
+<li>sertifikat CA, ACME, auto-renewal</li>
+<li>lab: <code>mkcert</code> / <code>step-ca</code> (jangan dipakai domain publik)</li>
+<li>Failure matrix: 502 / 504 / 499</li>
+</ul>
+<h2 id="perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output<a class="headerlink" href="#perintah-kunci-yang-harus-lo-lihat-di-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah</th>
+<th>Yang dicari di output</th>
+<th>Artinya kalau beda</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docker compose exec nginx nginx -t</code></td>
+<td><code>configuration test is successful</code></td>
+<td>Config salah → reload gagal</td>
+</tr>
+<tr>
+<td><code>curl -sS -o /dev/null -w '%{http_code}\n' http://localhost/health</code></td>
+<td><code>200</code></td>
+<td>Bukan 200 → cek proxy/upstream</td>
+</tr>
+<tr>
+<td><code>docker compose logs nginx</code></td>
+<td>akses/error log</td>
+<td>Error handshake/timeout</td>
+</tr>
+<tr>
+<td><code>openssl s_client -connect localhost:443</code></td>
+<td><code>Verify return code: 0</code></td>
+<td>Sertifikat nggak tepercaya</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Arti</th>
+<th>Cara bikin di lab</th>
+<th>Di mana cek</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>502</td>
+<td>Upstream nolak/reset</td>
+<td><code>docker compose stop api</code></td>
+<td><code>error.log</code>: <code>connect() failed (111...)</code></td>
+</tr>
+<tr>
+<td>504</td>
+<td><code>proxy_read_timeout</code> habis</td>
+<td>endpoint <code>/slow?ms=60000</code></td>
+<td><code>error.log</code>: <code>upstream timed out</code></td>
+</tr>
+<tr>
+<td>499</td>
+<td>Client tutup duluan</td>
+<td><code>curl --max-time 2</code> ke endpoint lambat</td>
+<td><code>access.log</code> kolom status</td>
+</tr>
+<tr>
+<td>TLS fail</td>
+<td>Versi/cipher nggak cocok</td>
+<td><code>curl --tls-max 1.1</code></td>
+<td><code>error.log</code>: <code>SSL_do_handshake() failed</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan-umum">Jebakan umum<a class="headerlink" href="#jebakan-umum" title="Permanent link">&para;</a></h2>
+<ul>
+<li>502 dan 504 sering ketuker.</li>
+<li>Lupa <code>proxy_set_header Host $host</code> → backend salah vhost.</li>
+<li><code>proxy_read_timeout</code> &gt; client timeout → hasilnya 499, bukan 504.</li>
+<li>Sertifikat 6 hari tanpa auto-renewal = outage berkala.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Client akses API cuma lewat reverse proxy.</li>
+<li>Port Postgres &amp; Redis nggak terekspos ke host (<code>ss -lntp</code>, <code>nmap</code>).</li>
+<li>Kegagalan upstream menghasilkan error yang bisa dilacak dari log.</li>
+<li>Bisa jelasin &amp; reproduksi 502 / 504 / 499.</li>
+</ol>
+<h2 id="satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat<a class="headerlink" href="#satu-kalimat-yang-harus-lo-ingat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>502 = upstream nolak, 504 = upstream kelamaan, 499 = client yang kabur — baca <code>error.log</code> buat membedakannya.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-04-reverse-proxy/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

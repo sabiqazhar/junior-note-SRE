@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 12 · SLI, SLO, Error Budget, dan Incident Response — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-12-slo/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-12-sli-slo-error-budget-dan-incident-response-bahan-bacaan">Minggu 12 · SLI, SLO, Error Budget, dan Incident Response — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-sli-angka-yang-diukur-dari-sisi-user">2.1 SLI — angka yang diukur dari sisi user</a></li>
+<li><a href="#22-slo-target-dari-sli">2.2 SLO — target dari SLI</a></li>
+<li><a href="#23-sla-janji-ke-user-ada-konsekuensi">2.3 SLA — janji ke user (ada konsekuensi)</a></li>
+<li><a href="#24-error-budget-burn-rate">2.4 Error budget &amp; burn rate</a></li>
+<li><a href="#25-multiwindow-multi-burn-rate-alerting">2.5 Multiwindow multi-burn-rate (alerting)</a></li>
+<li><a href="#26-error-budget-policy">2.6 Error budget policy</a></li>
+<li><a href="#27-incident-response-severity-alur">2.7 Incident response: severity &amp; alur</a></li>
+<li><a href="#28-blameless-postmortem">2.8 Blameless postmortem</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib-primer">5. Bahan bacaan wajib (primer)</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-google">6. Self-check (harus bisa dijawab tanpa Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-12-sli-slo-error-budget-dan-incident-response-bahan-bacaan">Minggu 12 · SLI, SLO, Error Budget, dan Incident Response — Bahan Bacaan<a class="headerlink" href="#minggu-12-sli-slo-error-budget-dan-incident-response-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>"SLO itu alat buat berantem pakai angka, bukan pakai perasaan. Budget habis = rilis dihentikan. Titik."</p>
+</blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah, kerjakan <code>lab.md</code> setelahnya.</p>
+<hr />
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Minggu 9–11 lo sudah punya metrics, dashboard, alert, log, dan trace. Tapi semua itu cuma alat ukur — minggu ini lo belajar <strong>ngapain sama angkanya</strong>. Tanpa SLI/SLO, "boleh nggak kita rilis fitur baru?" jawabnya tergantung siapa yang berani ngoceh paling keras di meeting. Dengan error budget, jawabnya jadi <strong>angka</strong>: budget masih banyak → gas; budget habis → freeze rilis, kerjaan pindah ke reliabilitas. Itu perubahan budaya, bukan cuma teknis.</p>
+<p>Bayangin error budget kayak <strong>kuota bensin di taksi</strong>. SLO 99,5% berarti lo diizinin "habisin" 0,5% perjalanan nyasar — 5.000 request gagal per 1 juta. Selama masih ada sisa bensin, lo bebas muter-muter (eksperimen, rilis agresif). Tapi kalau bensin habis, lo harus berhenti dan isi dulu, bukan lanjut jalan sampai mogok di tengah jalan. Burn rate itu <strong>kecepatan lo ngabisin bensin itu</strong>. Kalau lo ngabisin 14,4× lebih cepat dari rencana, 2% budget 30 hari habis dalam 1 jam — itu yang bikin alert <code>HighErrorBudgetBurn</code> page lo.</p>
+<p>Masalah kedua yang minggu ini beresin: <strong>insiden ditangani pakai panik, bukan prosedur</strong>. Deteksi lambat, severity telat ditentukan, mitigasi dicampur dengan cari root cause, postmortem cuma curhatan yang nyalahin orang. Minggu ini lo praktik alur: deteksi → triage → <strong>mitigasi dulu</strong> → diagnosis → pemulihan → postmortem <strong>blameless</strong>.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-sli-angka-yang-diukur-dari-sisi-user">2.1 SLI — angka yang diukur dari sisi user<a class="headerlink" href="#21-sli-angka-yang-diukur-dari-sisi-user" title="Permanent link">&para;</a></h3>
+<p>SLI (Service Level Indicator) adalah proporsi request valid yang berhasil. Contoh lab: "persentase request valid yang balas non-5xx" (availability) dan "persentase request valid yang selesai &lt; 300ms" (latency).</p>
+<p><strong>Penting:</strong> diukur <strong>dari sisi user/proxy</strong>, bukan dari metrik internal app. Kalau app crash sebelum nyatat metrik, request itu nggak kehitung sebagai error — padahal itu kegagalan terburuk. Proxy menutup celah itu.</p>
+<h3 id="22-slo-target-dari-sli">2.2 SLO — target dari SLI<a class="headerlink" href="#22-slo-target-dari-sli" title="Permanent link">&para;</a></h3>
+<p>SLO (Service Level Objective) = target SLI. Lab: <strong>availability 99,5%</strong> (30 hari rolling), <strong>latency 95% &lt; 300ms</strong>. SLO bukan janji ke user — itu kompas internal tim.</p>
+<h3 id="23-sla-janji-ke-user-ada-konsekuensi">2.3 SLA — janji ke user (ada konsekuensi)<a class="headerlink" href="#23-sla-janji-ke-user-ada-konsekuensi" title="Permanent link">&para;</a></h3>
+<p>SLA (Service Level Agreement) punya denda/credit kalau melanggar. Biasanya lebih longgar dari SLO (SLO 99,5%, SLA 99,9% dengan credit). Jangan campur: SLO buat tim, SLA buat kontrak.</p>
+<h3 id="24-error-budget-burn-rate">2.4 Error budget &amp; burn rate<a class="headerlink" href="#24-error-budget-burn-rate" title="Permanent link">&para;</a></h3>
+<p>Error budget = sisa "jatah gagal" = <code>1 - SLO</code>. Burn rate = seberapa cepat lo ngabisin itu:</p>
+<pre><code>burn rate = (error ratio terukur) / (1 - SLO)
+</code></pre>
+<p>Contoh: SLO 99,5% → budget 0,5%. Error ratio 1 jam = 3,6% → burn rate 7,2×.
+Dengan 7,2×, 5% budget 30 hari habis dalam 6 jam.</p>
+<h3 id="25-multiwindow-multi-burn-rate-alerting">2.5 Multiwindow multi-burn-rate (alerting)<a class="headerlink" href="#25-multiwindow-multi-burn-rate-alerting" title="Permanent link">&para;</a></h3>
+<p>Pakai dua jendela (pendek + panjang) biar alert <strong>cepat tapi nggak false positive</strong> di traffic rendah. Dari Google SRE Workbook:</p>
+<table>
+<thead>
+<tr>
+<th>Jendela panjang</th>
+<th>Pendek</th>
+<th>Burn rate</th>
+<th>Budget habis</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 jam</td>
+<td>5 mnt</td>
+<td><strong>14,4</strong></td>
+<td>2% / 1 jam</td>
+<td>Page</td>
+</tr>
+<tr>
+<td>6 jam</td>
+<td>30 mnt</td>
+<td><strong>6</strong></td>
+<td>5% / 6 jam</td>
+<td>Page</td>
+</tr>
+<tr>
+<td>3 hari</td>
+<td>6 jam</td>
+<td><strong>1</strong></td>
+<td>10% / 3 hari</td>
+<td>Ticket</td>
+</tr>
+</tbody>
+</table>
+<p>Di <code>rules/slo.yml</code>: <code>14.4 * 0.005</code> (page), <code>6 * 0.005</code> (page), <code>1 * 0.005</code> (ticket). Recording rule dulu (<code>job:slo_errors_per_request:ratio_rate*</code>), baru alerting rule.</p>
+<h3 id="26-error-budget-policy">2.6 Error budget policy<a class="headerlink" href="#26-error-budget-policy" title="Permanent link">&para;</a></h3>
+<p>Ubah "boleh rilis?" jadi angka:
+- &gt; 50% tersisa → rilis bebas.
+- 25–50% → rilis normal, risiko butuh review ekstra.
+- &lt; 25% → rilis fitur dihentikan, cuma perbaikan reliabilitas.
+- Habis → <strong>freeze</strong>, wajib 1 postmortem + minimal 1 item reliabilitas.</p>
+<h3 id="27-incident-response-severity-alur">2.7 Incident response: severity &amp; alur<a class="headerlink" href="#27-incident-response-severity-alur" title="Permanent link">&para;</a></h3>
+<p>Tetapkan <strong>severity di 5 menit pertama</strong>. Alur: deteksi → triage → <strong>mitigasi dulu</strong> → diagnosis → pemulihan → postmortem (48 jam). Urutan 3 sebelum 4 sengaja: pulihkan dulu, analisis belakangan. IC <strong>ngarahin, bukan debugging</strong>.</p>
+<h3 id="28-blameless-postmortem">2.8 Blameless postmortem<a class="headerlink" href="#28-blameless-postmortem" title="Permanent link">&para;</a></h3>
+<p>Fokus ke <strong>sistem yang memungkinkan</strong>, bukan orang. Template di <code>postmortems/incident-001.md</code>: impact, timeline, root cause (1 kalimat jujur), 5-whys, what went well/wrong, action item ber-owner &amp; tenggat. Tanpa owner+tenggat = harapan, bukan tindakan.</p>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Scrape</strong>: Prometheus tarik <code>http_server_requests_total</code> dari <code>api</code>.</li>
+<li><strong>Recording rule</strong>: tiap 30s hitung <code>job:slo_errors_per_request:ratio_rate{5m,30m,1h,6h}</code> dan <code>job:slo_latency_p95</code>.</li>
+<li><strong>Alerting rule</strong>: bandingkan ratio dengan <code>burn_rate × budget</code>; kalau dua jendela patri benar selama <code>for:</code>, firing.</li>
+<li><strong>Notification</strong>: page (on-call) / ticket (issue) sesuai severity.</li>
+<li><strong>Insiden</strong>: deteksi → severity → mitigasi (rollback/scale) → diagnosis → pulih (verifikasi angka).</li>
+<li><strong>Postmortem</strong>: blameless, dalam 48 jam, action item ber-owner.</li>
+</ol>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti singkat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SLI</td>
+<td>Indikator level service (diukur dari user)</td>
+</tr>
+<tr>
+<td>SLO</td>
+<td>Target SLI (kompas internal)</td>
+</tr>
+<tr>
+<td>SLA</td>
+<td>Janji ke user (ada denda)</td>
+</tr>
+<tr>
+<td>Error budget</td>
+<td>Sisa jatah gagal = 1 − SLO</td>
+</tr>
+<tr>
+<td>Burn rate</td>
+<td>Kecepatan ngabisin budget</td>
+</tr>
+<tr>
+<td>Multiwindow burn-rate</td>
+<td>Alert 2 jendela: cepat &amp; anti-false-positive</td>
+</tr>
+<tr>
+<td>Recording rule</td>
+<td>Hitung metrik turunan dulu, reuse</td>
+</tr>
+<tr>
+<td>Severity</td>
+<td>SEV1/2/3, ditetapkan 5 menit pertama</td>
+</tr>
+<tr>
+<td>Incident Commander</td>
+<td>Yang ngarahin, bukan debugging</td>
+</tr>
+<tr>
+<td>Mitigasi dulu</td>
+<td>Pulihkan sebelum cari root cause</td>
+</tr>
+<tr>
+<td>Blameless</td>
+<td>Fokus sistem, bukan orang</td>
+</tr>
+<tr>
+<td>5-whys</td>
+<td>Telusuri akar proses, bukan akar orang</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib-primer">5. Bahan bacaan wajib (primer)<a class="headerlink" href="#5-bahan-bacaan-wajib-primer" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Google SRE Workbook — Implementing SLOs: https://sre.google/workbook/implementing-slos/</li>
+<li>Google SRE Workbook — Alerting on SLOs (multiwindow burn-rate): https://sre.google/workbook/alerting-on-slos/</li>
+<li>Google SRE Book — Error budgets: https://sre.google/sre-book/embracing-risk/</li>
+<li>Prometheus — Recording rules: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/</li>
+<li>Prometheus — Checking rules with promtool: https://prometheus.io/docs/prometheus/latest/command-line/promtool/#checking-rules</li>
+<li>Grafana — Incident response (on-call): https://grafana.com/docs/oncall/latest/</li>
+</ol>
+<hr />
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-google">6. Self-check (harus bisa dijawab tanpa Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Bedanya SLI, SLO, SLA? Mana yang punya konsekuensi kontrak?</li>
+<li>Kenapa SLO diukur dari proxy, bukan metrik internal app?</li>
+<li>Hitung burn rate: SLO 99,5%, error ratio 1 jam = 3,6%.</li>
+<li>Kenapa alert burn-rate pakai dua jendela (multiwindow)?</li>
+<li>Kenapa mitigasi dilakukan SEBELUM cari root cause?</li>
+<li>Apa itu blameless postmortem dan kenapa action item butuh owner?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>"SLO diukur dari metrik internal aplikasi."</strong> Salah. App yang crash sebelum nyatat = error terburuk nggak kehitung. Ukur dari sisi user/proxy.</li>
+<li><strong>"Alert statis 'error &gt; 1%' cukup."</strong> Di traffic rendah, 1 request gagal/jam = burn rate 1000×. Butuh burn-rate + multiwindow.</li>
+<li><strong>"Service traffic rendah nggak perlu aturan khusus."</strong> Justru butuh — persentase gampang meledak oleh 1 request.</li>
+<li><strong>"Postmortem = nyari siapa yang salah."</strong> Salah. Blameless → fokus sistem. Nyebut nama orang = postmortem gagal.</li>
+<li><strong>"Severity bisa ditentukan belakangan."</strong> Telat tentuin severity = respons kacau. Tetapkan di 5 menit pertama.</li>
+<li><strong>"Recording rule optional."</strong> Tanpa recording rule, alert burn-rate manggil <code>rate()</code> berulang &amp; lambat. Reuse dulu.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-12-slo/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

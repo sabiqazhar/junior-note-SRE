@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 03 · Docker production fundamentals</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-03-docker/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-03-docker-production-fundamentals">Ringkasan — Minggu 03 · Docker production fundamentals</a><ul>
+<li><a href="#inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat</a></li>
+<li><a href="#peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)</a></li>
+<li><a href="#perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output</a></li>
+<li><a href="#failure-matrix-decision-tree">Failure matrix / decision tree</a></li>
+<li><a href="#jebakan-umum">Jebakan umum</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-03-docker-production-fundamentals">Ringkasan — Minggu 03 · Docker production fundamentals<a class="headerlink" href="#ringkasan-minggu-03-docker-production-fundamentals" title="Permanent link">&para;</a></h1>
+<h2 id="inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat<a class="headerlink" href="#inti-minggu-ini-dalam-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>docker compose</code> (v2) sudah menggantikan <code>docker-compose</code> (v1) yang sudah dihapus — jangan tulis strip <code>-</code> lagi.</li>
+<li><code>depends_on</code> bentuk pendek cuma nunggu container <em>start</em>; pakai <code>condition: service_healthy</code> buat nunggu <em>siap</em>.</li>
+<li><code>healthcheck</code> ngecek "apakah <em>proses ini</em> sehat", bukan "apakah dependency sehat" — dua hal beda.</li>
+<li>Tanpa <code>deploy.resources.limits</code>, satu container bisa bikin <strong>host</strong> OOM, bukan cuma dirinya sendiri.</li>
+<li>Inti minggu ini: kalau dependency mati, API harus <strong>gagal cepat &amp; jelas (503)</strong>, bukan <em>hang</em> — itu namanya controlled degradation.</li>
+</ol>
+<h2 id="peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)<a class="headerlink" href="#peta-konsep-daftar-bertingkat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Image &amp; build</li>
+<li>layer read-only + cache</li>
+<li>multi-stage build (image kecil, distroless/alpine)</li>
+<li><code>USER</code> non-root</li>
+<li>Container lifecycle</li>
+<li>created → running → stopped → removed</li>
+<li>restart policy (<code>unless-stopped</code>)</li>
+<li><code>restarting (1)</code> loop = aplikasi panic saat start</li>
+<li>Networking</li>
+<li>bridge network per stack</li>
+<li>DNS internal Compose (<code>api</code> ↔ <code>redis</code>)</li>
+<li>jangan kasih <code>ports:</code> ke postgres/redis</li>
+<li>Persistensi</li>
+<li>volume vs bind mount</li>
+<li><code>down -v</code> = data hilang</li>
+<li>Kesiapan &amp; dependensi</li>
+<li><code>healthcheck</code> (pg_isready, redis-cli ping)</li>
+<li><code>depends_on: condition: service_healthy</code></li>
+<li>Resource &amp; isolasi</li>
+<li>cgroups v2</li>
+<li><code>deploy.resources.limits</code> (cpus, memory, pids)</li>
+<li>Controlled degradation</li>
+<li>Redis mati → 503 / degrade, BUKAN hang</li>
+<li>Compose vs Swarm</li>
+<li><code>replicas</code>/<code>update_config</code> cuma Swarm</li>
+<li><code>deploy.resources.limits</code> jalan di Compose</li>
+</ul>
+<h2 id="perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output<a class="headerlink" href="#perintah-kunci-yang-harus-lo-lihat-di-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah</th>
+<th>Output kunci</th>
+<th>Interpretasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docker compose config</code></td>
+<td>YAML tervalidasi tanpa error</td>
+<td>Config benar sebelum jalan</td>
+</tr>
+<tr>
+<td><code>docker compose up -d --build --wait</code></td>
+<td><code>Running 3/3</code> + sehat</td>
+<td><code>--wait</code> tunggu healthcheck OK</td>
+</tr>
+<tr>
+<td><code>docker compose ps --format 'table {{.Name}}\t{{.Status}}\t{{.Health}}'</code></td>
+<td><code>api Up 2m healthy</code></td>
+<td>Status + health tiap service</td>
+</tr>
+<tr>
+<td><code>docker compose logs -f api</code></td>
+<td>log aplikasi real-time</td>
+<td>Lihat panic/hang saat dep mati</td>
+</tr>
+<tr>
+<td><code>docker inspect &lt;c&gt; --format '{{json .State}}'</code></td>
+<td><code>"ExitCode":0,"Status":"running"</code></td>
+<td>State &amp; exit code container</td>
+</tr>
+<tr>
+<td><code>docker stats --no-stream</code></td>
+<td>CPU%, MEM, PIDS per container</td>
+<td>Pemakaian resource nyata</td>
+</tr>
+<tr>
+<td><code>docker network ls</code></td>
+<td>list bridge termasuk compose stack</td>
+<td>Jaringan internal ada</td>
+</tr>
+<tr>
+<td><code>docker events --since 10m</code></td>
+<td>event start/stop/die</td>
+<td>Jejak kenapa container mati</td>
+</tr>
+<tr>
+<td><code>docker run --rm --memory=64m --cpus=.5 --pids-limit=100 &lt;img&gt;</code></td>
+<td>container mati/OOM</td>
+<td>Batas cgroup kelewat</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix-decision-tree">Failure matrix / decision tree<a class="headerlink" href="#failure-matrix-decision-tree" title="Permanent link">&para;</a></h2>
+<pre><code>Container restart terus (restarting)
+├─ docker inspect → ExitCode != 0 &amp; Error panic
+│   → aplikasi crash saat start. Cek logs -f api
+├─ healthcheck selalu starting/unhealthy
+│   → tes health salah (mis. curl di distroless). Perbaiki test
+├─ docker events → OOM
+│   → cgroup kena limit. Naikin memory / perbaiki leak
+└─ depends_on salah → API start sebelum PG siap
+    → pakai condition: service_healthy
+
+Redis mati
+├─ API balas 503 cepat  → controlled degradation OK
+└─ API hang / timeout   → BUG di client (no timeout). Perbaiki minggu 6
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Mekanisme</th>
+<th>Yang dijawab</th>
+<th>Yang TIDAK dijawab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>depends_on</code></td>
+<td>"container lain sudah distart?"</td>
+<td>"dia sudah siap terima traffic?"</td>
+</tr>
+<tr>
+<td><code>healthcheck</code></td>
+<td>"proses ini sehat?"</td>
+<td>"dependency sehat?"</td>
+</tr>
+<tr>
+<td>App retry/backoff</td>
+<td>"kalau dep sebentar mati?"</td>
+<td>— (tanggung jawab aplikasi)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan-umum">Jebakan umum<a class="headerlink" href="#jebakan-umum" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Healthcheck pakai <code>curl</code> di image distroless → selalu unhealthy (nggak ada curl).</li>
+<li>Tanpa <code>USER</code> → container jalan sebagai root.</li>
+<li>Tanpa limit memori → host yang OOM, bukan container.</li>
+<li><code>:latest</code> + cache → rollback mustahil; pin versi.</li>
+<li><code>down -v</code> = data hilang; pahami beda <code>down</code> dan <code>down -v</code>.</li>
+<li><code>replicas</code> di compose diabaikan (Swarm only).</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Seluruh service hidup dari kondisi bersih dengan <strong>satu perintah</strong> (<code>docker compose up -d --build --wait</code>).</li>
+<li>API <strong>gagal secara terkendali</strong> (503, bukan hang/panic) saat dependency nggak tersedia.</li>
+<li>Setiap container punya limit resource masuk akal + healthcheck yang benar-benar menguji kesiapan.</li>
+<li>Nggak ada password hardcoded; <code>.env</code> di <code>.gitignore</code>, <code>.env.example</code> di repo.</li>
+</ol>
+<h2 id="satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat<a class="headerlink" href="#satu-kalimat-yang-harus-lo-ingat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Dependency mati bukan alasan buat hang — aplikasi lo harus gagal cepat (503) atau degrade, biar caller nggak nunggu sampai timeout proxy.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-03-docker/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

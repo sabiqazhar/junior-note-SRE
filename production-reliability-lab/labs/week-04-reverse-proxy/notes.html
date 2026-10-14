@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catatan konsep — Week 04 · DNS, TLS, dan Reverse Proxy</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-04-reverse-proxy/notes.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#catatan-konsep-week-04-dns-tls-dan-reverse-proxy">Catatan konsep — Week 04 · DNS, TLS, dan Reverse Proxy</a><ul>
+<li><a href="#reverse-proxy-vs-forward-proxy">Reverse proxy vs forward proxy</a></li>
+<li><a href="#proxy-headers-wajib">Proxy headers wajib</a></li>
+<li><a href="#timeout-default-nginx-60s-kepanjangan">Timeout (default nginx = 60s, kepanjangan)</a></li>
+<li><a href="#keep-alive-upstream">Keep-alive upstream</a></li>
+<li><a href="#tls-2025">TLS 2025</a></li>
+<li><a href="#failure-matrix-hafal">Failure matrix (hafal!)</a></li>
+<li><a href="#self-check-jawab-tanpa-google">Self-check (jawab tanpa Google)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="catatan-konsep-week-04-dns-tls-dan-reverse-proxy">Catatan konsep — Week 04 · DNS, TLS, dan Reverse Proxy<a class="headerlink" href="#catatan-konsep-week-04-dns-tls-dan-reverse-proxy" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Tulis ulang dengan bahasa lo sendiri di bawah tiap poin. Kalau nggak bisa jelasin, berarti belum paham.</p>
+</blockquote>
+<h2 id="reverse-proxy-vs-forward-proxy">Reverse proxy vs forward proxy<a class="headerlink" href="#reverse-proxy-vs-forward-proxy" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Forward proxy = perantara buat <strong>client</strong> (akses internet lewat dia).</li>
+<li>Reverse proxy = perantara buat <strong>server</strong> (client nggak lihat backend).</li>
+<li>Di lab: Nginx di depan Go API, cuma port 80 yang kebuka ke host.</li>
+</ul>
+<h2 id="proxy-headers-wajib">Proxy headers wajib<a class="headerlink" href="#proxy-headers-wajib" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>Host $host</code> — biar backend nggak salah pilih virtual host.</li>
+<li><code>X-Real-IP</code> / <code>X-Forwarded-For</code> — jejak IP asli client.</li>
+<li><code>X-Forwarded-Proto</code> — http/https asli; lupa ini = redirect loop pas TLS nyala.</li>
+</ul>
+<h2 id="timeout-default-nginx-60s-kepanjangan">Timeout (default nginx = 60s, kepanjangan)<a class="headerlink" href="#timeout-default-nginx-60s-kepanjangan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>proxy_connect_timeout 5s</code> — waktu nyambung ke backend.</li>
+<li><code>proxy_read_timeout 30s</code> — waktu nunggu backend balas.</li>
+<li><code>proxy_send_timeout 30s</code> — waktu nunggu backend terima body.</li>
+<li>Aturan: client timeout &lt; <code>proxy_read_timeout</code>, kalau nggak → 499.</li>
+</ul>
+<h2 id="keep-alive-upstream">Keep-alive upstream<a class="headerlink" href="#keep-alive-upstream" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>keepalive 32</code> + <code>proxy_http_version 1.1</code> + <code>proxy_set_header Connection ""</code>.</li>
+<li>Default ON sejak nginx 1.29.7, tapi tulis eksplisit.</li>
+</ul>
+<h2 id="tls-2025">TLS 2025<a class="headerlink" href="#tls-2025" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Let's Encrypt umur sertifikat <strong>6 hari</strong> → renewal otomatis harian wajib.</li>
+<li>Lab: <code>mkcert</code> (CA lokal) atau <code>step-ca</code>. Jangan pakai domain publik.</li>
+</ul>
+<h2 id="failure-matrix-hafal">Failure matrix (hafal!)<a class="headerlink" href="#failure-matrix-hafal" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Penyebab</th>
+<th>Cek di</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>502</td>
+<td>upstream nolak/reset</td>
+<td><code>error.log</code>: <code>connect() failed (111...)</code></td>
+</tr>
+<tr>
+<td>504</td>
+<td><code>proxy_read_timeout</code> habis</td>
+<td><code>error.log</code>: <code>upstream timed out</code></td>
+</tr>
+<tr>
+<td>499</td>
+<td>client tutup duluan (bukan standar HTTP)</td>
+<td><code>access.log</code> status</td>
+</tr>
+</tbody>
+</table>
+<h2 id="self-check-jawab-tanpa-google">Self-check (jawab tanpa Google)<a class="headerlink" href="#self-check-jawab-tanpa-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa bedanya reverse proxy dan forward proxy?</li>
+<li>Kenapa <code>X-Forwarded-Proto</code> penting saat TLS nyala?</li>
+<li>Kapan 502, kapan 504, kapan 499?</li>
+<li>Kenapa timeout default 60s kepanjangan?</li>
+<li>Fungsi <code>keepalive</code> di upstream?</li>
+<li>Kenapa sertifikat 6 hari butuh renewal otomatis harian?</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-04-reverse-proxy/notes.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

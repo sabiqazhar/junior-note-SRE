@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Week 11 · Logs dan Distributed Tracing</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-11-observability/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-week-11-logs-dan-distributed-tracing">Lab — Week 11 · Logs dan Distributed Tracing</a><ul>
+<li><a href="#persiapan-wajib">Persiapan (wajib)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam-structured-log-trace">Hari 2 · Praktik (2 jam) — structured log &amp; trace</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-telusuri-1-request-lambat">Hari 3 · Eksperimen (2 jam) — telusuri 1 request lambat</a></li>
+<li><a href="#hari-4-review-2-jam-troubleshooting-guide">Hari 4 · Review (2 jam) — troubleshooting guide</a></li>
+<li><a href="#daftar-periksa-checklist">Daftar periksa (checklist)</a></li>
+<li><a href="#cara-buktikan-acceptance">Cara buktikan (acceptance)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-week-11-logs-dan-distributed-tracing">Lab — Week 11 · Logs dan Distributed Tracing<a class="headerlink" href="#lab-week-11-logs-dan-distributed-tracing" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Target: nyambungin gejala di metrics ke penyebab di request tertentu.
+Waktu: 4 hari × 2 jam. Stack: <code>api</code>, <code>prometheus</code>, <code>loki</code>, <code>tempo</code>, <code>alloy</code> (Alloy, bukan Promtail).</p>
+</blockquote>
+<h2 id="persiapan-wajib">Persiapan (wajib)<a class="headerlink" href="#persiapan-wajib" title="Permanent link">&para;</a></h2>
+<pre><code>docker compose ps
+</code></pre>
+<p>Pastikan <code>sre-lab-api-1</code>, <code>sre-lab-loki-1</code>, <code>sre-lab-tempo-1</code>,
+<code>sre-lab-alloy-1</code> status <code>Up</code>. Cek <code>observability/otel/config.alloy</code> aktif
+(pipeline log + trace). Buka Grafana → Explore → pilih data source <strong>Loki</strong> &amp;
+<strong>Tempo</strong>. Pastikan app log JSON lewat <code>slog</code> (lihat <code>app/main.go</code>).</p>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Baca <code>bahan-bacaan.md</code> seksi 1–7.</li>
+<li>Catat di <code>notes.md</code>: tabel "metrics vs logs vs traces" + 3 prinsip korelasi.</li>
+<li>Pahami <code>context.Context</code> dan kenapa <code>QueryRowContext</code> cegah trace putus.</li>
+</ul>
+<p><strong>Yang harus terjadi:</strong> lo bisa jelasin kenapa trace putus kalau ctx lupa diteruskan.</p>
+<p><strong>Kalau gagal:</strong> balik ke <code>bahan-bacaan.md</code> 2.4.</p>
+<p><strong>Catat notes:</strong> tulis contoh <code>slog</code> yang benar dengan <code>trace_id</code>.</p>
+<hr />
+<h2 id="hari-2-praktik-2-jam-structured-log-trace">Hari 2 · Praktik (2 jam) — structured log &amp; trace<a class="headerlink" href="#hari-2-praktik-2-jam-structured-log-trace" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Cek log app keluar sebagai JSON:
+   <code>docker compose logs api --since 1m | head -3</code>
+   <strong>Yang harus terjadi:</strong> baris JSON berisi <code>level</code>, <code>msg</code>, <code>route</code>, <code>status</code>,
+   <code>duration_ms</code>. (App sudah pakai <code>slog.NewJSONHandler</code>.)
+   <strong>Kalau gagal:</strong> cek <code>app/main.go</code> logger setup.</p>
+</li>
+<li>
+<p>Cek Alloy terima &amp; teruskan ke Loki:
+   <code>logql
+   {job="api"} | json | limit 5</code>
+   <strong>Yang harus terjadi:</strong> 5 log terbaru muncul terstruktur.
+   <strong>Kalau gagal:</strong> Alloy mati? cek <code>docker compose logs alloy</code>.</p>
+</li>
+<li>
+<p>Cek trace masuk Tempo (kirim 1 request dulu):
+   <code>curl -sS http://localhost/orders &gt;/dev/null</code>
+   Di Grafana Explore → Tempo, cari trace terbaru. <strong>Yang harus terjadi:</strong> trace
+   ada dengan span <code>sre-api</code> (HTTP) + child span DB.
+   <strong>Kalau gagal:</strong> cek OTLP receiver Alloy &amp; app ekspor ke <code>:4317</code>.</p>
+</li>
+</ol>
+<p><strong>Catat notes:</strong> screenshot 1 trace dengan span app + DB.</p>
+<hr />
+<h2 id="hari-3-eksperimen-2-jam-telusuri-1-request-lambat">Hari 3 · Eksperimen (2 jam) — telusuri 1 request lambat<a class="headerlink" href="#hari-3-eksperimen-2-jam-telusuri-1-request-lambat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Bikin endpoint lambat karena DB (di lab, pakai <code>pg_sleep</code> via query, atau
+   panjangin <code>handleOrders</code>). Kirim request:
+   <code>curl -sS -D - http://localhost/orders &gt;/dev/null</code>
+   Ambil <code>trace_id</code> dari log:
+   <code>logql
+   {job="api"} | json | route="/orders" | limit 1</code>
+   <strong>Yang harus terjadi:</strong> log berisi <code>trace_id</code> (mis. <code>4b2c...</code>).</p>
+</li>
+<li>
+<p>Cari log by <code>trace_id</code> di Loki:
+   <code>logql
+   {job="api"} | json | trace_id="4b2c..."</code>
+   <strong>Yang harus terjadi:</strong> semua log untuk request itu muncul.
+   <strong>Kalau gagal:</strong> <code>trace_id</code> lupa di-inject ke <code>slog</code> → tambahin.</p>
+</li>
+<li>
+<p>Buka trace di Tempo by <code>trace_id</code>:
+   <strong>Yang harus terjadi:</strong> lo lihat total 1,2s, dan 1,1s habis di span database.
+   <strong>"Oh, ternyata"</strong>: 90% waktu numpuk di DB, bukan di app.</p>
+</li>
+<li>
+<p><strong>CARA KEMBALI NORMAL (wajib):</strong>
+   <code>docker compose restart api        # kalau lo ubah handler/query eksperimen
+   # kalau cuma kirim request normal, nggak perlu restart — trace/log balik normal
+   curl -sS http://localhost:9090/api/v1/query?query=up{job=%22api%22}</code>
+   <strong>Yang harus terjadi:</strong> <code>up{job="api"}</code> = 1, log/trace kembali ke pola normal
+   (tanpa request lambat). Bukan rollback image — cukup pastikan handler eksperimen
+   dikembalikan &amp; container jalan.</p>
+</li>
+</ol>
+<p><strong>Catat notes:</strong> tulis berapa % waktu di span DB vs app untuk request lambat tadi.</p>
+<hr />
+<h2 id="hari-4-review-2-jam-troubleshooting-guide">Hari 4 · Review (2 jam) — troubleshooting guide<a class="headerlink" href="#hari-4-review-2-jam-troubleshooting-guide" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Tulis <code>labs/week-11-observability/troubleshooting.md</code>: langkah metrics →
+   log → trace dengan screenshot (cara nTelusuri 1 request).</li>
+<li>Verifikasi tail sampling Alloy simpan error+lambat 100%:
+   <code>grep -n "status_code\|latency\|probabilistic" observability/otel/config.alloy</code></li>
+<li>Commit <code>troubleshooting.md</code> + <code>commands.md</code> + <code>evidence/</code>.</li>
+</ol>
+<p><strong>Catat notes:</strong> 1 hal yang bikin lo "oh, ternyata" minggu ini.</p>
+<hr />
+<h2 id="daftar-periksa-checklist">Daftar periksa (checklist)<a class="headerlink" href="#daftar-periksa-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>api</code>, <code>loki</code>, <code>tempo</code>, <code>alloy</code> Up</li>
+<li>[ ] Log app JSON (<code>slog</code>)</li>
+<li>[ ] Log masuk Loki lewat Alloy (bukan Promtail)</li>
+<li>[ ] Trace masuk Tempo, span app + DB nyambung</li>
+<li>[ ] Log bisa difilter by <code>trace_id</code></li>
+<li>[ ] Request lambat berhasil ditelusuri ke span DB</li>
+<li>[ ] Tail sampling: error+lambat 100%, baseline 1%</li>
+<li>[ ] Troubleshooting guide ada</li>
+</ul>
+<h2 id="cara-buktikan-acceptance">Cara buktikan (acceptance)<a class="headerlink" href="#cara-buktikan-acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Screenshot LogQL by trace_id → <code>evidence/</code>.</li>
+<li>Screenshot Tempo trace (span DB dominan) → <code>evidence/</code>.</li>
+<li><code>config.alloy</code> aktif (Alloy, bukan Promtail) → <code>docker compose ps</code>.</li>
+<li><code>troubleshooting.md</code> langkah lengkap → <code>evidence/</code>.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-11-observability/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

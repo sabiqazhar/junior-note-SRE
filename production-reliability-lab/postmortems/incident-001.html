@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Incident 001 — Template</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/postmortems/incident-001.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#incident-001-template">Incident 001 — Template</a><ul>
+<li><a href="#aturan-penulisan">Aturan penulisan</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="incident-001-template">Incident 001 — Template<a class="headerlink" href="#incident-001-template" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Salin file ini tiap kali ada insiden. Nama: <code>incident-002.md</code>, dst.
+<strong>Blameless:</strong> fokus ke sistem yang memungkinkan kejadian ini, bukan ke orang.
+Kalau di bagian root cause tertulis nama orang, postmortem ini gagal.</p>
+</blockquote>
+<pre><code class="language-markdown"># Incident 00X — Judul singkat (gejala, bukan penyebab)
+
+## Metadata
+| Item | Isi |
+| --- | --- |
+| Severity | SEV2 |
+| Durasi | 34 menit |
+| Penulis | &lt;nama&gt; |
+| Tanggal | YYYY-MM-DD |
+| Status | Teratasi / Monitoring |
+
+## Impact
+- 12% request gagal selama 34 menit
+- ~4.200 request terdampak (dari total X request)
+- Error budget 30 hari terpakai 8%
+- Tidak ada kehilangan data / tidak ada dampak finansial langsung
+
+## Timeline (UTC — tulis apa adanya, jangan dibaguskan)
+| Waktu | Kejadian |
+| --- | --- |
+| 10:14 | Deploy versi sha-abc123 ke lab |
+| 10:31 | Alert HighErrorBudgetBurn firing |
+| 10:33 | On-call mulai investigasi |
+| 10:36 | Cek dashboard: error rate naik, latency normal |
+| 10:41 | Hipotesis: connection pool habis |
+| 10:44 | Verifikasi: koneksi DB mencapai batas maksimum |
+| 10:47 | Rollback ke sha-9f8e21 |
+| 10:48 | Error rate kembali normal |
+
+## Deteksi
+- Alert yang menyala: HighErrorBudgetBurn
+- Waktu dari masalah mulai → alert: 17 menit
+- Apakah ada sinyal yang lebih cepat seharusnya menyala? Ya: saturasi koneksi DB
+  belum punya alert.
+
+## Root cause
+Satu kalimat, jujur, menyebut mekanisme bukan orang.
+Contoh: &quot;Deploy memperkenalkan query tanpa batas LIMIT sehingga koneksi database
+dipegang lebih lama dari kapasitas pool yang tersedia.&quot;
+
+## Contributing factors (5-whys)
+1. Kenapa request gagal? Koneksi DB habis.
+2. Kenapa koneksi habis? Query baru menahan koneksi lebih lama.
+3. Kenapa query baru lolos? Tidak ada integration test yang mengukur durasi query.
+4. Kenapa tidak ada test itu? Tidak pernah ada insiden serupa sebelumnya.
+5. Kenapa tidak pernah terdeteksi? Tidak ada alert untuk saturasi koneksi.
+
+## What went well
+- Alert SLO menyala dalam 17 menit
+- Rollback berjalan tanpa masalah — prosedur sudah pernah diuji
+
+## What went wrong
+- Tidak ada dashboard untuk saturasi koneksi database
+- Deteksi bergantung pada error rate, bukan pada sinyal leading (saturasi)
+- Butuh 12 menit untuk sampai ke hipotesis yang benar
+
+## Luck
+- Kejadian di jam kerja, bukan jam 3 pagi
+- Traffic sedang rendah, jadi dampak terbatas
+
+## Action items
+| # | Tindakan | Tipe | Owner | Tenggat | Prioritas |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Tambah panel + alert saturasi koneksi DB | Deteksi | | +1 minggu | P1 |
+| 2 | Integration test yang mengukur durasi query | Pencegahan | | +2 minggu | P1 |
+| 3 | Batasi ukuran hasil query di layer aplikasi | Mitigasi | | +2 minggu | P2 |
+
+## Pelajaran
+Satu atau dua kalimat yang bisa dipakai orang lain.
+</code></pre>
+<h2 id="aturan-penulisan">Aturan penulisan<a class="headerlink" href="#aturan-penulisan" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Timeline pakai waktu <strong>sebenarnya</strong>, termasuk yang membuat lo terlihat lambat.</li>
+<li>Action item wajib punya <strong>owner dan tenggat</strong>. Tanpa itu, ia cuma harapan.</li>
+<li>Bedakan <strong>mitigasi</strong> (mengurangi dampak sekarang) dan <strong>pencegahan</strong> (mencegah terulang).</li>
+<li>Jangan tutup postmortem sebelum action item P1 selesai.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/postmortems/incident-001.md</span><span><a href="../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

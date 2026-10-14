@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 01 · Linux observability &amp; troubleshooting</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-01-linux/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-01-linux-observability-troubleshooting">Perintah — Week 01 · Linux observability &amp; troubleshooting</a><ul>
+<li><a href="#hari-2-kondisi-normal">Hari 2 (kondisi normal)</a></li>
+<li><a href="#hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-01-linux-observability-troubleshooting">Perintah — Week 01 · Linux observability &amp; troubleshooting<a class="headerlink" href="#perintah-week-01-linux-observability-troubleshooting" title="Permanent link">&para;</a></h1>
+<p>Format: <code>perintah</code> → output yang diharap → interpretasi. Output di bawah sudah disanitasi (PID, IP, waktu diganti placeholder). Jalankan di Ubuntu 22.04/24.04 dengan aplikasi lab (<code>sre-api</code>) jalan.</p>
+<p>Anggaplah <code>sre-api</code> jalan di port <code>8080</code> dengan PID contoh <code>9001</code>. Ganti dengan PID asli lo (<code>pgrep -f sre-api</code>).</p>
+<hr />
+<h2 id="hari-2-kondisi-normal">Hari 2 (kondisi normal)<a class="headerlink" href="#hari-2-kondisi-normal" title="Permanent link">&para;</a></h2>
+<p><strong>1. Identitas kernel &amp; arsitektur</strong></p>
+<pre><code class="language-bash">uname -a
+</code></pre>
+<p>→ <code>Linux lab-vm 6.8.0-xx-generic #yy-Ubuntu SMP x86_64 GNU/Linux</code>
+→ Kernel 6.x (Ubuntu 24.04 bawa HWE). Versi kernel penting karena PSI butuh &gt;= 4.20, cgroup v2 butuh &gt;= 4.5.</p>
+<p><strong>2. Load average 1/5/15 menit</strong></p>
+<pre><code class="language-bash">uptime
+</code></pre>
+<p>→ <code>up 3 days, load average: 0.12, 0.08, 0.05</code>
+→ Angka di bawah jumlah core = sistem idle. Bukan persen CPU.</p>
+<p><strong>3. Memori: lihat <code>available</code>, BUKAN <code>free</code></strong></p>
+<pre><code class="language-bash">free -h
+</code></pre>
+<p>→ <code>Mem: total 7.7Gi, free 280Mi, buff/cache 4.1Gi, available 6.9Gi</code>
+→ <code>available</code> 6.9Gi artinya masih lega. <code>free</code> kecil itu wajar (Linux pakai RAM buat page cache).</p>
+<p><strong>4. Disk &amp; inode terpisah</strong></p>
+<pre><code class="language-bash">df -h &amp;&amp; df -i
+</code></pre>
+<p>→ <code>Use%</code> (kapasitas) dan <code>IUse%</code> (jumlah file). Keduanya harus &lt;90%.
+→ "Disk penuh" bisa jadi inode habis (<code>df -i</code> 100%) padahal kapasitas masih 40%.</p>
+<p><strong>5. Proses pemakan CPU teratas</strong></p>
+<pre><code class="language-bash">ps aux --sort=-%cpu | head -10
+</code></pre>
+<p>→ Baris teratas nunjukin COMMAND &amp; %CPU tertinggi, mis. <code>sre-api  85.0</code>.
+→ Buat ngecek siapa yang lagi "panas" di level proses.</p>
+<p><strong>6. Proses pemakan memori teratas</strong></p>
+<pre><code class="language-bash">ps aux --sort=-%mem | head -10
+</code></pre>
+<p>→ Sama, diurutkan memori. Bedakan VSZ (virtual) vs RSS (fisik, yang makan RAM beneran).</p>
+<p><strong>7. Service sistem yang gagal</strong></p>
+<pre><code class="language-bash">systemctl --failed
+</code></pre>
+<p>→ <code>0 loaded units listed</code> → sehat. Kalau ada unit, itu titik mulai investigasi.</p>
+<p><strong>8. Error journal sejak boot</strong></p>
+<pre><code class="language-bash">journalctl -p err -b --no-pager
+</code></pre>
+<p>→ Baris merah = error. Kosong berarti tidak ada error level err sejak boot.</p>
+<p><strong>9. Cari PID aplikasi + command lengkap</strong></p>
+<pre><code class="language-bash">pgrep -af 'sre-api|go run'
+</code></pre>
+<p>→ <code>9001 /app/sre-api</code> — ini PID yang lo pakai di langkah berikut.</p>
+<p><strong>10. Siapa yang listen di 8080</strong></p>
+<pre><code class="language-bash">ss -lntp | grep 8080
+</code></pre>
+<p>→ <code>LISTEN 0 4096 *:8080 users:(("sre-api",pid=9001,fd=3))</code>
+→ Bukti: proses Go lo benar-benar listen, dan punya PID 9001.</p>
+<p><strong>11. File &amp; koneksi yang dibuka proses</strong></p>
+<pre><code class="language-bash">lsof -p 9001 | head -30
+</code></pre>
+<p>→ Baris <code>IPv4 ... TCP localhost:8080 (LISTEN)</code>, koneksi ke <code>5432</code> (Postgres) &amp; <code>6379</code> (Redis).
+→ Bukti dependency terhubung: ada socket ke Postgres &amp; Redis.</p>
+<p><strong>12. Koneksi di port 8080 (hakim waktu port bentrok)</strong></p>
+<pre><code class="language-bash">lsof -i :8080
+</code></pre>
+<p>→ Sama dengan <code>ss</code> di atas tapi dari sisi koneksi. Kalau ini kosong tapi <code>ss -lntp</code> ada, berarti port cuma listen lokal.</p>
+<p><strong>13. Thread &amp; RSS dari /proc</strong></p>
+<pre><code class="language-bash">cat /proc/9001/status | grep -E 'Threads|VmRSS'
+</code></pre>
+<p>→ <code>Threads: 18</code> <code>VmRSS: 28400 kB</code>
+→ 18 thread OS (goroutine Go dipetakan ke sini), pakai ~28 MB RAM fisik.</p>
+<p><strong>14. Jumlah file descriptor</strong></p>
+<pre><code class="language-bash">ls /proc/9001/fd | wc -l
+</code></pre>
+<p>→ <code>43</code>
+→ Tiap koneksi HTTP + DB + file = 1 fd. Naik terus = bocor koneksi (selidiki di minggu 6).</p>
+<hr />
+<h2 id="hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)<a class="headerlink" href="#hari-3-eksperimen-kegagalan" title="Permanent link">&para;</a></h2>
+<p><strong>15. Bikin CPU tinggi lalu lihat per-thread</strong></p>
+<pre><code class="language-bash">yes &gt; /dev/null &amp; BAD=$!
+top -H -p $BAD
+</code></pre>
+<p>→ <code>top -H</code> nunjukin thread <code>yes</code> di 100% CPU, bukan cuma proses.
+→ <code>kill -TERM $BAD</code> lalu <code>kill -KILL $BAD</code> kalau bandel.</p>
+<p><strong>16. CPU+mem+IO per proses, interval 1s</strong></p>
+<pre><code class="language-bash">pidstat -urd -p 9001 1 5
+</code></pre>
+<p>→ Baris ke-2 dst: <code>%cpu</code>, <code>minflt/s</code>, <code>kbmemfree</code>. Baris ke-1 itu rata-rata sejak boot.
+→ Tunggu baris ke-2 sebelum simpulkan.</p>
+<p><strong>17. Status systemd unit yang sengaja rusak</strong></p>
+<pre><code class="language-bash">systemctl status sre-lab.service
+</code></pre>
+<p>→ <code>failed (Result: exit-code)</code> + pesan error path binary.
+→ Ini cara bedain "aplikasi error" vs "sistem error".</p>
+<p><strong>18. Log spesifik unit</strong></p>
+<pre><code class="language-bash">journalctl -u sre-lab.service -n 100 --no-pager
+</code></pre>
+<p>→ Pesan <code>execve: No such file or directory</code> (path salah).
+→ Journal = sumber kebenaran, lebih jujur dari log aplikasi.</p>
+<p><strong>19. Tiga kondisi: proses mati</strong></p>
+<pre><code class="language-bash">pgrep -f sre-api      # kosong
+ss -lntp | grep 8080  # kosong
+curl -v --max-time 3 http://localhost:8080/health
+</code></pre>
+<p>→ <code>curl: (7) Failed to connect ... Connection refused</code>
+→ <code>exit 7</code> = tidak ada yang listen.</p>
+<p><strong>20. Tiga kondisi: hang (listen tapi nggak balas)</strong></p>
+<pre><code class="language-bash">curl -v --max-time 3 http://localhost:8080/slow
+echo &quot;exit code: $?&quot;
+</code></pre>
+<p>→ <code>curl: (28) Operation timed out</code> → <code>exit 28</code>.
+→ <code>ss</code> nemu listen, tapi aplikasi nggak balas (biasanya thread pool / DB habis).</p>
+<p><strong>21. Bukti exit code (simpan trik ini)</strong></p>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'code=%{http_code} exit=%{exitcode}\n' http://localhost:8080/health
+</code></pre>
+<p>→ <code>code=200 exit=0</code> (ok), <code>code=000 exit=7</code> (refused), <code>code=000 exit=28</code> (timeout).
+→ <code>http_code=000</code> = curl gagal sebelum dapat response HTTP.</p>
+<p><strong>22. PSI: sistem lagi nunggu resource?</strong></p>
+<pre><code class="language-bash">cat /proc/pressure/memory
+</code></pre>
+<p>→ <code>some avg10=0.00 avg60=0.00 avg300=2.31 total=1234567</code>
+→ <code>avg300</code> naik = beberapa proses sering nunggu memori. <code>full</code> tinggi = thrashing.</p>
+<p><strong>23. OOM cgroup (bila eksperimen Hari 3.3 jalan)</strong></p>
+<pre><code class="language-bash">cat /sys/fs/cgroup/memory.events
+</code></pre>
+<p>→ <code>oom 1</code> <code>oom_kill 1</code> → kernel pernah nembak proses di cgroup ini.
+→ Bukti OOM tanpa harus bongkar <code>dmesg</code>.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-01-linux/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

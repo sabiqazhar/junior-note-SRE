@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deployment &amp; Rollback</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/docs/deployment.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#deployment-rollback">Deployment &amp; Rollback</a><ul>
+<li><a href="#prinsip">Prinsip</a></li>
+<li><a href="#build">Build</a></li>
+<li><a href="#deploy-versi-tertentu">Deploy versi tertentu</a></li>
+<li><a href="#checklist-sebelum-deploy">Checklist sebelum deploy</a></li>
+<li><a href="#checklist-setelah-deploy">Checklist setelah deploy</a></li>
+<li><a href="#kriteria-rollback-jangan-debat-lihat-angka">Kriteria rollback — jangan debat, lihat angka</a></li>
+<li><a href="#prosedur-rollback">Prosedur rollback</a></li>
+<li><a href="#verifikasi-setelah-rollback">Verifikasi setelah rollback</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="deployment-rollback">Deployment &amp; Rollback<a class="headerlink" href="#deployment-rollback" title="Permanent link">&para;</a></h1>
+<h2 id="prinsip">Prinsip<a class="headerlink" href="#prinsip" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Satu artefak, banyak environment.</strong> Image dibangun sekali, diberi tag commit SHA, tidak pernah diubah.</li>
+<li><strong>Rollback itu fitur, bukan rencana cadangan.</strong> Kalau belum pernah diuji, berarti belum punya rollback.</li>
+<li><strong>Tidak ada langkah manual yang wajib.</strong> Kalau harus ingat sesuatu, itu bug.</li>
+</ol>
+<h2 id="build">Build<a class="headerlink" href="#build" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash">make build            # -&gt; sre-lab-api:sha-&lt;12 char&gt;
+# di CI (push ke main): otomatis, plus attestation
+gh attestation verify oci://ghcr.io/&lt;user&gt;/.../sre-api:sha-abc123 -R &lt;user&gt;/&lt;repo&gt;
+</code></pre>
+<h2 id="deploy-versi-tertentu">Deploy versi tertentu<a class="headerlink" href="#deploy-versi-tertentu" title="Permanent link">&para;</a></h2>
+<p>Selalu dengan <strong>digest</strong>, bukan tag mutable:</p>
+<pre><code class="language-bash">docker pull ghcr.io/&lt;user&gt;/.../sre-api@sha256:&lt;digest&gt;
+# lalu pakai digest itu di compose / manifest k8s
+kubectl set image deployment/sre-api api=ghcr.io/&lt;user&gt;/.../sre-api@sha256:&lt;digest&gt;
+kubectl rollout status deployment/sre-api --timeout=5m
+</code></pre>
+<h2 id="checklist-sebelum-deploy">Checklist sebelum deploy<a class="headerlink" href="#checklist-sebelum-deploy" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] CI hijau (unit + integration)</li>
+<li>[ ] Perubahan konfigurasi/secret sudah ada di environment target</li>
+<li>[ ] Ada rencana rollback: <strong>versi sebelumnya diketahui dan tersedia</strong></li>
+<li>[ ] Tidak dalam masa maintenance window sistem lain yang jadi dependency</li>
+<li>[ ] Alerting sehat (bukan dalam kondisi banyak alert aktif)</li>
+</ul>
+<h2 id="checklist-setelah-deploy">Checklist setelah deploy<a class="headerlink" href="#checklist-setelah-deploy" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>/healthz</code> dan <code>/readyz</code> 200</li>
+<li>[ ] Error rate dalam 10 menit pertama tidak lebih buruk dari baseline</li>
+<li>[ ] p95 latency dalam rentang normal</li>
+<li>[ ] Tidak ada restart container yang tidak wajar (<code>docker compose ps</code>, <code>kubectl get pods</code>)</li>
+<li>[ ] Log tidak muncul error baru yang belum dikenal</li>
+</ul>
+<h2 id="kriteria-rollback-jangan-debat-lihat-angka">Kriteria rollback — jangan debat, lihat angka<a class="headerlink" href="#kriteria-rollback-jangan-debat-lihat-angka" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Ambang</th>
+<th>Tindakan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Error rate</td>
+<td>&gt; 2% selama 5 menit</td>
+<td>Rollback</td>
+</tr>
+<tr>
+<td>p95 latency</td>
+<td>&gt; 2× baseline selama 10 menit</td>
+<td>Rollback</td>
+</tr>
+<tr>
+<td>CrashLoop / restart beruntun</td>
+<td>≥ 3 kali dalam 5 menit</td>
+<td>Rollback</td>
+</tr>
+<tr>
+<td>Readiness gagal terus</td>
+<td>&gt; 2 menit</td>
+<td>Rollback</td>
+</tr>
+</tbody>
+</table>
+<h2 id="prosedur-rollback">Prosedur rollback<a class="headerlink" href="#prosedur-rollback" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># Kubernetes
+kubectl rollout undo deployment/sre-api
+kubectl rollout status deployment/sre-api
+
+# Compose (keterbatasan: tidak ada perintah rollout; ini recreate ke image sebelumnya)
+docker compose down
+# ganti tag image ke versi sebelumnya
+docker compose up -d --wait
+</code></pre>
+<p><strong>Perkiraan waktu:</strong> K8s ~30–60 detik. Compose: ada jeda, tidak zero-downtime — keterbatasan ini dicatat eksplisit di <code>labs/week-06-deployment/</code>.</p>
+<h2 id="verifikasi-setelah-rollback">Verifikasi setelah rollback<a class="headerlink" href="#verifikasi-setelah-rollback" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Error rate kembali ke baseline</li>
+<li>[ ] <code>/readyz</code> 200</li>
+<li>[ ] Tidak ada request yang hilang (cek log proxy untuk 5xx selama jendela rollback)</li>
+<li>[ ] Catat: berapa lama dari keputusan rollback sampai sistem normal</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/docs/deployment.md</span><span><a href="../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

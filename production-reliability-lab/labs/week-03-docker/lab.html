@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 03 · Docker production fundamentals</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-03-docker/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-03-docker-production-fundamentals">Lab — Minggu 03 · Docker production fundamentals</a><ul>
+<li><a href="#persiapan-1015-menit">Persiapan (10–15 menit)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-kegagalan-2-jam-wajib-ada-cara-kembali-ke-normal">Hari 3 · Eksperimen kegagalan (2 jam) — WAJIB ada cara kembali ke normal</a></li>
+<li><a href="#hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)</a></li>
+<li><a href="#daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"</a></li>
+<li><a href="#cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-03-docker-production-fundamentals">Lab — Minggu 03 · Docker production fundamentals<a class="headerlink" href="#lab-minggu-03-docker-production-fundamentals" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Target: stack Go API + PostgreSQL 18 + Redis jalan dari satu perintah, dengan resource limit, healthcheck, dan degradasi terkendali.</p>
+</blockquote>
+<h2 id="persiapan-1015-menit">Persiapan (10–15 menit)<a class="headerlink" href="#persiapan-1015-menit" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Cek Docker Compose v2</strong> → perintah: <code>docker compose version</code> → Yang harus terjadi: <code>Docker Compose version v2.x.x</code> (ada spasi, bukan <code>docker-compose</code>). → Kalau gagal: <code>docker compose</code> nggak ada = install Docker Engine terbaru. → Catat di notes.md.</li>
+<li><strong>Cek file lab ada</strong> → perintah: <code>ls docker/compose.yaml docker/Dockerfile .env.example</code> → Yang harus terjadi: ketiganya ada. → Kalau gagal: ambil dari repo utama. → Catat di notes.md.</li>
+<li><strong>Siapin .env</strong> → perintah: <code>cp .env.example .env &amp;&amp; grep -E 'PG|REDIS' .env</code> → Yang harus terjadi: <code>.env</code> berisi <code>PGUSER</code>, <code>PGPASSWORD</code>, <code>PGDATABASE</code>, <code>REDIS_URL</code>. → Kalau gagal: edit manual. → Catat di notes.md (jangan commit .env!).</li>
+</ol>
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Baca bahan bacaan</strong> → perintah: <code>cat labs/week-03-docker/bahan-bacaan.md</code> → Yang harus terjadi: lo paham depends_on vs healthcheck vs limits. → Kalau gagal: ulang bagian #2. → Catat di notes.md.</li>
+<li><strong>Baca compose reference</strong> → perintah: buka <a href="https://docs.docker.com/reference/compose-file/services/">Compose services</a> → Yang harus terjadi: lo tau <code>condition: service_healthy</code> &amp; <code>deploy.resources.limits</code>. → Kalau gagal: fokus ke contoh di lab.md. → Catat di notes.md.</li>
+<li><strong>Pahami multi-stage Dockerfile</strong> → perintah: <code>cat docker/Dockerfile</code> → Yang harus terjadi: lo lihat <code>FROM golang AS build</code> lalu <code>FROM gcr.io/distroless/static</code>. → Kalau gagal: lihat Dockerfile reference. → Catat di notes.md.</li>
+<li><strong>Bedah compose.yaml</strong> → perintah: <code>docker compose -f docker/compose.yaml config</code> → Yang harus terjadi: YAML valid, service <code>api/postgres/redis</code> muncul. → Kalau gagal: baca error (biasanya indent YAML). → Catat di notes.md.</li>
+<li><strong>Catat versi dependency</strong> → perintah: <code>grep -E 'image:' docker/compose.yaml</code> → Yang harus terjadi: <code>postgres:18</code>, <code>redis:7-alpine</code>, <code>nginx:1.29-alpine</code>. → Kalau gagal: sesuaikan ke versi di jadwal. → Catat di notes.md.</li>
+</ol>
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Build &amp; jalanin dari bersih</strong> → perintah: <code>docker compose up -d --build --wait</code> → Yang harus terjadi: <code>Running 3/3</code> dan semua <code>healthy</code>. → Kalau gagal: <code>docker compose logs</code> cari panic. → Catat di notes.md.</li>
+<li><strong>Cek status + health</strong> → perintah: <code>docker compose ps --format 'table {{.Name}}\t{{.Status}}\t{{.Health}}'</code> → Yang harus terjadi: <code>api Up ... healthy</code>, <code>postgres ... healthy</code>, <code>redis ... healthy</code>. → Kalau gagal: lihat healthcheck tiap service. → Catat di notes.md.</li>
+<li><strong>Validasi config</strong> → perintah: <code>docker compose config | head -40</code> → Yang harus terjadi: limit &amp; healthcheck kelihatan di output. → Kalau gagal: compose.yaml salah. → Catat di notes.md.</li>
+<li><strong>Lihat resource nyata</strong> → perintah: <code>docker stats --no-stream</code> → Yang harus terjadi: CPU/MEM/PIDS per container sesuai limit. → Kalau gagal: limit belum dipasang. → Catat di notes.md.</li>
+<li><strong>Inspect network</strong> → perintah: <code>docker network ls</code> &amp; <code>docker compose exec api getent hosts redis</code> → Yang harus terjadi: bridge stack ada; <code>api</code> resolve <code>redis</code>. → Kalau gagal: cek <code>networks:</code> di compose. → Catat di notes.md.</li>
+<li><strong>Cek port terekspos</strong> → perintah: <code>ss -lntp | grep -E '5432|6379|8080'</code> → Yang harus terjadi: CUMA <code>8080</code> (atau <code>80</code> nginx) yang listen di host; <code>5432</code>/<code>6379</code> nggak ada. → Kalau gagal: postgres/redis kepasang <code>ports:</code>. → Catat di notes.md.</li>
+</ol>
+<h2 id="hari-3-eksperimen-kegagalan-2-jam-wajib-ada-cara-kembali-ke-normal">Hari 3 · Eksperimen kegagalan (2 jam) — WAJIB ada cara kembali ke normal<a class="headerlink" href="#hari-3-eksperimen-kegagalan-2-jam-wajib-ada-cara-kembali-ke-normal" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Batas memori mepet → OOM cgroup</strong> → perintah:
+   <code>bash
+   docker run --rm --name oom-test --memory=64m --cpus=.5 --pids-limit=100 postgres:18
+   docker inspect --format '{{json .State}}' oom-test 2&gt;/dev/null</code>
+   → Yang harus terjadi: container exit karena OOM; <code>docker events --since 10m</code> nunjukin <code>oom</code>. → Kalau gagal: postgres butuh &gt;64m; naikin ke 128m. → Catat di notes.md. <strong>Kembali normal:</strong> container <code>--rm</code> otomatis bersih; jalankan <code>docker ps -a</code> buat pastiin nggak nyangkut.</li>
+<li><strong>Matiin dependency → lihat reaksi API</strong> → perintah:
+   <code>bash
+   docker compose stop redis
+   docker compose logs -f api        # amati: panic? hang? 503?
+   docker compose ps                 # health api berubah?</code>
+   → Yang harus terjadi: lo lihat API <strong>hang</strong> (ini yang dicari — bug!). → Kalau gagal: API langsung 503 = sudah bagus, catat sebagai "controlled degradation OK". → Catat di notes.md. <strong>Kembali normal (WAJIB):</strong> <code>docker compose start redis &amp;&amp; docker compose ps</code> → tunggu <code>redis</code> sehat sebelum lanjut.</li>
+<li><strong>Container restart loop</strong> → perintah: <code>docker compose restart api &amp;&amp; docker compose ps --format 'table {{.Name}}\t{{.Status}}'</code> → Yang harus terjadi: kalau app panic, status <code>Restarting</code>. → Kalau gagal: app sehat, status <code>Up</code>. → Catat di notes.md. <strong>Kembali normal:</strong> pastiin app bener (perbaiki env) lalu <code>docker compose up -d</code>.</li>
+<li><strong>Cari kenapa restart terus</strong> → perintah: <code>docker inspect &lt;container&gt; --format '{{json .State}}' | jq</code> &amp; <code>docker events --since 10m</code> → Yang harus terjadi: <code>ExitCode</code> &amp; <code>Error</code> ketemu; event <code>die</code>/<code>oom</code> muncul. → Kalau gagal: jq belum ada, pakai <code>python3 -m json.tool</code>. → Catat di notes.md.</li>
+<li><strong>Verifikasi degradasi terkendali</strong> → perintah: <code>curl -sS -m 2 -o /dev/null -w '%{http_code} time=%{time_total}\n' http://localhost:8080/health</code> (waktu Redis mati) → Yang harus terjadi: 503 dalam &lt;100ms (bukan hang 30s). → Kalau gagal: ini bukti bug; catat buat diperbaiki minggu 6. → Catat di notes.md.</li>
+</ol>
+<h2 id="hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)<a class="headerlink" href="#hari-4-review-dokumentasi-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Healthcheck beneran</strong> → perintah: buka <code>docker/compose.yaml</code>, cek <code>test:</code> tiap service nggak <code>true</code>. → Yang harus terjadi: PG = <code>pg_isready</code>, Redis = <code>redis-cli ping</code>. → Kalau gagal: ganti ke tes nyata. → Catat di notes.md.</li>
+<li><strong>Tabel perbandingan mekanisme</strong> → perintah: salin tabel "depends_on vs healthcheck vs app retry" ke <code>commands.md</code>. → Yang harus terjadi: tabel lengkap. → Kalau gagal: lihat ringkasan. → Catat di notes.md.</li>
+<li><strong>Cek .env / .gitignore</strong> → perintah: <code>grep -n 'POSTGRES_PASSWORD' docker/compose.yaml; grep -n '.env' .gitignore</code> → Yang harus terjadi: password di <code>.env</code> (lewat <code>env_file</code>), dan <code>.env</code> di <code>.gitignore</code>. → Kalau gagal: jangan hardcode password. → Catat di notes.md.</li>
+<li><strong>Lengkapi commands.md</strong> → perintah: isi Hari 2 &amp; Hari 3 dengan output asli (≥15 perintah). → Yang harus terjadi: semua percobaan tercatat. → Kalau gagal: tambah eksperimen. → Catat di notes.md.</li>
+<li><strong>Update README</strong> → perintah: isi <code>## Referensi</code>. → Yang harus terjadi: 5–8 link primer. → Kalau gagal: lihat bahan bacaan #5. → Catat di notes.md.</li>
+<li><strong>Commit</strong> → perintah: <code>git add labs/week-03-docker docker .env.example &amp;&amp; git commit -m "week 03 docker lab"</code> → Yang harus terjadi: commit masuk, <code>.env</code> tdk ikut. → Kalau gagal: cek <code>git status</code>. → Catat di notes.md.</li>
+</ol>
+<h2 id="daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"<a class="headerlink" href="#daftar-periksa-minggu-ini-selesai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>docker compose up -d --build --wait</code> jalan dari bersih, 3 service healthy.</li>
+<li>[ ] <code>ss -lntp</code> nunjukin 5432/6379 TIDAK terekspos ke host.</li>
+<li>[ ] Tiap container punya limit CPU/memori/pids + healthcheck nyata.</li>
+<li>[ ] Lo bisa reproduksi: Redis mati → API hang/503, lalu <code>start redis</code> balikin normal.</li>
+<li>[ ] <code>commands.md</code> ≥15 perintah + output; <code>notes.md</code> ada tabel &amp; kesimpulan.</li>
+<li>[ ] State bersih: nggak ada container <code>--rm</code> nyangkut, Redis sudah <code>start</code>.</li>
+</ul>
+<h2 id="cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer<a class="headerlink" href="#cara-membuktikan-ke-reviewer" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 1. Start bersih satu perintah
+docker compose up -d --build --wait
+docker compose ps --format 'table {{.Name}}\t{{.Status}}\t{{.Health}}'
+
+# 2. Bukti port internal doang
+sudo ss -lntp | grep -E '5432|6379' &amp;&amp; echo &quot;BAHAYA: terekspos&quot; || echo &quot;aman: PG/Redis internal&quot;
+
+# 3. Bukti degradasi (matiin redis, amati)
+docker compose stop redis
+curl -sS -m 2 -o /dev/null -w 'code=%{http_code} time=%{time_total}\n' http://localhost:8080/health
+docker compose start redis &amp;&amp; docker compose ps
+
+# 4. Bukti resource limit
+docker stats --no-stream
+
+# 5. State bersih
+docker ps -a --filter status=exited
+</code></pre>
+<div class="foot"><span>production-reliability-lab/labs/week-03-docker/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

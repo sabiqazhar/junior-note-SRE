@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 01 · Linux observability dan troubleshooting — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-01-linux/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-01-linux-observability-dan-troubleshooting-bahan-bacaan">Minggu 01 · Linux observability dan troubleshooting — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-proses-vs-thread">2.1 Proses vs thread</a></li>
+<li><a href="#22-signal-sigterm-vs-sigkill">2.2 Signal: SIGTERM vs SIGKILL</a></li>
+<li><a href="#23-systemd-dan-journalctl">2.3 systemd dan journalctl</a></li>
+<li><a href="#24-memori-bedanya-free-dan-available">2.4 Memori: bedanya free dan available</a></li>
+<li><a href="#25-file-descriptor">2.5 File descriptor</a></li>
+<li><a href="#26-cgroup-v2">2.6 cgroup v2</a></li>
+<li><a href="#27-psi-pressure-stall-information">2.7 PSI (Pressure Stall Information)</a></li>
+<li><a href="#28-load-average">2.8 Load average</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar-dari-memori-habis-sampai-oom-killer-menembak">3. Mekanisme di balik layar: dari memori habis sampai OOM killer menembak</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-01-linux-observability-dan-troubleshooting-bahan-bacaan">Minggu 01 · Linux observability dan troubleshooting — Bahan Bacaan<a class="headerlink" href="#minggu-01-linux-observability-dan-troubleshooting-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham konsepnya. Baru setelah itu kerjakan lab.md.</p>
+</blockquote>
+<hr />
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Pernah nggak lo dapet pesan begini jam 2 pagi: <em>"Aplikasinya lemot banget, tolong dicek."</em> Terus lo buka dashboard, lihat grafik CPU naik, lalu... bingung mau ngapain. Restart? Tunggu? Naikin instance? Semua itu tebakan. Dan tebakan yang salah di jam 2 pagi harganya mahal: lo bangunin orang yang salah, lo nambah kapasitas buat masalah yang sebenernya cuma satu query jelek, atau lo restart dan bukti hilang — besok pagi lo nggak bisa jelasin apa pun.</p>
+<p>Minggu ini ngajarin hal yang lebih mendasar dari Prometheus, Grafana, atau tracing: <strong>gimana caranya nanya ke kernel Linux langsung</strong>. Karena pada akhirnya, semua lapisan di atasnya (container, orchestrator, bahkan bahasa pemrograman lo) cuma ngasih <em>tampilan</em> dari apa yang sebenarnya terjadi di kernel. Kalau lo bisa baca kondisi kernel, lo nggak perlu nebak.</p>
+<p>Analoginya gini. Bayangin lo montir. Ada yang bilang "mobil gue bunyi". Lo bisa: (a) ganti oli dan berharap bunyinya hilang, atau (b) buka kap, dengerin bunyinya dari mana, pegang bagian yang getar, baru mutusin. SRE itu montir tipe (b). Minggu ini lo belajar "buka kap"-nya Linux: <code>ps</code>, <code>ss</code>, <code>lsof</code>, <code>/proc</code>, <code>journalctl</code>, dan <code>cgroup</code>.</p>
+<p>Alasan lain kenapa ini minggu nomor satu: hampir semua insiden produksi ujungnya cuma tiga pertanyaan. <strong>Siapa yang makan CPU? Siapa yang makan memori atau kena limit? Prosesnya masih hidup nggak, dan kalau hidup, kenapa nggak bisa diajak ngomong?</strong> Kalau tiga ini nggak bisa lo jawab dalam lima menit, observability stack secanggih apa pun cuma jadi dekorasi mahal.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-proses-vs-thread">2.1 Proses vs thread<a class="headerlink" href="#21-proses-vs-thread" title="Permanent link">&para;</a></h3>
+<p>Satu proses itu wadah: punya memori sendiri, file descriptor sendiri, dan <strong>satu atau lebih thread</strong>. Thread adalah yang sebenarnya dieksekusi CPU. Ini penting karena <code>top</code> biasa nunjukin angka per proses — jadi satu thread nakal di dalam proses yang kelihatannya "normal" bisa nyamar.</p>
+<p>Contoh nyata: aplikasi Go lo punya ratusan goroutine yang dipetakan ke belasan thread OS. Kalau satu goroutine looping tanpa henti, CPU satu core bisa 100% sementara prosesnya kelihatan cuma "lumayan sibuk".</p>
+<pre><code class="language-bash"># Lihat per THREAD, bukan cuma per proses
+top -H -p &lt;PID&gt;
+
+# Atau versi satu kali jalan, gampang di-copy ke notes
+ps -eLo pid,tid,pcpu,comm --sort=-pcpu | head -15
+</code></pre>
+<h3 id="22-signal-sigterm-vs-sigkill">2.2 Signal: SIGTERM vs SIGKILL<a class="headerlink" href="#22-signal-sigterm-vs-sigkill" title="Permanent link">&para;</a></h3>
+<p>Signal itu cara kernel dan lo "nyolek" proses. Dua yang paling penting:</p>
+<ul>
+<li><strong>SIGTERM (15)</strong> — "tolong berhenti". Proses <strong>bisa</strong> nangkep signal ini, beberes (nutup koneksi DB, nyelesaiin request yang lagi jalan), lalu keluar dengan rapi. Ini yang dipakai <code>systemctl stop</code>, <code>docker stop</code>, dan <code>kubectl delete pod</code>.</li>
+<li><strong>SIGKILL (9)</strong> — "mati sekarang". Proses <strong>tidak bisa</strong> nangkep, tidak bisa abaikan, tidak bisa beberes. Kernel yang cabut langsung.</li>
+</ul>
+<p>Kenapa ini penting buat SRE: <code>kill -9</code> yang jadi kebiasaan bakal nyiptain bug misterius. Koneksi database nggak ditutup, transaksi menggantung, file setengah jadi. Minggu 6 lo bakal lihat sendiri kenapa graceful shutdown itu nggak bisa dicapai kalau lo nembak prosesnya.</p>
+<pre><code class="language-bash">kill -TERM &lt;PID&gt;     # sopan
+kill -KILL &lt;PID&gt;     # paksa — cuma kalau TERM nggak digubris setelah waktu wajar
+</code></pre>
+<h3 id="23-systemd-dan-journalctl">2.3 systemd dan journalctl<a class="headerlink" href="#23-systemd-dan-journalctl" title="Permanent link">&para;</a></h3>
+<p>systemd itu init system (PID 1) sekaligus manajer service di hampir semua distro modern. Dua hal yang lo pedulikan:</p>
+<ol>
+<li><strong>Dia yang nyalain ulang service</strong> — lewat <code>Restart=</code> di unit file. Jadi kalau service lo "misteriusnya hidup lagi", itu bukan keajaiban, itu systemd.</li>
+<li><strong><code>journalctl</code> adalah sumber kebenaran.</strong> Log aplikasi bisa hilang, bisa ke-rotate, bisa salah level. Journal systemd nyimpen stdout/stderr service plus log kernel dalam satu tempat.</li>
+</ol>
+<pre><code class="language-bash">systemctl --failed                          # unit yang gagal
+systemctl status sre-lab.service
+journalctl -u sre-lab.service -n 100 --no-pager
+journalctl -p err -b --no-pager             # error sejak boot ini
+journalctl -k --no-pager                    # cuma log kernel (tempat OOM killer lapor)
+journalctl --since &quot;10 minutes ago&quot; --no-pager
+</code></pre>
+<h3 id="24-memori-bedanya-free-dan-available">2.4 Memori: bedanya <code>free</code> dan <code>available</code><a class="headerlink" href="#24-memori-bedanya-free-dan-available" title="Permanent link">&para;</a></h3>
+<p>Ini sumber salah diagnosis nomor satu. Linux itu pelit: memori yang nganggur dia pakai buat <strong>page cache</strong> (nyimpen isi file biar baca disk nggak perlu ulang). Cache ini bisa dibuang kapan aja kalau ada yang butuh.</p>
+<p>Jadi pas lo lihat <code>free -h</code> dan kolom <code>free</code> tinggal sedikit, itu <strong>bukan</strong> berarti memori habis. Yang harus lo lihat:</p>
+<table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>total</code></td>
+<td>total RAM fisik</td>
+</tr>
+<tr>
+<td><code>free</code></td>
+<td>memori yang benar-benar kosong dan nggak dipakai apa pun (selalu kecil, wajar)</td>
+</tr>
+<tr>
+<td><code>buff/cache</code></td>
+<td>page cache + buffer. Ini <strong>bukan musuh lo</strong> — ini memori yang bisa direklamasi</td>
+</tr>
+<tr>
+<td><code>available</code></td>
+<td>estimasi memori yang bisa dipakai aplikasi baru <strong>tanpa swapping</strong>. Ini angka yang lo pakai</td>
+</tr>
+</tbody>
+</table>
+<p>Kalau <code>available</code> masih besar tapi aplikasi lambat, masalahnya bukan memori. Kalau <code>available</code> kecil <strong>dan</strong> swap dipakai terus, baru itu masalah memori.</p>
+<h3 id="25-file-descriptor">2.5 File descriptor<a class="headerlink" href="#25-file-descriptor" title="Permanent link">&para;</a></h3>
+<p>File descriptor (fd) itu "nomor tiket" yang dipegang proses buat tiap resource terbuka: file, socket, pipe. Setiap koneksi HTTP masuk, setiap koneksi database, setiap file yang dibaca — semuanya makan satu fd.</p>
+<p>"Too many open files" bukan bug eksotis. Hampir selalu artinya: ada yang buka koneksi dan lupa nutup.</p>
+<pre><code class="language-bash">ulimit -n                      # batas per proses (shell lo)
+ls /proc/&lt;PID&gt;/fd | wc -l      # berapa fd yang dipakai proses ini
+cat /proc/&lt;PID&gt;/limits | grep 'open files'
+lsof -p &lt;PID&gt; | head -30       # fd apa aja
+</code></pre>
+<h3 id="26-cgroup-v2">2.6 cgroup v2<a class="headerlink" href="#26-cgroup-v2" title="Permanent link">&para;</a></h3>
+<p>cgroup (control group) adalah mekanisme kernel buat <strong>ngasih batas resource ke sekelompok proses</strong>. cgroup v2 adalah versi baru dengan satu hierarki terpadu, dan ini yang dipakai Docker, containerd, systemd, dan Kubernetes hari ini.</p>
+<p>Kenapa ini krusial: ini alasan container kena OOM <strong>meski RAM host masih lega</strong>. Container nggak ngeliat RAM host — dia cuma ngeliat batas cgroup-nya.</p>
+<pre><code class="language-bash">cat /sys/fs/cgroup/memory.max          # batas memori cgroup saat ini (max = tanpa batas)
+cat /sys/fs/cgroup/memory.current
+cat /sys/fs/cgroup/memory.events       # counter: low, high, max, oom, oom_kill
+cat /sys/fs/cgroup/memory.stat
+cat /sys/fs/cgroup/cpu.max             # format: &quot;quota period&quot;, contoh &quot;50000 100000&quot; = 0.5 CPU
+cat /sys/fs/cgroup/pids.current
+</code></pre>
+<p>Yang paling sering lo intip adalah <code>memory.events</code>. Kalau kolom <code>oom_kill</code> naik, berarti kernel pernah nembak proses di cgroup ini. Itu bukti, bukan perasaan.</p>
+<h3 id="27-psi-pressure-stall-information">2.7 PSI (Pressure Stall Information)<a class="headerlink" href="#27-psi-pressure-stall-information" title="Permanent link">&para;</a></h3>
+<p>PSI menjawab pertanyaan yang paling bikin frustrasi: <strong>"CPU-nya nggak 100%, tapi kok lambat?"</strong></p>
+<p>PSI ngukur <strong>berapa persen waktu proses menunggu</strong> (stalled) karena CPU/memori/IO, bukan berapa persen resource terpakai. Beda fundamental. Utilisasi 80% bisa berarti sehat; stall 40% berarti separuh waktu proses lo cuma ngantri.</p>
+<pre><code class="language-bash">cat /proc/pressure/cpu
+cat /proc/pressure/memory
+cat /proc/pressure/io
+</code></pre>
+<p>Formatnya:</p>
+<pre><code>some avg10=0.00 avg60=0.00 avg300=2.31 total=1234567
+full avg10=0.00 avg60=0.00 avg300=0.00 total=0
+</code></pre>
+<ul>
+<li><strong><code>some</code></strong> = persentase waktu di mana <em>minimal satu</em> task ngantri resource itu.</li>
+<li><strong><code>full</code></strong> = persentase waktu di mana <em>semua</em> task ngantri bersamaan. Ini parah: CPU cycle benar-benar kebuang. Kalau <code>full</code> tinggi dan lama, sistem lo sedang <strong>thrashing</strong>.</li>
+<li><code>avg10/60/300</code> = tren 10 detik, 1 menit, 5 menit. <code>total</code> = akumulasi mikrodetik, berguna buat deteksi spike pendek yang nggak kelihatan di rata-rata.</li>
+</ul>
+<p>Aturan praktis buat lab: <code>avg10</code> di atas 10% itu sudah berasa oleh user. <code>avg300</code> tinggi berarti masalah struktural, bukan spike sesaat.</p>
+<h3 id="28-load-average">2.8 Load average<a class="headerlink" href="#28-load-average" title="Permanent link">&para;</a></h3>
+<p>Load average (angka tiga di <code>uptime</code>) itu <strong>bukan persentase CPU</strong>. Dia adalah jumlah task yang sedang <strong>runnable</strong> (R) atau <strong>tidak bisa di-interupsi</strong> (D — biasanya nunggu disk/IO), dirata-rata eksponensial selama 1, 5, dan 15 menit.</p>
+<p>Makanya load tinggi bisa muncul padahal CPU idle: banyak proses ngantri di state <code>D</code>. Cek kolom <code>wa</code> (wait) di <code>vmstat</code> dan kolom <code>b</code> (blocked).</p>
+<pre><code class="language-bash">uptime
+vmstat 1 5        # kolom r = runnable, b = blocked, wa = % waktu nunggu IO
+</code></pre>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar-dari-memori-habis-sampai-oom-killer-menembak">3. Mekanisme di balik layar: dari memori habis sampai OOM killer menembak<a class="headerlink" href="#3-mekanisme-di-balik-layar-dari-memori-habis-sampai-oom-killer-menembak" title="Permanent link">&para;</a></h2>
+<p>Ini urutan yang sebenarnya terjadi. Lo bakal butuh ini buat ngejelasin insiden dengan percaya diri.</p>
+<p><strong>Langkah 1 — Ada yang minta memori.</strong>
+Aplikasi panggil <code>malloc()</code>. Di level kernel, ini biasanya cuma reservasi alamat virtual dulu. Memori fisik baru benar-benar dialokasi saat halaman itu disentuh (page fault).</p>
+<p><strong>Langkah 2 — Kernel ngitung apakah ini boleh.</strong>
+Tergantung <code>vm.overcommit_memory</code> (lihat file <code>/proc/sys/vm/overcommit_memory</code>):
+- <code>0</code> (default) — heuristik. Kernel nebak-nebak, boleh sedikit overcommit.
+- <code>1</code> — selalu iya, jangan pernah nolak.
+- <code>2</code> — strict. Tolak kalau sudah lewat <code>RAM * overcommit_ratio + swap</code>.</p>
+<p>Jadi di mode default, kernel bisa bilang "oke" dulu walau memori sebenarnya nggak cukup. Ini yang bikin OOM muncul <em>tiba-tiba</em> jauh kemudian.</p>
+<p><strong>Langkah 3 — Batas cgroup dicek lebih dulu.</strong>
+Kalau prosesnya masuk cgroup dengan <code>memory.max</code>, kernel nge-charge pemakaian ke cgroup itu. Kalau lewat batas:
+- Kernel coba reklamasi page cache di dalam cgroup itu.
+- Kalau masih lewat → <strong>OOM cgroup</strong>. Kernel cetak <code>Memory cgroup out of memory: Killed process ...</code>.
+- Counter <code>oom</code> dan <code>oom_kill</code> di <code>memory.events</code> naik.</p>
+<p><strong>Langkah 4 — Kalau bukan cgroup yang kena, host yang kena.</strong>
+Kernel panggil <code>out_of_memory()</code> → jalanin <code>select_bad_process()</code> → tiap proses dikasih skor <code>oom_badness()</code>. Skor itu kira-kira:</p>
+<pre><code>skor = (persentase memori yang dipakai proses) * 1000 + oom_score_adj
+</code></pre>
+<ul>
+<li><code>/proc/&lt;PID&gt;/oom_score</code> — skor saat ini (0–1000).</li>
+<li><code>/proc/&lt;PID&gt;/oom_score_adj</code> — <strong>bobot yang bisa lo atur</strong>, rentang <code>-1000</code> sampai <code>+1000</code>.</li>
+<li><code>-1000</code> = "jangan pernah bunuh gue" (ini yang dipakai <code>sshd</code>, systemd, dan pod Kubernetes QoS <code>Guaranteed</code>).</li>
+<li><code>+1000</code> = "gue korban pertama yang wajar" (pod QoS <code>BestEffort</code>).</li>
+</ul>
+<p><strong>Langkah 5 — Tembak.</strong>
+Proses dengan skor tertinggi dikirim <strong>SIGKILL</strong>. Ingat: SIGKILL nggak bisa ditangkap. Nggak ada graceful shutdown. Nggak ada log aplikasi. Yang ada cuma log kernel.</p>
+<p><strong>Langkah 6 — Lo nemuin buktinya.</strong></p>
+<pre><code class="language-bash">journalctl -k --no-pager | grep -i -E 'out of memory|oom-kill|killed process'
+# atau
+dmesg -T | grep -i -E 'out of memory|killed process'
+</code></pre>
+<p><strong>Catatan penting buat 2025+:</strong> di Ubuntu 22.04/24.04 ada <strong>systemd-oomd</strong>, daemon OOM di userspace yang jalan berdampingan dengan kernel OOM killer. Dia nggak nunggu memori benar-benar habis — dia mantau <strong>PSI</strong> dan nembak cgroup dengan tekanan tertinggi begitu kondisi terpenuhi (mis. swap terpakai dan stall memori tinggi). Bedanya: aksinya kelihatan di journal <strong>systemd-oomd</strong>, bukan di log kernel. Makanya "container restart mendadak tanpa jejak OOM di dmesg" itu hal yang nyata, dan jawabannya ada di dua tempat.</p>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti dengan bahasa sederhana</th>
+<th>Contoh konkret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Proses</strong></td>
+<td>Wadah berisi memori + fd + minimal satu thread</td>
+<td>Satu instance binary <code>sre-api</code></td>
+</tr>
+<tr>
+<td><strong>Thread</strong></td>
+<td>Yang benar-benar dieksekusi CPU; bagian dari proses</td>
+<td><code>top -H</code> nunjukin 12 thread di PID 9001</td>
+</tr>
+<tr>
+<td><strong>SIGTERM</strong></td>
+<td>"Tolong berhenti, beberes dulu" — bisa ditangkap aplikasi</td>
+<td><code>systemctl stop</code> kirim ini</td>
+</tr>
+<tr>
+<td><strong>SIGKILL</strong></td>
+<td>"Mati sekarang" — nggak bisa ditangkap, nggak ada beberes</td>
+<td><code>kill -9</code>, dan OOM killer pakai ini</td>
+</tr>
+<tr>
+<td><strong>Page cache</strong></td>
+<td>Memori yang dipakai nyimpen isi file biar baca disk cepat</td>
+<td>Kolom <code>buff/cache</code> di <code>free -h</code></td>
+</tr>
+<tr>
+<td><strong>MemAvailable</strong></td>
+<td>Estimasi memori yang bisa dipakai aplikasi baru tanpa swap</td>
+<td>Angka yang harus lo lihat di <code>free -h</code></td>
+</tr>
+<tr>
+<td><strong>File descriptor</strong></td>
+<td>Nomor tiket buat tiap file/socket yang dibuka proses</td>
+<td><code>ls /proc/9001/fd \| wc -l</code> → 43</td>
+</tr>
+<tr>
+<td><strong>cgroup v2</strong></td>
+<td>Mekanisme kernel buat ngasih batas CPU/memori ke sekelompok proses</td>
+<td><code>memory.max</code> bikin container OOM walau host lega</td>
+</tr>
+<tr>
+<td><strong>PSI</strong></td>
+<td>Berapa persen waktu proses <em>nunggu</em> resource, bukan terpakai</td>
+<td><code>some avg10=2.31</code> di <code>/proc/pressure/memory</code></td>
+</tr>
+<tr>
+<td><strong>Load average</strong></td>
+<td>Jumlah task yang runnable atau nunggu IO, rata-rata 1/5/15 menit</td>
+<td><code>load average: 8.2</code> di mesin 2 core = parah</td>
+</tr>
+<tr>
+<td><strong>oom_score_adj</strong></td>
+<td>Bobot <code>-1000..1000</code> yang nentuin siapa dibunuh duluan saat OOM</td>
+<td><code>-1000</code> = kebal, <code>+1000</code> = korban pertama</td>
+</tr>
+<tr>
+<td><strong>systemd-oomd</strong></td>
+<td>Daemon OOM userspace yang mantau PSI dan nembak cgroup</td>
+<td>Container mati tanpa OOM di <code>dmesg</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber (link)</th>
+<th>Bagian mana yang dibaca &amp; apa yang dicari</th>
+<th>Estimasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://docs.kernel.org/admin-guide/cgroup-v2.html">Control Group v2 — The Linux Kernel documentation</a></td>
+<td>Fokus ke bagian <strong>Memory</strong>: <code>memory.max</code>, <code>memory.current</code>, <code>memory.events</code>, <code>memory.stat</code>. Cari juga kenapa v2 cuma punya satu hierarki. Jangan baca semua — bagian memory dan cpu aja cukup.</td>
+<td>45 menit</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://docs.kernel.org/accounting/psi.html">PSI — Pressure Stall Information</a></td>
+<td>Baca bagian <strong>Pressure interface</strong>. Pastiin lo paham beda <code>some</code> vs <code>full</code>, dan kenapa <code>full</code> itu indikasi thrashing.</td>
+<td>20 menit</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://man7.org/linux/man-pages/man7/signal.7.html">signal(7) — Linux manual page</a></td>
+<td>Cari tabel Standard signals. Catat nomor dan arti SIGTERM (15) dan SIGKILL (9), lalu baca paragraf soal signal yang tidak bisa di-<em>catch</em>.</td>
+<td>20 menit</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://docs.kernel.org/admin-guide/sysctl/vm.html">Documentation for /proc/sys/vm/</a></td>
+<td>Cari entri <code>overcommit_memory</code>, <code>overcommit_ratio</code>, <code>swappiness</code>, dan <code>oom_kill_allocating_task</code>. Ini yang nentuin kapan OOM bisa terjadi.</td>
+<td>25 menit</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://manpages.ubuntu.com/manpages/noble/en/man8/systemd-oomd.service.8.html">systemd-oomd.service(8) — Ubuntu manpages</a></td>
+<td>Baca deskripsi dan syarat kapan dia bertindak. Ini ngejelasin kenapa container bisa mati tanpa jejak di <code>dmesg</code>.</td>
+<td>15 menit</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://man7.org/linux/man-pages/man1/journalctl.1.html">journalctl(1) — Linux manual page</a></td>
+<td>Cari flag <code>-u</code>, <code>-b</code>, <code>-k</code>, <code>-p</code>, <code>--since</code>. Ini perintah yang bakal lo pakai tiap minggu sampai minggu 16.</td>
+<td>15 menit</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa bedanya <code>kill -TERM</code> dan <code>kill -KILL</code>? Sebutkan satu situasi di mana <code>-KILL</code> jadi keputusan yang buruk.</li>
+<li>Di output <code>free -h</code>, kolom mana yang harus lo lihat buat mutusin "memori kita habis atau nggak"? Kenapa kolom <code>free</code> selalu kelihatan kecil?</li>
+<li>Load average tinggi tapi CPU idle. Apa kemungkinan penyebabnya, dan satu perintah buat ngebuktiin?</li>
+<li>Container lo mati mendadak. <code>dmesg</code> nggak nunjukin apa-apa. Ke mana lagi lo cari, dan apa nama daemon-nya?</li>
+<li>Apa beda baris <code>some</code> dan <code>full</code> di <code>/proc/pressure/memory</code>? Kalau <code>full avg300</code> tinggi, apa yang sedang terjadi?</li>
+<li>Proses hidup (<code>pgrep</code> nemu PID) tapi <code>curl</code> ke portnya <code>Connection refused</code>. Apa yang lo curigai dan apa perintah pembuktinya?</li>
+<li>Sebutkan dua file di <code>/sys/fs/cgroup/</code> yang nunjukin apakah cgroup ini pernah kena OOM.</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataannya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Load average tinggi berarti CPU tinggi."</td>
+<td>Load itu jumlah task runnable <strong>plus</strong> task yang nunggu IO (state D). Cek kolom <code>wa</code> di <code>vmstat</code> dan <code>b</code> sebelum nyimpulin CPU.</td>
+</tr>
+<tr>
+<td>"<code>free</code> tinggal dikit, berarti memori habis."</td>
+<td>Linux pakai sisa RAM buat page cache. Lihat <code>available</code>. <code>buff/cache</code> itu memori yang bisa direklamasi, bukan memori bocor.</td>
+</tr>
+<tr>
+<td>"OOM di container selalu muncul di <code>dmesg</code> host."</td>
+<td>Yang kena limit itu cgroup. Bisa jadi cuma kelihatan di <code>memory.events</code>, atau di journal <code>systemd-oomd</code>. Kadang malah cuma di <code>docker inspect</code>.</td>
+</tr>
+<tr>
+<td>"<code>pidstat</code> baris pertama itu kondisi sekarang."</td>
+<td>Baris pertama <code>pidstat</code> itu <strong>rata-rata sejak boot</strong>. Tunggu baris ke-2 baru itu kondisi nyata.</td>
+</tr>
+<tr>
+<td>"<code>kill -9</code> itu solusi cepat yang aman."</td>
+<td>Itu nggak ngasih aplikasi kesempatan nutup koneksi DB dengan rapi. Bakal jadi bug misterius di minggu 6 pas lo bahas graceful shutdown.</td>
+</tr>
+<tr>
+<td>"Satu proses = satu thread."</td>
+<td>Satu proses bisa punya puluhan thread. Makanya <code>top</code> biasa bisa nyembunyiin pelaku aslinya; pakai <code>top -H</code> atau <code>ps -eLo</code>.</td>
+</tr>
+<tr>
+<td>"Kalau CPU nggak 100%, berarti sistem sehat."</td>
+<td>Bisa aja semua proses ngantri memori atau IO. Itu yang diukur PSI, bukan utilisasi.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-01-linux/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

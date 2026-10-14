@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 16 · Load Testing, Chaos, dan Final Incident Simulation</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-16-final-capstone/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-16-load-testing-chaos-dan-final-incident-simulation">Ringkasan — Minggu 16 · Load Testing, Chaos, dan Final Incident Simulation</a><ul>
+<li><a href="#inti-5-kalimat">Inti 5 kalimat</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#perintah-kunci-output">Perintah kunci + output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan">Jebakan</a></li>
+<li><a href="#cheat-sheet-cepat">Cheat sheet cepat</a></li>
+<li><a href="#tanya-jawab-kilat">Tanya jawab kilat</a></li>
+<li><a href="#acceptance">Acceptance</a></li>
+<li><a href="#studi-kasus-mini">Studi kasus mini</a></li>
+<li><a href="#istilah-kunci-flashcard">Istilah kunci (flashcard)</a></li>
+<li><a href="#pertanyaan-wawancara">Pertanyaan wawancara</a></li>
+<li><a href="#pola-yang-sering-kelewat">Pola yang sering kelewat</a></li>
+<li><a href="#cek-cepat-sebelum-ci">Cek cepat sebelum CI</a></li>
+<li><a href="#satu-kalimat">Satu kalimat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-16-load-testing-chaos-dan-final-incident-simulation">Ringkasan — Minggu 16 · Load Testing, Chaos, dan Final Incident Simulation<a class="headerlink" href="#ringkasan-minggu-16-load-testing-chaos-dan-final-incident-simulation" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman untuk dibaca ulang sebelum ujian/wawancara. Bukan pengganti bahan-bacaan.md.</p>
+</blockquote>
+<h2 id="inti-5-kalimat">Inti 5 kalimat<a class="headerlink" href="#inti-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Little's Law (L = λ × W)</strong> ngasih tahu concurrency yang lo butuh buat capai throughput tertentu.</li>
+<li>Saat <strong>utilisasi ρ → 1</strong>, latency meledak eksponensial = <strong>saturasi</strong>; itu titik kapasitas lo.</li>
+<li><strong>Retry storm</strong> terjadi kalau retry di banyak lapis tanpa <strong>jitter</strong> → traffic jadi gerombolan (sampai 27×).</li>
+<li><strong>Timeout budget</strong> (menurun per hop) + <strong>circuit breaker</strong> cegah sistem numpuk nunggu dependency mati.</li>
+<li>Chaos = eksperimen ber<strong>hipotesis + abort condition</strong>; tanpa itu, lo cuma ngerusak, bukan belajar.</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<pre><code>λ (req/s) ─┐
+           ├─ Little: L = λ × W  →  butuh concurrency berapa?
+W (latency)┘
+           ├─ ρ = λ / μ  →  ρ→1 = saturasi (p95 meledak)
+           │
+dependency lambat ─&gt; retry tanpa jitter ─&gt; RETRY STORM
+           │
+           ├─ timeout budget 2s &gt; 1s &gt; 200ms  (gagal cepat)
+           ├─ circuit breaker: buka(50% err/10s) → setengah-buka(30s)
+           │
+k6 ramp VU ─&gt; catat p95/err/CPU/DB ─&gt; titik saturasi
+toxiproxy/Chaos Mesh ─&gt; rusak ─&gt; abort condition ─&gt; pulih ─&gt; bandingkan
+</code></pre>
+<h2 id="perintah-kunci-output">Perintah kunci + output<a class="headerlink" href="#perintah-kunci-output" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 1. Cek versi k6 (v2.x — PIN di CI)
+$ k6 version
+# output: k6 v2.0.x (...)
+# interpretasi: catat versi; jangan biarkan CI pakai latest.
+
+# 2. Baseline load test
+$ k6 run loadtest/loadtest.js
+# output: ✓ p(95)&lt;300 ✓ p(99)&lt;800 ✓ http_req_failed&lt;0.01
+# interpretasi: di 50 VU threshold lolos = kapasitas cukup.
+
+# 3. Simpan hasil JSON
+$ k6 run --summary-mode=full --out json=loadtest/results.json loadtest/loadtest.js
+# output: results.json berisi metrics lengkap
+# interpretasi: buat dibandingkan per tahap beban.
+
+# 4. Naik beban (stages ke 200 VU)
+$ k6 run loadtest/loadtest.js
+# output: p(95)=820ms ✗ (threshold failed)
+# interpretasi: di 200 VU SATURASI — p95 meledak.
+
+# 5. Little's Law concurrency
+$ python3 -c &quot;print(500*0.2)&quot;
+# output: 100.0
+# interpretasi: butuh ~100 request in-flight buat 500 req/s @200ms.
+
+# 6. Threshold gagal = CI gagal
+$ k6 run loadtest/loadtest.js; echo $?
+# output: ✗ thresholds failed / exit 99
+# interpretasi: CI harus berhenti saat SLO jebol.
+
+# 7. Toxiproxy: proxy Redis
+$ toxiproxy-cli create redis -l 0.0.0.0:26379 -u redis:6379
+# output: Created proxy redis
+# interpretasi: proxy di depan Redis buat inject gangguan.
+
+# 8. Inject latency 200ms
+$ toxiproxy-cli add redis --latency 200
+# output: Added toxic latency to redis
+# interpretasi: tiap request Redis lambat 200ms.
+
+# 9. Chaos Mesh: kill 1 pod
+$ kubectl apply -f podchaos-kill-api.yaml
+# output: podchaos.chaos-mesh.org/kill-api created
+# interpretasi: sengaja rusak 1 replica, lihat self-healing.
+
+# 10. Amati pemulihan
+$ kubectl get pods -w
+# output: pod lama hilang, baru Running 3/3 ~10s
+# interpretasi: ReplicaSet ganti otomatis.
+
+# 11. Metric Prometheus (p99)
+$ curl -s 'http://localhost:9090/api/v1/query?query=histogram_quantile(0.99,...)'
+# output: {value:[...,0.81]}
+# interpretasi: p99 = 0.81s, dari data nyata bukan tebakan.
+
+# 12. Diagnosis log
+$ kubectl logs deploy/sre-api --tail=50 | grep -i redis
+# output: timeout connecting redis
+# interpretasi: akar masalah = latency Redis.
+
+# 13. ABORT &amp; pulih
+$ kubectl delete podchaos kill-api &amp;&amp; toxiproxy-cli delete redis
+# output: deleted
+# interpretasi: eksperimen dihentikan, proxy dibersihkan.
+
+# 14. Ulangi setelah perbaikan
+$ k6 run loadtest/loadtest.js
+# output: p(95)=290ms ✓
+# interpretasi: perbaikan turunkan p95 (before/after terukur).
+
+# 15. CLEANUP wajib
+$ kubectl delete -f kubernetes/ &amp;&amp; kind delete cluster --name sre
+# output: deleted / Deleted cluster sre
+# interpretasi: lab bersih, nggak ada chaos nyangkut.
+</code></pre>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Penyebab</th>
+<th>Cek</th>
+<th>Penyelesaian</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>p95 naik, throughput datar</td>
+<td>saturasi (ρ→1)</td>
+<td><code>kubectl top</code>, conn DB</td>
+<td>naik resource / optimasi query</td>
+</tr>
+<tr>
+<td>error rate lonjak pas retry</td>
+<td>retry storm</td>
+<td>trace retry count</td>
+<td>backoff + jitter</td>
+</tr>
+<tr>
+<td>Antrean numpuk</td>
+<td>timeout terlalu besar</td>
+<td>app timeout config</td>
+<td>turunkan timeout budget</td>
+</tr>
+<tr>
+<td>Dependency mati → kaskade</td>
+<td>nggak ada circuit breaker</td>
+<td>error rate spike</td>
+<td>pasang breaker</td>
+</tr>
+<tr>
+<td>Chaos bikin insiden beneran</td>
+<td>nggak ada abort condition</td>
+<td>—</td>
+<td>hentikan, pasang abort</td>
+</tr>
+<tr>
+<td>Threshold k6 flaky di CI</td>
+<td>versi k6 beda</td>
+<td><code>k6 version</code></td>
+<td>pin versi di CI</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan">Jebakan<a class="headerlink" href="#jebakan" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Cuma ukur rata-rata latency (penting p95/p99 + error rate).</li>
+<li>Naikin VU terus tanpa cek utilisasi → ukur antrean, bukan kapasitas.</li>
+<li>Load test dari laptop → kebatas bandwidth sendiri.</li>
+<li>Chaos tanpa abort condition → insiden beneran.</li>
+<li>Retry di 3 lapis tanpa jitter → amplifikasi 27×.</li>
+<li>k6 nggak di-pin versi → perilaku beda tiap CI.</li>
+</ul>
+<h2 id="cheat-sheet-cepat">Cheat sheet cepat<a class="headerlink" href="#cheat-sheet-cepat" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mau ngapain</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Load test</td>
+<td><code>k6 run loadtest/loadtest.js</code></td>
+</tr>
+<tr>
+<td>Simpan hasil</td>
+<td><code>k6 run --out json=results.json ...</code></td>
+</tr>
+<tr>
+<td>Inject latency</td>
+<td><code>toxiproxy-cli add redis --latency 200</code></td>
+</tr>
+<tr>
+<td>Chaos pod kill</td>
+<td><code>kubectl apply -f podchaos-*.yaml</code></td>
+</tr>
+<tr>
+<td>Baca p99</td>
+<td>query Prometheus <code>histogram_quantile</code></td>
+</tr>
+<tr>
+<td>Hentikan chaos</td>
+<td><code>kubectl delete podchaos ...</code></td>
+</tr>
+<tr>
+<td>Bersih</td>
+<td><code>kind delete cluster --name sre</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="tanya-jawab-kilat">Tanya jawab kilat<a class="headerlink" href="#tanya-jawab-kilat" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Q: Little's Law buat apa?</strong> A: tahu concurrency (L) dari λ &amp; W.</li>
+<li><strong>Q: ρ→1?</strong> A: saturasi, latency meledak eksponensial.</li>
+<li><strong>Q: Jitter itu?</strong> A: acak di backoff biar retry nggak gerombolan.</li>
+<li><strong>Q: Timeout budget?</strong> A: batas waktu menurun per hop, gagal cepat.</li>
+<li><strong>Q: Chaos tanpa abort?</strong> A: sabotase, bukan eksperimen.</li>
+</ul>
+<h2 id="acceptance">Acceptance<a class="headerlink" href="#acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Load test bisa diulang &amp; punya threshold yang ngegagalkan CI.</li>
+<li>Bottleneck didukung data (saturasi, ρ, koneksi DB), bukan dugaan.</li>
+<li>Insiden terdeteksi, didiagnosis, dimitigasi, dipulihkan dengan timeline tercatat.</li>
+<li>Hasil sebelum vs sesudah perbaikan bisa dibandingkan kuantitatif.</li>
+</ol>
+<h2 id="studi-kasus-mini">Studi kasus mini<a class="headerlink" href="#studi-kasus-mini" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Kasus A:</strong> naik VU terus tanpa cek CPU → yang diukur cuma antrean, bukan kapasitas. Pelajaran: catat utilisasi tiap tahap, cari titik saturasi.</li>
+<li><strong>Kasus B:</strong> retry di client+LB+app tanpa jitter → pas dependency pulih, semua retry bareng = 27× amplifikasi. Pelajaran: backoff + jitter di tiap lapis.</li>
+<li><strong>Kasus C:</strong> chaos tanpa abort → Redis mati bikin insiden beneran. Pelajaran: selalu ada hipotesis + abort condition.</li>
+</ul>
+<h2 id="istilah-kunci-flashcard">Istilah kunci (flashcard)<a class="headerlink" href="#istilah-kunci-flashcard" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Little's Law</strong> = L = λ × W.</li>
+<li><strong>Utilisasi (ρ)</strong> = λ / μ; →1 = saturasi.</li>
+<li><strong>Saturasi</strong> = latency meledak eksponensial.</li>
+<li><strong>Retry storm</strong> = retry beramai-ramam tanpa jitter.</li>
+<li><strong>Timeout budget</strong> = batas waktu menurun per hop.</li>
+<li><strong>Circuit breaker</strong> = henti trafik ke dependency mati.</li>
+<li><strong>Threshold (k6)</strong> = syarat gagalkan CI.</li>
+<li><strong>Steady state</strong> = keadaan normal sebelum di-rusak.</li>
+<li><strong>Abort condition</strong> = hentikan chaos otomatis.</li>
+</ul>
+<h2 id="pertanyaan-wawancara">Pertanyaan wawancara<a class="headerlink" href="#pertanyaan-wawancara" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Hitung L untuk λ=500, W=200ms?</li>
+<li>Kenapa "kuat 800 rps" tanpa latency omong kosong?</li>
+<li>Kapan saturasi terjadi matematis?</li>
+<li>Kenapa jitter penting di retry?</li>
+<li>Kenapa chaos butuh abort condition?</li>
+</ol>
+<h2 id="pola-yang-sering-kelewat">Pola yang sering kelewat<a class="headerlink" href="#pola-yang-sering-kelewat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Cuma ukur rata-rata latency.</li>
+<li>Naik VU tanpa cek utilisasi.</li>
+<li>Load test dari laptop.</li>
+<li>Chaos tanpa abort / k6 nggak di-pin.</li>
+</ul>
+<h2 id="cek-cepat-sebelum-ci">Cek cepat sebelum CI<a class="headerlink" href="#cek-cepat-sebelum-ci" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Cek</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Load test</td>
+<td><code>k6 run loadtest/loadtest.js</code></td>
+</tr>
+<tr>
+<td>Threshold gagal</td>
+<td>turunin p95 → exit non-zero</td>
+</tr>
+<tr>
+<td>Chaos aman</td>
+<td>ada hipotesis + abort</td>
+</tr>
+<tr>
+<td>Versi</td>
+<td><code>k6 version</code> (pin di CI)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="satu-kalimat">Satu kalimat<a class="headerlink" href="#satu-kalimat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Ukur kapasitas pakai Little's Law &amp; cari titik saturasi, lindungi sistem dengan timeout budget + circuit breaker + jitter, dan buktikan pemulihan lewat chaos berhipotesis — bukan sekadar harapan.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-16-final-capstone/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

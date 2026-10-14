@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 13 · Terraform dan Infrastructure as Code</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-13-terraform/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-13-terraform-dan-infrastructure-as-code">Ringkasan — Minggu 13 · Terraform dan Infrastructure as Code</a><ul>
+<li><a href="#inti-5-kalimat">Inti 5 kalimat</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#perintah-kunci-output">Perintah kunci + output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan">Jebakan</a></li>
+<li><a href="#cheat-sheet-cepat">Cheat sheet cepat</a></li>
+<li><a href="#tanya-jawab-kilat">Tanya jawab kilat</a></li>
+<li><a href="#acceptance">Acceptance</a></li>
+<li><a href="#studi-kasus-mini">Studi kasus mini</a></li>
+<li><a href="#istilah-kunci-flashcard">Istilah kunci (flashcard)</a></li>
+<li><a href="#pertanyaan-wawancara">Pertanyaan wawancara</a></li>
+<li><a href="#pola-yang-sering-kelewat">Pola yang sering kelewat</a></li>
+<li><a href="#cek-cepat-sebelum-commit">Cek cepat sebelum commit</a></li>
+<li><a href="#satu-kalimat">Satu kalimat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-13-terraform-dan-infrastructure-as-code">Ringkasan — Minggu 13 · Terraform dan Infrastructure as Code<a class="headerlink" href="#ringkasan-minggu-13-terraform-dan-infrastructure-as-code" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman untuk dibaca ulang sebelum ujian/wawancara. Bukan pengganti bahan-bacaan.md.</p>
+</blockquote>
+<h2 id="inti-5-kalimat">Inti 5 kalimat<a class="headerlink" href="#inti-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Infrastructure as Code (IaC) nerjemahin bentuk infrastruktur jadi teks di Git, supaya lo bisa bangun ulang persis sama kapan saja.</li>
+<li><strong>State</strong> adalah peta "kode ↔ objek asli di cloud"; dia bukan log, tapi input buat <code>plan</code> berikutnya — makanya nggak boleh bocor/di-commit.</li>
+<li><strong>Plan</strong> adalah kontrak: selalu <code>plan -out</code> lalu <code>apply tfplan</code>, jangan <code>apply</code> telanjang yang bisa jalanin rencana beda dari yang lo review.</li>
+<li><strong>Drift</strong> muncul kalau ada yang utak-atik di luar Terraform; deteksi rutin pakai <code>tofu plan -refresh-only</code>.</li>
+<li>OpenTofu dan Terraform punya sintaks identik — bedanya cuma lisensi (MPL-2.0 vs BUSL) dan kepemilikan; pin versi provider biar nggak ada kejutan.</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<pre><code>kode .tf ──init──&gt; provider + backend
+   │
+   ├─ plan ──&gt; graph (siapa nunggu siapa) + refresh state + diff
+   │              │
+   │              └─ -out=tfplan ──&gt; apply tfplan ──&gt; update STATE (remote+encrypt)
+   │
+   ├─ plan -refresh-only ──&gt; DETEKSI DRIFT
+   ├─ import block ──&gt; masukin resource luar ke state (review dulu)
+   └─ trivy config . ──&gt; scan keamanan IaC
+
+OpenTofu (MPL)  ≈  Terraform (BUSL)   →  sintaks SAMA, ganti `tofu`↔`terraform`
+</code></pre>
+<h2 id="perintah-kunci-output">Perintah kunci + output<a class="headerlink" href="#perintah-kunci-output" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 1. Format &amp; init
+$ tofu fmt -check &amp;&amp; tofu init
+# output: Terraform has been successfully initialized!
+# interpretasi: provider AWS didownload, backend (state) siap.
+
+# 2. Validasi sintaks
+$ tofu validate
+# output: Success! The configuration is valid.
+# interpretasi: struktur HCL benar; BUKAN berarti resource sukses di cloud.
+
+# 3. Plan tersimpan
+$ tofu plan -out=tfplan
+# output: Plan: 7 to add, 0 to change, 0 to destroy.
+# interpretasi: 7 resource baru; file tfplan WAJIB dipakai di apply.
+
+# 4. Lihat JSON plan (review otomatis)
+$ tofu show -json tfplan | jq '.resource_changes | length'
+# output: 7
+# interpretasi: ada 7 resource berubah; bisa dipakai CI review.
+
+# 5. Lihat aksi per resource
+$ tofu show -json tfplan | jq '.resource_changes[].change.actions'
+# output: [&quot;create&quot;] (7 baris)
+# interpretasi: semua create, nggak ada replace — aman.
+
+# 6. Apply pakai file plan
+$ tofu apply tfplan
+# output: Apply complete! Resources: 7 added.
+# interpretasi: infrastruktur jadi persis seperti plan.
+
+# 7. Ambil output
+$ tofu output vpc_id
+# output: &quot;vpc-0abc123&quot;
+# interpretasi: ID VPC lab, dipakai langkah berikutnya.
+
+# 8. State list
+$ tofu state list
+# output: aws_vpc.main, aws_subnet.public, aws_instance.app, ...
+# interpretasi: resource yang dikelola state.
+
+# 9. Deteksi drift
+$ tofu plan -refresh-only
+# output: # aws_instance.app: Refreshing state... ~ tags
+# interpretasi: Terraform lihat perubahan di luar kode = drift.
+
+# 10. Import block (bukan CLI)
+$ tofu plan
+# output: Plan: 1 to import, 0 to add
+# interpretasi: resource luar akan masuk state lewat import block.
+
+# 11. Scan keamanan
+$ trivy config .
+# output: terraform: 0 (atau daftar temuan)
+# interpretasi: IaC lolos / ada yang perlu diperbaiki.
+
+# 12. Cek kebocoran secret
+$ tofu state show aws_instance.app | grep -i password
+# output: (kosong)
+# interpretasi: nggak ada password plaintext di state.
+
+# 13. CLEANUP wajib
+$ tofu destroy
+# output: Destroy complete! Resources: 7 destroyed.
+# interpretasi: semua resource lab hilang; cek sisa di console.
+
+# 14. Pastikan nggak ada state ke-commit
+$ git status --porcelain | grep tfstate
+# output: (kosong)
+# interpretasi: aman, nggak ada *.tfstate ke-commit.
+</code></pre>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Kemungkinan penyebab</th>
+<th>Cek</th>
+<th>Penyelesaian</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>init</code> gagal download provider</td>
+<td>versi provider ke-pin nggak ada / network</td>
+<td><code>tofu version</code>, <code>required_providers</code></td>
+<td>longgarkan <code>~&gt; 6.0</code>, cek akses registry</td>
+</tr>
+<tr>
+<td><code>apply</code> bikin resource dobel</td>
+<td>state hilang/rusak</td>
+<td><code>tofu state list</code></td>
+<td><code>import</code> block, jangan buat ulang</td>
+</tr>
+<tr>
+<td>Rencana beda dari review</td>
+<td><code>apply</code> tanpa <code>-out</code></td>
+<td>banding <code>tfplan</code> vs <code>show</code></td>
+<td>selalu <code>apply tfplan</code></td>
+</tr>
+<tr>
+<td>Drift detector ribut terus</td>
+<td>ada yang utak-atik console</td>
+<td><code>tofu plan -refresh-only</code></td>
+<td>kembalikan lewat kode, bukan console</td>
+</tr>
+<tr>
+<td><code>lock</code> gagal (DynamoDB)</td>
+<td>dua <code>apply</code> berbarengan</td>
+<td>error "lock"</td>
+<td>tunggu / pastikan 1 proses</td>
+</tr>
+<tr>
+<td>Secret ketahuan di state</td>
+<td>output <code>password</code></td>
+<td><code>tofu state show ... \| grep -i password</code></td>
+<td>pindah ke Secret Manager, rotate</td>
+</tr>
+<tr>
+<td>Tagihan meledak</td>
+<td>lupa <code>destroy</code></td>
+<td>AWS Cost Explorer</td>
+<td><code>tofu destroy</code>, cek NAT/EIP/volume</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan">Jebakan<a class="headerlink" href="#jebakan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>apply</code> tanpa <code>-out</code> → rencana beda dari yang direview.</li>
+<li>Workspace buat dev/prod dalam 1 state → blast radius gede.</li>
+<li>State di Git/lokal → secret bocor plaintext.</li>
+<li>Provider tanpa pin → <code>init</code> CI narik versi nabrak.</li>
+<li>Lupa <code>destroy</code> → NAT gateway jadi tagihan bulanan.</li>
+<li>Pakai <code>terraform import</code> CLI → state berubah tanpa review.</li>
+</ul>
+<h2 id="cheat-sheet-cepat">Cheat sheet cepat<a class="headerlink" href="#cheat-sheet-cepat" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mau ngapain</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cek rapi</td>
+<td><code>tofu fmt -check</code></td>
+</tr>
+<tr>
+<td>Cek valid</td>
+<td><code>tofu validate</code></td>
+</tr>
+<tr>
+<td>Simulasi aman</td>
+<td><code>tofu plan -out=tfplan</code></td>
+</tr>
+<tr>
+<td>Eksekusi pasti</td>
+<td><code>tofu apply tfplan</code></td>
+</tr>
+<tr>
+<td>Cek drift</td>
+<td><code>tofu plan -refresh-only</code></td>
+</tr>
+<tr>
+<td>Lihat state</td>
+<td><code>tofu state list</code> / <code>tofu state show &lt;x&gt;</code></td>
+</tr>
+<tr>
+<td>Masukin resource luar</td>
+<td><code>import { to = ... id = ... }</code></td>
+</tr>
+<tr>
+<td>Scan</td>
+<td><code>trivy config .</code></td>
+</tr>
+<tr>
+<td>Bersih</td>
+<td><code>tofu destroy</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="tanya-jawab-kilat">Tanya jawab kilat<a class="headerlink" href="#tanya-jawab-kilat" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Q: State boleh di-commit?</strong> A: TIDAK. Isinya bisa berisi secret plaintext.</li>
+<li><strong>Q: <code>apply</code> langsung vs <code>apply tfplan</code>?</strong> A: Selalu <code>tfplan</code> biar yang dieksekusi = yang direview.</li>
+<li><strong>Q: Drift itu apa?</strong> A: selisih keadaan aktual cloud vs konfigurasi.</li>
+<li><strong>Q: OpenTofu vs Terraform?</strong> A: sintaks sama, lisensi beda (MPL vs BUSL).</li>
+<li><strong>Q: Kenapa pin provider?</strong> A: cegah breaking change dadakan di CI.</li>
+</ul>
+<h2 id="acceptance">Acceptance<a class="headerlink" href="#acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>tofu validate</code> lolos, <code>fmt -check</code> bersih.</li>
+<li>Tiap perubahan direview lewat <code>plan -out</code> sebelum <code>apply</code>.</li>
+<li>Provisioning + cleanup terdokumentasi; biaya dipahami sebelum <code>apply</code>.</li>
+<li>Nggak ada <code>*.tfstate</code> atau secret ke-commit (backend terenkripsi + <code>.gitignore</code>).</li>
+</ol>
+<h2 id="studi-kasus-mini">Studi kasus mini<a class="headerlink" href="#studi-kasus-mini" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Kasus A:</strong> lo <code>apply</code> langsung tanpa <code>-out</code>, dan di antaranya rekan lo nambah SG lewat console. Pas <code>apply</code>, yang dieksekusi bukan plan lo → SG dobel. Pelajaran: selalu <code>plan -out</code> lalu <code>apply tfplan</code>.</li>
+<li><strong>Kasus B:</strong> state di-commit ke Git, ternyata <code>aws_db_instance</code> keluarkan password plaintext → bocor di PR. Pelajaran: backend remote + encrypt, <code>.gitignore</code> <code>*.tfstate</code>.</li>
+<li><strong>Kasus C:</strong> <code>init</code> di CI narik provider <code>7.0</code> padahal kode nulis <code>~&gt; 6.0</code> → resource baru nabrak. Pelajaran: pin versi di <code>required_providers</code>.</li>
+</ul>
+<h2 id="istilah-kunci-flashcard">Istilah kunci (flashcard)<a class="headerlink" href="#istilah-kunci-flashcard" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>State</strong> = peta resource kode ↔ objek cloud; input buat plan berikutnya.</li>
+<li><strong>Drift</strong> = selisih keadaan aktual vs konfigurasi.</li>
+<li><strong>Plan</strong> = simulasi perubahan; simpan ke <code>-out</code>.</li>
+<li><strong>Apply</strong> = eksekusi plan; pakai file plan, bukan telanjang.</li>
+<li><strong>Backend</strong> = tempat state (remote + encrypt disarankan).</li>
+<li><strong>Pinning</strong> = kunci versi provider/Terraform.</li>
+<li><strong>Import block</strong> = masukin resource luar ke state (review dulu).</li>
+<li><strong>Module</strong> = kumpulan resource reusable.</li>
+</ul>
+<h2 id="pertanyaan-wawancara">Pertanyaan wawancara<a class="headerlink" href="#pertanyaan-wawancara" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Kenapa <code>apply</code> tanpa <code>-out</code> bahaya?</li>
+<li>Apa risiko state di-commit ke Git?</li>
+<li>Bagaimana detect drift?</li>
+<li>Kapan pakai <code>import</code> block?</li>
+<li>Bedanya OpenTofu vs Terraform?</li>
+</ol>
+<h2 id="pola-yang-sering-kelewat">Pola yang sering kelewat<a class="headerlink" href="#pola-yang-sering-kelewat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Lupa <code>destroy</code> → tagihan bulanan.</li>
+<li>Pakai workspace buat dev/prod (blast radius gede).</li>
+<li>Provider tanpa pin.</li>
+<li>Scan IaC (<code>trivy config .</code>) dilewatin.</li>
+</ul>
+<h2 id="cek-cepat-sebelum-commit">Cek cepat sebelum commit<a class="headerlink" href="#cek-cepat-sebelum-commit" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Cek</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rapi</td>
+<td><code>tofu fmt -check</code></td>
+</tr>
+<tr>
+<td>Valid</td>
+<td><code>tofu validate</code></td>
+</tr>
+<tr>
+<td>Review aman</td>
+<td><code>tofu plan -out=tfplan</code></td>
+</tr>
+<tr>
+<td>Nggak ada state</td>
+<td><code>git status \| grep tfstate</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="satu-kalimat">Satu kalimat<a class="headerlink" href="#satu-kalimat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>IaC itu resep, bukan foto: state adalah peta yang harus dijaga, dan <code>plan -out</code> → <code>apply tfplan</code> adalah satu-satunya cara aman ngeksekusi perubahan.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-13-terraform/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

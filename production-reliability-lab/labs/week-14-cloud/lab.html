@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 14 · Cloud Networking dan Security</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-14-cloud/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-14-cloud-networking-dan-security">Lab — Minggu 14 · Cloud Networking dan Security</a><ul>
+<li><a href="#persiapan-baca-ini-sebelum-apply">Persiapan — BACA INI SEBELUM APPLY</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak</a></li>
+<li><a href="#hari-4-review-2-jam">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#cheat-sheet-per-hari">Cheat sheet per hari</a></li>
+<li><a href="#rubrik-observasi-per-hari">Rubrik observasi per hari</a></li>
+<li><a href="#troubleshooting-cepat">Troubleshooting cepat</a></li>
+<li><a href="#alat-bantu-wajib">Alat bantu wajib</a></li>
+<li><a href="#langkah-pemulihan-darurat">Langkah pemulihan darurat</a></li>
+<li><a href="#verifikasi-akhir">Verifikasi akhir</a></li>
+<li><a href="#daftar-periksa">Daftar periksa</a></li>
+<li><a href="#cara-buktikan">Cara buktikan</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-14-cloud-networking-dan-security">Lab — Minggu 14 · Cloud Networking dan Security<a class="headerlink" href="#lab-minggu-14-cloud-networking-dan-security" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti BERURUTAN, jangan lompat. Setiap langkah formatnya: perintah → Yang harus terjadi → Kalau gagal → Catat notes.</p>
+</blockquote>
+<h2 id="persiapan-baca-ini-sebelum-apply">Persiapan — BACA INI SEBELUM APPLY<a class="headerlink" href="#persiapan-baca-ini-sebelum-apply" title="Permanent link">&para;</a></h2>
+<p>⚠️ <strong>Peringatan biaya:</strong> minggu ini bikin resource AWS NYATA. Tersangka tagihan: <strong>NAT Gateway (~$0,045/jam + biaya data processing)</strong>, EC2 <code>t3.small</code> (~$0,02/jam), managed DB, object storage per GB.</p>
+<p>⚠️ <strong>AWS Free Tier berubah 15 Juli 2025:</strong> kredit <strong>$100 (+$100) berlaku 6 bulan</strong>, bukan lagi "12 bulan gratis". Habis itu tagihan jalan otomatis.</p>
+<p>🔔 <strong>Pasang budget alert SEBELUM apply pertama:</strong></p>
+<pre><code class="language-bash">aws sts get-caller-identity --query Account --output text   # catat $ACC
+cat &gt; budget.json &lt;&lt;'EOF'
+{ &quot;BudgetLimit&quot;:{&quot;Amount&quot;:&quot;20&quot;,&quot;Unit&quot;:&quot;USD&quot;}, &quot;TimeUnit&quot;:&quot;MONTHLY&quot;,
+  &quot;BudgetType&quot;:&quot;COST&quot;, &quot;BudgetName&quot;:&quot;sre-lab-budget&quot; }
+EOF
+cat &gt; notify.json &lt;&lt;'EOF'
+[{ &quot;Notification&quot;:{&quot;NotificationType&quot;:&quot;ACTUAL&quot;,&quot;ComparisonOperator&quot;:&quot;GREATER_THAN&quot;,
+   &quot;Threshold&quot;:50,&quot;ThresholdType&quot;:&quot;PERCENTAGE&quot;},
+   &quot;Subscribers&quot;:[{&quot;SubscriptionType&quot;:&quot;EMAIL&quot;,&quot;Address&quot;:&quot;lo@example.com&quot;}] }]
+EOF
+aws budgets create-budget --account-id $ACC \
+  --budget file://budget.json --notifications-with-subscribers file://notify.json
+# Yang harus terjadi: &quot;Budget sre-lab-budget created.&quot;
+# Kalau gagal: cek permission budgets:*, pastikan $ACC ter-set.
+</code></pre>
+<ul>
+<li>[ ] Budget alert aktif di ≤ 50% batas nyaman.</li>
+<li>[ ] Siap jalankan <code>tofu destroy</code> setelah lab.</li>
+</ul>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Baca</strong> <code>bahan-bacaan.md</code> section 1–2 → <strong>Yang harus terjadi:</strong> paham public vs private, SG rujuk SG. → <strong>Kalau gagal:</strong> ulang section 2.1–2.2. → <strong>Catat notes:</strong> gambar diagram di <code>notes.md</code>.</li>
+<li><strong>Buka</strong> <code>infra/terraform/main.tf</code> → <strong>Yang harus terjadi:</strong> temukan <code>aws_security_group.db</code> cuma buka dari <code>aws_security_group.app</code>. → <strong>Kalau gagal:</strong> baca section 2.2. → <strong>Catat notes:</strong> kenapa nggak <code>0.0.0.0/0</code>.</li>
+<li><strong>Pahami</strong> IAM role + IMDSv2 → <strong>Yang harus terjadi:</strong> jelasin celah SSRF. → <strong>Kalau gagal:</strong> ulang section 2.3–2.4. → <strong>Catat notes:</strong> beda IMDSv1 vs v2.</li>
+<li><strong>Gambar diagram dulu</strong> (sebelum nulis config) → <strong>Yang harus terjadi:</strong> ada sketsa VPC→subnet→SG→instance. → <strong>Kalau gagal:</strong> ulang section 2.1. → <strong>Catat notes:</strong> ini kebiasaan yang cegah salah pasang.</li>
+</ol>
+<hr />
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>tofu init &amp;&amp; tofu validate</code></strong> → <strong>Yang harus terjadi:</strong> valid. → <strong>Kalau gagal:</strong> cek <code>required_providers</code>. → <strong>Catat notes:</strong> output validate.</li>
+<li><strong><code>tofu plan -out=tfplan</code></strong> → <strong>Yang harus terjadi:</strong> "Plan: N to add". → <strong>Kalau gagal:</strong> cek quota/region. → <strong>Catat notes:</strong> simpan tfplan.</li>
+<li><strong><code>tofu apply tfplan</code></strong> → <strong>Yang harus terjadi:</strong> "Apply complete!". → <strong>Kalau gagal:</strong> baca error (permission/quota). → <strong>Catat notes:</strong> <code>tofu output</code> (vpc_id, private_subnet_id, app_instance_id).</li>
+<li><strong>Gambar diagram jaringan</strong> di <code>evidence/</code> → <strong>Yang harus terjadi:</strong> sesuai config aktual. → <strong>Kalau gagal:</strong> bandingkan dengan <code>tofu output</code>. → <strong>Catat notes:</strong> beda tebakan vs aktual.</li>
+<li><strong>Verifikasi SG db:</strong> <strong><code>aws ec2 describe-security-groups --group-ids &lt;db-sg&gt;</code></strong> → <strong>Yang harus terjadi:</strong> <code>UserIdGroupPairs</code> isi SG app, nggak ada <code>0.0.0.0/0</code>. → <strong>Kalau gagal:</strong> edit <code>main.tf</code>, <code>tofu apply</code>. → <strong>Catat notes:</strong> bukti least exposure.</li>
+</ol>
+<hr />
+<h2 id="hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak<a class="headerlink" href="#hari-3-eksperimen-2-jam-sengaja-rusak" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Bukti DB tertutup:</strong> <strong><code>nmap -Pn -p 5432 &lt;public-ip-app&gt;</code></strong> → <strong>Yang harus terjadi:</strong> <code>filtered/closed</code>. → <strong>Kalau gagal:</strong> SG db kebuka publik, perbaiki. → <strong>Catat notes:</strong> ini acceptance #1.</li>
+<li><strong>Bukti LB kebuka:</strong> <strong><code>curl -fsS -o /dev/null -w '%{http_code}\n' https://lab.domain-lo</code></strong> → <strong>Yang harus terjadi:</strong> <code>200</code>. → <strong>Kalau gagal:</strong> cek SG lb + DNS. → <strong>Catat notes.</strong></li>
+<li><strong>Cek TLS:</strong> <strong><code>openssl s_client -connect lab.domain-lo:443 -servername lab.domain-lo -brief</code></strong> → <strong>Yang harus terjadi:</strong> <code>Verify return code: 0</code>. → <strong>Kalau gagal:</strong> cek sertifikat. → <strong>Catat notes.</strong></li>
+<li><strong>Admin tanpa SSH:</strong> <strong><code>aws ssm start-session --target i-0abc</code></strong> → <strong>Yang harus terjadi:</strong> session masuk tanpa port 22. → <strong>Kalau gagal:</strong> cek SSM agent + role. → <strong>Catat notes:</strong> bukti zero standing access.</li>
+<li><strong>Cek IMDSv2:</strong> di dalam instance <strong><code>curl -s http://169.254.169.254/latest/meta-data/</code></strong> → <strong>Yang harus terjadi:</strong> 401 (butuh token) karena <code>http_tokens=required</code>. → <strong>Kalau gagal:</strong> set metadata_options. → <strong>Catat notes.</strong></li>
+<li><strong>Verifikasi dari luar:</strong> <strong><code>nmap -Pn -p 22,80,443,5432,6379 &lt;ip&gt;</code></strong> → <strong>Yang harus terjadi:</strong> cuma 80/443 open. → <strong>Kalau gagal:</strong> tutup port lain. → <strong>Catat notes:</strong> attack surface terbatas.</li>
+</ol>
+<p>🧹 <strong>HARI 3 WAJIB — CLEANUP (lab disposable):</strong></p>
+<pre><code class="language-bash">tofu destroy
+# Yang harus terjadi: &quot;Destroy complete! Resources: N destroyed.&quot;
+# SETELAH destroy: cek console AWS untuk sisa NAT gateway, EIP, volume — itu yang sering ditagih.
+</code></pre>
+<hr />
+<h2 id="hari-4-review-2-jam">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Tulis</strong> <code>docs/security-review.md</code> (attack surface, hak akses, eksposur jaringan, biaya). → <strong>Yang harus terjadi:</strong> tabel terisi. → <strong>Kalau gagal:</strong> lihat template <code>docs/security-review.md</code>.</li>
+<li><strong>Isi</strong> temuan: IMDSv2, SG rujuk SG, private subnet, budget alert. → <strong>Yang harus terjadi:</strong> status "ya".</li>
+<li><strong>Verifikasi</strong> nggak ada <code>*.tfstate</code> ke-commit. → <strong>Yang harus terjadi:</strong> <code>git status</code> bersih.</li>
+</ol>
+<hr />
+<h2 id="cheat-sheet-per-hari">Cheat sheet per hari<a class="headerlink" href="#cheat-sheet-per-hari" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Hari</th>
+<th>Fokus</th>
+<th>Perintah inti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Teori</td>
+<td>bedah <code>main.tf</code>, gambar diagram</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Praktik</td>
+<td><code>tofu apply tfplan</code>, <code>describe-security-groups</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Rusak</td>
+<td><code>nmap</code>, <code>curl</code>, <code>ssm start-session</code>, <code>destroy</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Review</td>
+<td>isi <code>docs/security-review.md</code>, cek <code>.gitignore</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="rubrik-observasi-per-hari">Rubrik observasi per hari<a class="headerlink" href="#rubrik-observasi-per-hari" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Hari</th>
+<th>Yang lo amati</th>
+<th>Tanda lulus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Paham VPC/SG/IAM</td>
+<td>Bisa gambar diagram tanpa bantuan</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Resource jalan rapi</td>
+<td><code>apply</code> sukses, output muncul</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Kegagalan keamanan terbukti</td>
+<td>DB tertutup, IMDSv2 aktif</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Review lengkap</td>
+<td><code>docs/security-review.md</code> terisi</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting-cepat">Troubleshooting cepat<a class="headerlink" href="#troubleshooting-cepat" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Penyebab</th>
+<th>Solusi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nmap</code> buka 5432</td>
+<td>SG db <code>0.0.0.0/0</code></td>
+<td>ganti ke SG app</td>
+</tr>
+<tr>
+<td>app nggak reachable LB</td>
+<td>SG app nggak rujuk SG lb</td>
+<td>tambah ingress dari SG lb</td>
+</tr>
+<tr>
+<td>app nggak akses S3</td>
+<td>role/profile salah</td>
+<td>pasang <code>iam_instance_profile</code></td>
+</tr>
+<tr>
+<td>IMDSv1 masih jalan</td>
+<td><code>http_tokens</code> bukan required</td>
+<td>set metadata_options</td>
+</tr>
+<tr>
+<td>SSH masih bisa</td>
+<td>port 22 publik</td>
+<td>tutup, pakai SSM</td>
+</tr>
+<tr>
+<td>tagihan meledak</td>
+<td>NAT ditinggal nyala</td>
+<td><code>tofu destroy</code>, matikan NAT</td>
+</tr>
+</tbody>
+</table>
+<h2 id="alat-bantu-wajib">Alat bantu wajib<a class="headerlink" href="#alat-bantu-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Alat</th>
+<th>Kegunaan</th>
+<th>Cara cek</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tofu</code> / <code>terraform</code></td>
+<td>eksekusi IaC</td>
+<td><code>tofu version</code></td>
+</tr>
+<tr>
+<td><code>aws</code> CLI</td>
+<td>cek SG, IMDS, budget</td>
+<td><code>aws --version</code></td>
+</tr>
+<tr>
+<td><code>nmap</code></td>
+<td>bukti port tertutup</td>
+<td><code>nmap --version</code></td>
+</tr>
+<tr>
+<td><code>openssl</code></td>
+<td>cek TLS</td>
+<td><code>openssl version</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="langkah-pemulihan-darurat">Langkah pemulihan darurat<a class="headerlink" href="#langkah-pemulihan-darurat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>SG kebuka publik: edit <code>main.tf</code>, <code>tofu apply</code>, lalu <code>nmap</code> ulang buat bukti.</li>
+<li>IMDSv2 belum aktif: set <code>metadata_options.http_tokens=required</code>, <code>tofu apply</code>.</li>
+<li>Tagihan tak terduga: <code>tofu destroy</code> lalu cek console untuk NAT/EIP/volume sisa.</li>
+</ul>
+<h2 id="verifikasi-akhir">Verifikasi akhir<a class="headerlink" href="#verifikasi-akhir" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>git status</code> bersih dari <code>*.tfstate</code>.</li>
+<li>[ ] Budget alert tercatat aktif.</li>
+<li>[ ] Bukti <code>nmap</code>/<code>curl</code>/<code>ssm</code> ada di <code>evidence/</code>.</li>
+</ul>
+<h2 id="daftar-periksa">Daftar periksa<a class="headerlink" href="#daftar-periksa" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Budget alert aktif SEBELUM apply.</li>
+<li>[ ] <code>nmap</code> 5432 = filtered; curl 443 = 200.</li>
+<li>[ ] IMDSv2 <code>http_tokens=required</code> (curl 169.254... → 401).</li>
+<li>[ ] Admin lewat SSM, bukan SSH publik.</li>
+<li>[ ] Diagram jaringan sesuai <code>tofu output</code>.</li>
+<li>[ ] <code>tofu destroy</code> selesai + cek sisa resource di console.</li>
+</ul>
+<h2 id="cara-buktikan">Cara buktikan<a class="headerlink" href="#cara-buktikan" title="Permanent link">&para;</a></h2>
+<p>Lo lulus kalau: (1) <code>nmap -Pn -p 5432</code> menunjukkan DB tertutup, (2) <code>curl</code> LB 200, (3) <code>curl 169.254.169.254</code> di instance balikin 401 (IMDSv2 aktif), (4) budget alert tercatat aktif, dan (5) sesudah <code>tofu destroy</code> nggak ada resource nyangkut. Bukti di <code>evidence/</code> sudah disanitasi.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-14-cloud/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

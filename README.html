@@ -1,0 +1,3090 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menjadi SRE dalam 16 Minggu</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="index.html">&#8592; Roadmap</a><span class="crumb">README.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#menjadi-sre-dalam-16-minggu">Menjadi SRE dalam 16 Minggu</a><ul>
+<li><a href="#cara-pakai-dokumen-ini">Cara pakai dokumen ini</a><ul>
+<li><a href="#5-kebiasaan-yang-sebenarnya-dibentuk-16-minggu-ini">5 kebiasaan yang sebenarnya dibentuk 16 minggu ini</a></li>
+</ul>
+</li>
+<li><a href="#peta-besar">Peta besar</a></li>
+<li><a href="#setup-awal-stack-dan-versi">Setup awal: stack dan versi</a></li>
+</ul>
+</li>
+<li><a href="#bulan-1-linux-networking-dan-diagnosis">Bulan 1: Linux, Networking, dan Diagnosis</a><ul>
+<li><a href="#minggu-1-linux-observability-dan-troubleshooting">Minggu 1 · Linux observability dan troubleshooting</a><ul>
+<li><a href="#kenapa-minggu-ini-nomor-satu">Kenapa minggu ini nomor satu</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-1">Jebakan umum minggu 1</a></li>
+<li><a href="#acceptance-criteria-minggu-1">Acceptance criteria minggu 1</a></li>
+</ul>
+</li>
+<li><a href="#minggu-2-networking-untuk-backend-engineer">Minggu 2 · Networking untuk backend engineer</a><ul>
+<li><a href="#konsep-yang-harus-nempel">Konsep yang harus nempel</a></li>
+<li><a href="#hari-1-teori-2-jam_1">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_1">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_1">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_1">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-2">Jebakan umum minggu 2</a></li>
+<li><a href="#acceptance-criteria-minggu-2">Acceptance criteria minggu 2</a></li>
+</ul>
+</li>
+<li><a href="#minggu-3-docker-production-fundamentals">Minggu 3 · Docker production fundamentals</a><ul>
+<li><a href="#hari-1-teori-2-jam_2">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_2">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_2">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_2">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-3">Jebakan umum minggu 3</a></li>
+<li><a href="#acceptance-criteria-minggu-3">Acceptance criteria minggu 3</a></li>
+</ul>
+</li>
+<li><a href="#minggu-4-dns-tls-dan-reverse-proxy">Minggu 4 · DNS, TLS, dan reverse proxy</a><ul>
+<li><a href="#hari-1-teori-2-jam_3">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_3">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-failure-matrix">Hari 3 · Eksperimen (2 jam) — Failure matrix</a></li>
+<li><a href="#hari-4-review-2-jam_3">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-4">Jebakan umum minggu 4</a></li>
+<li><a href="#acceptance-criteria-minggu-4">Acceptance criteria minggu 4</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#bulan-2-deployment-dan-operasi-production">Bulan 2: Deployment dan Operasi Production</a><ul>
+<li><a href="#minggu-5-cicd-dan-release-management">Minggu 5 · CI/CD dan release management</a><ul>
+<li><a href="#kenapa-ini-minggu-pertama-bulan-2">Kenapa ini minggu pertama bulan 2</a></li>
+<li><a href="#hari-1-teori-2-jam_4">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_4">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_3">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_4">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-5">Jebakan umum minggu 5</a></li>
+<li><a href="#acceptance-criteria-minggu-5">Acceptance criteria minggu 5</a></li>
+</ul>
+</li>
+<li><a href="#minggu-6-secrets-konfigurasi-dan-deployment">Minggu 6 · Secrets, konfigurasi, dan deployment</a><ul>
+<li><a href="#hari-1-teori-2-jam_5">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_5">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_4">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_5">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-6">Jebakan umum minggu 6</a></li>
+<li><a href="#acceptance-criteria-minggu-6">Acceptance criteria minggu 6</a></li>
+</ul>
+</li>
+<li><a href="#minggu-7-backup-dan-disaster-recovery">Minggu 7 · Backup dan disaster recovery</a><ul>
+<li><a href="#hari-1-teori-2-jam_6">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_6">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-restore-drill">Hari 3 · Eksperimen (2 jam) — Restore drill</a></li>
+<li><a href="#hari-4-review-2-jam_6">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-7">Jebakan umum minggu 7</a></li>
+<li><a href="#acceptance-criteria-minggu-7">Acceptance criteria minggu 7</a></li>
+</ul>
+</li>
+<li><a href="#minggu-8-production-readiness-dan-reliability-baseline">Minggu 8 · Production readiness dan reliability baseline</a><ul>
+<li><a href="#hari-1-teori-2-jam_7">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_7">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_5">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_7">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-8">Jebakan umum minggu 8</a></li>
+<li><a href="#acceptance-criteria-minggu-8">Acceptance criteria minggu 8</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#bulan-3-observability-dan-sre-fundamentals">Bulan 3: Observability dan SRE Fundamentals</a><ul>
+<li><a href="#minggu-9-metrics-dengan-prometheus">Minggu 9 · Metrics dengan Prometheus</a><ul>
+<li><a href="#hari-1-teori-2-jam_8">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_8">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_6">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam-query-wajib">Hari 4 · Review (2 jam) — Query wajib</a></li>
+<li><a href="#jebakan-umum-minggu-9">Jebakan umum minggu 9</a></li>
+<li><a href="#acceptance-criteria-minggu-9">Acceptance criteria minggu 9</a></li>
+</ul>
+</li>
+<li><a href="#minggu-10-grafana-dan-alerting">Minggu 10 · Grafana dan alerting</a><ul>
+<li><a href="#hari-1-teori-2-jam_9">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_9">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_7">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_8">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-10">Jebakan umum minggu 10</a></li>
+<li><a href="#acceptance-criteria-minggu-10">Acceptance criteria minggu 10</a></li>
+</ul>
+</li>
+<li><a href="#minggu-11-logs-dan-distributed-tracing">Minggu 11 · Logs dan distributed tracing</a><ul>
+<li><a href="#konsep-kunci-tiga-pertanyaan-tiga-alat">Konsep kunci: tiga pertanyaan, tiga alat</a></li>
+<li><a href="#hari-1-teori-2-jam_10">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_10">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_8">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_9">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-11">Jebakan umum minggu 11</a></li>
+<li><a href="#acceptance-criteria-minggu-11">Acceptance criteria minggu 11</a></li>
+</ul>
+</li>
+<li><a href="#minggu-12-sli-slo-error-budget-dan-incident-response">Minggu 12 · SLI, SLO, error budget, dan incident response</a><ul>
+<li><a href="#hari-1-teori-2-jam_11">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_11">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-alerting-on-slo">Hari 3 · Eksperimen (2 jam) — Alerting on SLO</a></li>
+<li><a href="#hari-4-review-2-jam-postmortem-blameless">Hari 4 · Review (2 jam) — Postmortem blameless</a></li>
+<li><a href="#jebakan-umum-minggu-12">Jebakan umum minggu 12</a></li>
+<li><a href="#acceptance-criteria-minggu-12">Acceptance criteria minggu 12</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#bulan-4-automation-cloud-dan-reliability-engineering">Bulan 4: Automation, Cloud, dan Reliability Engineering</a><ul>
+<li><a href="#minggu-13-terraform-dan-infrastructure-as-code">Minggu 13 · Terraform dan Infrastructure as Code</a><ul>
+<li><a href="#hari-1-teori-2-jam_12">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_12">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_9">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_10">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-13">Jebakan umum minggu 13</a></li>
+<li><a href="#acceptance-criteria-minggu-13">Acceptance criteria minggu 13</a></li>
+</ul>
+</li>
+<li><a href="#minggu-14-cloud-networking-dan-security">Minggu 14 · Cloud networking dan security</a><ul>
+<li><a href="#hari-1-teori-2-jam_13">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_13">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_10">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_11">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-14">Jebakan umum minggu 14</a></li>
+<li><a href="#acceptance-criteria-minggu-14">Acceptance criteria minggu 14</a></li>
+</ul>
+</li>
+<li><a href="#minggu-15-kubernetes-dan-orchestration">Minggu 15 · Kubernetes dan orchestration</a><ul>
+<li><a href="#hari-1-teori-2-jam_14">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_14">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam_11">Hari 3 · Eksperimen (2 jam)</a></li>
+<li><a href="#hari-4-review-2-jam_12">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-15">Jebakan umum minggu 15</a></li>
+<li><a href="#acceptance-criteria-minggu-15">Acceptance criteria minggu 15</a></li>
+</ul>
+</li>
+<li><a href="#minggu-16-load-testing-chaos-dan-final-incident-simulation">Minggu 16 · Load testing, chaos, dan final incident simulation</a><ul>
+<li><a href="#hari-1-teori-2-jam_15">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam_15">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-game-day">Hari 3 · Eksperimen (2 jam) — Game day</a></li>
+<li><a href="#hari-4-final-review-2-jam">Hari 4 · Final review (2 jam)</a></li>
+<li><a href="#jebakan-umum-minggu-16">Jebakan umum minggu 16</a></li>
+<li><a href="#acceptance-criteria-minggu-16">Acceptance criteria minggu 16</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#lampiran-a-ai-agent-workflow-products-yang-relevan-buat-sre">Lampiran A · AI Agent Workflow Products yang Relevan Buat SRE</a><ul>
+<li><a href="#kenapa-ini-relevan-buat-sre-bukan-cuma-buat-ai-engineer">Kenapa ini relevan buat SRE, bukan cuma buat "AI engineer"</a></li>
+<li><a href="#perubahan-yang-perlu-lo-antisipasi">Perubahan yang perlu lo antisipasi</a></li>
+<li><a href="#aturan-pakai-yang-gue-saranin">Aturan pakai yang gue saranin</a></li>
+</ul>
+</li>
+<li><a href="#lampiran-b-checklist-kelulusan-pribadi">Lampiran B · Checklist Kelulusan Pribadi</a><ul>
+<li><a href="#per-minggu-tanya-4-hal-ini-sebelum-centang">Per minggu — tanya 4 hal ini sebelum centang</a></li>
+<li><a href="#per-bulan-pertanyaan-level-atas">Per bulan — pertanyaan level atas</a></li>
+<li><a href="#tanda-bahaya-bahwa-lo-cuma-nonton">Tanda bahaya bahwa lo cuma nonton</a></li>
+</ul>
+</li>
+<li><a href="#lampiran-c-referensi-utama-per-topik">Lampiran C · Referensi Utama per Topik</a></li>
+</ul>
+</div>
+</details>
+<h1 id="menjadi-sre-dalam-16-minggu">Menjadi SRE dalam 16 Minggu<a class="headerlink" href="#menjadi-sre-dalam-16-minggu" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini adalah <strong>versi yang diperdalam</strong> dari roadmap 16 minggu yang lo punya.<br />
+Roadmap asli udah bagus: ritme jelas, acceptance criteria jelas, struktur repo jelas.<br />
+Yang kurang biasanya cuma satu hal: <strong>bagian "gue harus ngapain tepatnya, dan gimana tahu kalau salah"</strong>.<br />
+Dokumen ini ngisi bagian itu.</p>
+<p><strong>Ditulis untuk:</strong> backend engineer yang sudah nyaman dengan Python, Go, Docker, database, Redis, dan debugging aplikasi.<br />
+<strong>Ditulis pada:</strong> 12 Oktober 2026. Semua versi ditandai: <strong>[2025]</strong> = milestone yang lo minta, <strong>[2026]</strong> = versi aktual hari ini (jangan sampai lo install yang udah pensiun).</p>
+</blockquote>
+<hr />
+<h2 id="cara-pakai-dokumen-ini">Cara pakai dokumen ini<a class="headerlink" href="#cara-pakai-dokumen-ini" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Jangan dibaca sekali duduk.</strong> Baca minggu yang lagi lo kerjain, minggu depan baca lagi.</li>
+<li><strong>Setiap minggu punya 4 "pintu keluar".</strong> Kalau 4 acceptance criteria di bawah nggak lolos, minggu itu <strong>belum selesai</strong>. Lanjut minggu berikutnya itu boleh, tapi jangan centang yang ini.</li>
+<li><strong>Bukti &gt; perasaan.</strong> "Kayaknya udah paham" bukan bukti. Log, screenshot, angka, dan commit itu bukti.</li>
+<li><strong>Rusakkan dengan sengaja.</strong> Hampir semua minggu punya sesi "Hari 3: Eksperimen kegagalan". Ini bagian yang paling berharga — karena insiden nyata nggak pernah datang dalam kondisi lo lagi siap.</li>
+<li><strong>Satu repo, bukan 16 repo.</strong> Semua masuk ke <code>production-reliability-lab/</code>. Reviewer (dan calon interviewer) bisa ngikutin progres lo dari Linux sampai incident response tanpa buka 16 tab.</li>
+</ol>
+<h3 id="5-kebiasaan-yang-sebenarnya-dibentuk-16-minggu-ini">5 kebiasaan yang sebenarnya dibentuk 16 minggu ini<a class="headerlink" href="#5-kebiasaan-yang-sebenarnya-dibentuk-16-minggu-ini" title="Permanent link">&para;</a></h3>
+<p>Roadmap ini kelihatannya soal tools. Sebenernya soal <strong>cara berpikir</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Kebiasaan</th>
+<th>Kelihatannya di minggu ke-</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ukur</strong> dulu sebelum opini</td>
+<td>2 (latency fase), 9 (metrics), 16 (load test)</td>
+</tr>
+<tr>
+<td><strong>Deteksi</strong> sebelum user ngeluh</td>
+<td>10 (alerting), 12 (burn rate)</td>
+</tr>
+<tr>
+<td><strong>Diagnosis</strong> pakai bukti berjenjang</td>
+<td>1 (Linux), 11 (trace), 16 (chaos)</td>
+</tr>
+<tr>
+<td><strong>Mitigasi</strong> dulu, analisis belakangan</td>
+<td>4 (failure matrix), 6 (rollback), 12 (incident)</td>
+</tr>
+<tr>
+<td><strong>Cegah</strong> yang sama terulang</td>
+<td>8 (PRR), 12 (postmortem), 16 (capacity)</td>
+</tr>
+</tbody>
+</table>
+<p>Kalau habis 16 minggu lo cuma hapal perintah <code>kubectl</code> tapi masih nebak-nebak pas ada masalah, berarti 128 jam itu kepakai buat nonton, bukan buat latihan.</p>
+<hr />
+<h2 id="peta-besar">Peta besar<a class="headerlink" href="#peta-besar" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Bulan</th>
+<th>Minggu</th>
+<th>Tema</th>
+<th>Yang bikin lo beda dari "backend engineer yang bisa deploy"</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1–4</td>
+<td>Linux, networking, container, proxy</td>
+<td>Bisa jawab "kenapa lambat/mati" pakai bukti, bukan "coba restart dulu"</td>
+</tr>
+<tr>
+<td>2</td>
+<td>5–8</td>
+<td>CI/CD, secret, backup, readiness</td>
+<td>Bisa rilis, rollback, dan pulihin data tanpa panik</td>
+</tr>
+<tr>
+<td>3</td>
+<td>9–12</td>
+<td>Metrics, alert, log, trace, SLO</td>
+<td>Bisa bilang "layanan kita sehat 99,7%, dan ini buktinya"</td>
+</tr>
+<tr>
+<td>4</td>
+<td>13–16</td>
+<td>IaC, cloud, K8s, load test, chaos</td>
+<td>Bisa ukur kapasitas dan buktiin sistem bisa pulih</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="setup-awal-stack-dan-versi">Setup awal: stack dan versi<a class="headerlink" href="#setup-awal-stack-dan-versi" title="Permanent link">&para;</a></h2>
+<p>Roadmap lo udah milih stack yang tepat. Catatan tambahan buat 2025–2026:</p>
+<table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Pilihan</th>
+<th>Catatan versi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aplikasi</td>
+<td>Go HTTP API</td>
+<td>Go 1.25 rilis Agustus <strong>[2025]</strong>; versi stabil terbaru hari ini <strong>Go 1.27.x</strong>. Pakai minimal 1.22+ biar dapet routing pattern di <code>ServeMux</code>, dan manfaatin <code>log/slog</code> (bawaan sejak Go 1.21)</td>
+</tr>
+<tr>
+<td>Dependency</td>
+<td>PostgreSQL + Redis</td>
+<td><strong>PostgreSQL 18 GA 25 Sep 2025</strong> — <code>initdb</code> sekarang default <strong>data checksum ON</strong>, ada AIO (<code>io_method</code>), <code>md5</code> deprecated. PG 17/18 dua-duanya aman buat lab</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>Docker Compose</td>
+<td>Compose v1 (<code>docker-compose</code> Python) <strong>sudah dihapus</strong>. Pakai <code>docker compose</code> (v2+). Compose sekarang sudah v5.x <strong>[2026]</strong></td>
+</tr>
+<tr>
+<td>Reverse proxy</td>
+<td>Nginx</td>
+<td>Stable 1.28/1.29 di 2025; hari ini stable 1.30.x. Mulai <strong>nginx 1.29.7</strong>, <code>keepalive</code> di blok <code>upstream</code> dan <code>proxy_http_version 1.1</code> <strong>default ON</strong></td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td>GitHub Actions</td>
+<td><code>actions/setup-go</code> v7, <code>docker/build-push-action</code> v7, <code>actions/attest</code> v4 (SLSA attestation)</td>
+</tr>
+<tr>
+<td>Metrics</td>
+<td>Prometheus</td>
+<td><strong>Prometheus 3.0 rilis 14 Nov 2024</strong> — UI baru, Remote Write 2.0, UTF-8 di nama metric, OTLP receiver. Rilis 2025: 3.2 → 3.8. Sekarang 3.15.x, jalur LTS <strong>3.13.x</strong></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td>Grafana</td>
+<td>Grafana 12.0 rilis 5 Mei <strong>[2025]</strong>; sekarang 13.x</td>
+</tr>
+<tr>
+<td>Logs</td>
+<td>Loki + <strong>Grafana Alloy</strong></td>
+<td><strong>PENTING: Promtail EOL 2 Maret 2026.</strong> Jangan mulai lab pakai Promtail — langsung Alloy</td>
+</tr>
+<tr>
+<td>Tracing</td>
+<td>OpenTelemetry</td>
+<td>OTLP sudah <strong>stable untuk traces, metrics, dan logs</strong>. Semconv HTTP dan DB client sudah stable</td>
+</tr>
+<tr>
+<td>Load test</td>
+<td>k6</td>
+<td><strong>k6 v1.0.0 rilis 6 Mei 2025</strong> (native TypeScript, SemVer, 2 tahun support). Sekarang sudah <strong>k6 v2.x</strong> — pin versi di CI</td>
+</tr>
+<tr>
+<td>IaC</td>
+<td>Terraform <strong>atau</strong> OpenTofu</td>
+<td>Terraform berlisensi BUSL sejak 2023; <strong>IBM selesaikan akuisisi HashiCorp 27 Feb 2025</strong>. OpenTofu (MPL-2.0, Linux Foundation) makin banyak dipakai. <strong>Buat lab, OpenTofu lebih bebas</strong>; buat kerja, pahami dua-duanya</td>
+</tr>
+<tr>
+<td>Cloud lab</td>
+<td>VPS / free tier</td>
+<td><strong>AWS Free Tier berubah 15 Juli 2025</strong>: bukan lagi "12 bulan gratis", tapi kredit $100 (+$100) berlaku <strong>6 bulan</strong>. Pasang budget alert dari hari pertama</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Saran gue:</strong> mulai dengan <strong>1 VPS Ubuntu 24.04 LTS</strong> (~$5/bulan) + Docker. Lebih murah, lebih sedikit jebakan, dan cukup buat minggu 1–12. Pakai cloud managed service (RDS/Cloud SQL) <strong>cuma</strong> pas minggu 13–14, karena itu minggu yang memang ngajarin cloud.</p>
+<hr />
+<h1 id="bulan-1-linux-networking-dan-diagnosis">Bulan 1: Linux, Networking, dan Diagnosis<a class="headerlink" href="#bulan-1-linux-networking-dan-diagnosis" title="Permanent link">&para;</a></h1>
+<p>Tujuan bulan ini: berhenti jadi orang yang bilang "coba restart dulu".</p>
+<hr />
+<h2 id="minggu-1-linux-observability-dan-troubleshooting">Minggu 1 · Linux observability dan troubleshooting<a class="headerlink" href="#minggu-1-linux-observability-dan-troubleshooting" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> bisa menjelaskan kenapa service lambat atau mati, pakai bukti.</p>
+<h3 id="kenapa-minggu-ini-nomor-satu">Kenapa minggu ini nomor satu<a class="headerlink" href="#kenapa-minggu-ini-nomor-satu" title="Permanent link">&para;</a></h3>
+<p>Karena hampir semua insiden produksi ujungnya cuma 3 pertanyaan:</p>
+<ol>
+<li>Siapa yang makan CPU?</li>
+<li>Siapa yang makan memori / kena limit?</li>
+<li>Prosesnya masih hidup nggak, dan kalau hidup, kenapa nggak bisa diajak bicara?</li>
+</ol>
+<p>Kalau lo nggak bisa jawab 3 ini dalam 5 menit, observability stack secanggih apa pun cuma jadi dekorasi.</p>
+<h3 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h3>
+<p>Yang wajib lo pahami, dan kenapa:</p>
+<table>
+<thead>
+<tr>
+<th>Konsep</th>
+<th>Kenapa penting buat SRE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Process vs thread</strong></td>
+<td>"CPU 100%" bisa jadi 1 thread nakal di proses yang kelihatannya normal. <code>top</code> biasa nyembunyiin ini</td>
+</tr>
+<tr>
+<td><strong>Signals (SIGTERM/SIGKILL)</strong></td>
+<td>Bedanya minta berhenti dengan sopan vs ditembak. Ini nyambung langsung ke graceful shutdown di minggu 6</td>
+</tr>
+<tr>
+<td><strong>systemd</strong></td>
+<td>Siapa yang nyalain ulang service, dan kenapa <code>journalctl</code> jadi sumber kebenaran</td>
+</tr>
+<tr>
+<td><strong>Memory: free vs available</strong></td>
+<td>"Memory penuh" paling sering salah diagnosis</td>
+</tr>
+<tr>
+<td><strong>File descriptor</strong></td>
+<td>"Too many open files" itu bukan bug eksotis — ini koneksi yang nggak ditutup</td>
+</tr>
+<tr>
+<td><strong>cgroup v2</strong></td>
+<td>Ini yang bikin container kena OOM meski RAM host masih lega</td>
+</tr>
+</tbody>
+</table>
+<p>Baca: <a href="https://man7.org/linux/man-pages/">Linux man-pages</a> dan <a href="https://docs.kernel.org/admin-guide/cgroup-v2.html">cgroup v2 docs</a>.</p>
+<p>Konsep yang <strong>sering kelewat tapi sangat berguna</strong>: <strong>PSI (Pressure Stall Information)</strong>. Ini jawaban buat pertanyaan "CPU-nya nggak 100%, tapi kok lambat?" PSI ngasih tahu berapa persen waktu proses <em>menunggu</em> CPU/memori/IO.</p>
+<pre><code class="language-bash">cat /proc/pressure/cpu
+cat /proc/pressure/memory
+cat /proc/pressure/io
+# some avg10=0.00 avg60=0.00 avg300=2.31 total=1234567
+</code></pre>
+<h3 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">uname -a                             # kernel + arsitektur (Ubuntu 24.04.3 LTS bawa HWE 6.14 [2025])
+uptime                               # load average 1/5/15 menit
+free -h                              # lihat &quot;available&quot;, BUKAN &quot;free&quot;
+df -h &amp;&amp; df -i                       # disk penuh dan inode habis itu dua masalah beda
+ps aux --sort=-%cpu | head -10
+ps aux --sort=-%mem | head -10
+systemctl --failed
+journalctl -p err -b --no-pager
+</code></pre>
+<p>Lalu nyalain API Go, dan <strong>buktikan</strong> hal-hal ini:</p>
+<pre><code class="language-bash">go run . &amp;                           # atau ./sre-api
+pgrep -af 'sre-api|go run'           # PID + command lengkap
+PID=$(pgrep -f sre-api | head -1)
+ss -lntp | grep 8080                 # siapa yang listen di 8080
+lsof -p $PID | head -30              # file + koneksi yang dibuka proses ini
+lsof -i :8080                        # kalau port bentrok, ini hakimnya
+cat /proc/$PID/status | grep -E 'Threads|VmRSS'
+ls /proc/$PID/fd | wc -l             # jumlah file descriptor
+</code></pre>
+<p><strong>Output yang harus lo simpan sebagai bukti:</strong> <code>ss -lntp</code> nunjukin proses Go lo listen di 8080, dan <code>lsof -p $PID</code> nunjukin koneksi ke Postgres dan Redis.</p>
+<h3 id="hari-3-eksperimen-2-jam">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam" title="Permanent link">&para;</a></h3>
+<p>Tiga eksperimen wajib:</p>
+<p><strong>Eksperimen A: CPU tinggi.</strong></p>
+<pre><code class="language-bash"># bikin proses CPU-intensive
+yes &gt; /dev/null &amp; 
+BAD=$!
+top -H -p $BAD                       # lihat thread-level, bukan cuma proses
+pidstat -urd -p $BAD 1 5             # CPU + memori + IO per proses, interval 1s
+kill -TERM $BAD                      # minta berhenti sopan
+# kalau bandel:
+kill -KILL $BAD                      # paksa — dan pahami kapan ini jadi masalah
+</code></pre>
+<p><strong>Eksperimen B: Service gagal di systemd.</strong> Bikin unit file sederhana, sengaja salahin (path binary salah, atau env yang nggak ada), lalu:</p>
+<pre><code class="language-bash">systemctl status sre-lab.service
+journalctl -u sre-lab.service -n 100 --no-pager
+systemctl --failed
+</code></pre>
+<p><strong>Eksperimen C: bedain 3 kondisi yang sering ketuker.</strong></p>
+<ol>
+<li><strong>Proses mati</strong> → <code>pgrep</code> kosong, <code>ss</code> nggak ada yang listen, <code>curl</code> → <code>connection refused</code>.</li>
+<li><strong>Proses hidup, port nggak listen</strong> → <code>pgrep</code> ada, <code>ss</code> kosong. Ini yang bikin orang bingung 30 menit.</li>
+<li><strong>Port listen, tapi aplikasi nggak responsif</strong> → <code>ss</code> ada, <code>curl</code> nggak pernah balas (hang). Biasanya thread pool / koneksi DB habis.</li>
+</ol>
+<pre><code class="language-bash"># pembuktiannya
+curl -v --max-time 3 http://localhost:8080/health
+echo &quot;exit code: $?&quot;                 # 7 = refused, 28 = timeout, 0 = ok, 52 = empty reply
+</code></pre>
+<p>Simpan tabel perbandingan 3 kondisi ini di <code>labs/week-01-linux/commands.md</code>. Ini salah satu artefak paling kepakai sepanjang karier lo.</p>
+<h3 id="hari-4-review-2-jam">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam" title="Permanent link">&para;</a></h3>
+<p>Bikin 3 runbook di <code>labs/week-01-linux/runbooks/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Gejala</th>
+<th>Isi minimum</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>high-cpu.md</code></td>
+<td>load tinggi, request lambat</td>
+<td>Cara nemu thread nakal &lt;5 menit, keputusan kapan scale vs kapan perbaiki kode</td>
+</tr>
+<tr>
+<td><code>oom-symptoms.md</code></td>
+<td>container restart mendadak</td>
+<td>Bukti kernel <code>oom-kill</code> vs <code>systemd-oomd</code>, beda OOM host vs OOM cgroup</td>
+</tr>
+<tr>
+<td><code>service-down.md</code></td>
+<td>endpoint nggak bisa diakses</td>
+<td>Decision tree: proses hidup? port listen? aplikasi responsif? dependency sehat?</td>
+</tr>
+</tbody>
+</table>
+<h3 id="jebakan-umum-minggu-1">Jebakan umum minggu 1<a class="headerlink" href="#jebakan-umum-minggu-1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Load average tinggi ≠ CPU tinggi.</strong> Bisa jadi proses numpuk nunggu I/O. Cek kolom <code>wa</code> di <code>vmstat</code> dan <code>b</code> (blocked).</li>
+<li><strong>"Memory penuh" palsu.</strong> Linux pakai sisa RAM buat page cache. Lihat <code>MemAvailable</code>, dan <code>free -h</code> baris <code>buff/cache</code> bukan musuh lo.</li>
+<li><strong>OOM di container nggak selalu muncul di <code>dmesg</code> host.</strong> Yang kena limit itu cgroup, jadi cek <code>memory.events</code> dan <code>systemd-oomd</code>.</li>
+<li><strong><code>pidstat</code> iterasi pertama itu rata-rata sejak boot</strong>, bukan kondisi sekarang. Tunggu baris ke-2.</li>
+<li><strong><code>kill -9</code> sebagai solusi pertama.</strong> Itu nggak ngasih aplikasi kesempatan nutup koneksi DB dengan rapi — dan bakal jadi bug misterius di minggu 6.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-1">Acceptance criteria minggu 1<a class="headerlink" href="#acceptance-criteria-minggu-1" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Bisa nunjuk proses/thread penyebab CPU tinggi dalam <strong>&lt; 5 menit</strong>, dengan bukti.</li>
+<li>Bisa nemuin error dari system journal (<code>journalctl</code>) dan bedain error aplikasi vs error sistem.</li>
+<li>Bisa bedain <strong>service down</strong> vs <strong>service hidup tapi nggak nerima koneksi</strong>, dan nulis decision tree-nya.</li>
+<li>Bisa sebutin apa bedanya <code>kill -TERM</code> dan <code>kill -KILL</code>, serta kapan <code>-KILL</code> jadi keputusan yang buruk.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-01-linux/</code> berisi <code>README.md</code>, <code>notes.md</code>, <code>commands.md</code> (perintah + output tersanitasi), <code>runbooks/</code> (3 file), <code>evidence/</code>.</p>
+<hr />
+<h2 id="minggu-2-networking-untuk-backend-engineer">Minggu 2 · Networking untuk backend engineer<a class="headerlink" href="#minggu-2-networking-untuk-backend-engineer" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> paham perjalanan request dari client ke aplikasi dan dependency-nya.</p>
+<h3 id="konsep-yang-harus-nempel">Konsep yang harus nempel<a class="headerlink" href="#konsep-yang-harus-nempel" title="Permanent link">&para;</a></h3>
+<p>Bayangin request itu kayak kurir:</p>
+<ol>
+<li><strong>DNS</strong> = nyari alamat dari nama. Gagal di sini = "alamatnya nggak ada".</li>
+<li><strong>TCP handshake</strong> = ketuk pintu, tunggu dibukain. Gagal = <code>connection refused</code> (pintu dikunci) atau <strong>timeout</strong> (nggak ada yang nyahut).</li>
+<li><strong>TLS handshake</strong> = saling kenal dan bikin kunci rahasia. Gagal = certificate/versi TLS nggak cocok.</li>
+<li><strong>HTTP</strong> = ngobrol. Gagal di sini = 4xx/5xx, maksudnya aplikasi <strong>jawab</strong>, tapi jawabannya jelek.</li>
+<li><strong>Transfer body</strong> = barangnya diantar.</li>
+</ol>
+<p>Kerennya: <code>curl</code> bisa nunjukin <strong>semua fase ini dalam angka</strong>. Dan angka itu bikin debat "lelet di server atau di jaringan?" selesai dalam 10 detik.</p>
+<h3 id="hari-1-teori-2-jam_1">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_1" title="Permanent link">&para;</a></h3>
+<p>Pelajari DNS, routing, TCP handshake, listening socket, connection timeout, HTTP, TLS, reverse proxy.<br />
+Referensi: <a href="https://www.cloudflare.com/learning/network-layer/">Cloudflare Learning Center</a>.</p>
+<p>Fakta yang baiknya lo tahu (biar nggak kaget pas ngobrol sama orang infra):</p>
+<ul>
+<li>Pangsa traffic global Cloudflare <strong>2025</strong>: <strong>HTTP/2 ~50%</strong>, HTTP/1.x ~29%, <strong>HTTP/3 ~21%</strong> — <a href="https://blog.cloudflare.com/radar-2025-year-in-review/">Cloudflare Radar 2025 Year in Review</a>. HTTP/3 (RFC 9114 di atas QUIC) bukan lagi "eksperimen".</li>
+<li><strong>OpenSSL 3.5 LTS</strong> rilis 8 April <strong>[2025]</strong>, didukung sampai 2030 — <a href="https://openssl-library.org/post/2025-04-08-openssl-35-final-release/">pengumuman</a>.</li>
+</ul>
+<h3 id="hari-2-praktik-2-jam_1">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_1" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">ip addr                              # alamat IP + interface
+ip route                             # ke mana traffic dilempar
+ss -lntp                             # port yang listen + proses pemiliknya
+dig example.com +trace               # DNS dari root → TLD → authoritative
+dig +short example.com               # cuma jawabannya
+getent hosts redis                   # resolusi ala aplikasi (bukan ala dig!)
+</code></pre>
+<p>Ukur fase latency:</p>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'dns=%{time_namelookup} tcp=%{time_connect} tls=%{time_appconnect} ttfb=%{time_starttransfer} total=%{time_total} http=%{http_code} ver=%{http_version}\n' https://example.com
+</code></pre>
+<p>Coba juga ke service lokal lo:</p>
+<pre><code class="language-bash">curl -sS -o /dev/null -w 'dns=%{time_namelookup} tcp=%{time_connect} ttfb=%{time_starttransfer} total=%{time_total}\n' http://localhost:8080/health
+</code></pre>
+<p><strong>Latihan wajib:</strong> jalanin perintah itu 5 kali, lalu jawab: kenapa <code>dns</code> ke <code>localhost</code> nyaris nol tapi ke domain publik bisa puluhan milidetik? Kenapa <code>ttfb</code> turun naik? Kenapa <code>total</code> jauh lebih besar dari <code>ttfb</code> di response gede?</p>
+<h3 id="hari-3-eksperimen-2-jam_1">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_1" title="Permanent link">&para;</a></h3>
+<p>Reproduksi 4 kegagalan klasik, dan <strong>catat persis error-nya</strong>:</p>
+<pre><code class="language-bash"># 1. Port salah → connection refused
+curl --connect-timeout 3 http://localhost:9999
+# 2. Service mati tapi DNS/host ada
+docker compose stop api &amp;&amp; curl --connect-timeout 3 http://localhost:8080/health
+# 3. DNS gagal: host yang nggak ada di jaringan Docker
+docker compose exec api getent hosts nope-service
+docker compose exec api curl -v --connect-timeout 3 http://nope-service:8080
+# 4. Timeout: iptables DROP (bukan REJECT) di lab, atau firewall cloud
+</code></pre>
+<p>Bikin tabel begini di <code>labs/week-02-networking/commands.md</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Error yang muncul</th>
+<th>exit code curl</th>
+<th>Cara deteksi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNS gagal</td>
+<td><code>Could not resolve host</code></td>
+<td>6</td>
+<td><code>dig</code> / <code>getent hosts</code></td>
+</tr>
+<tr>
+<td>Port nggak listen</td>
+<td><code>Connection refused</code></td>
+<td>7</td>
+<td><code>ss -lntp</code></td>
+</tr>
+<tr>
+<td>Firewall drop / routing</td>
+<td>hang lalu <code>Timeout</code></td>
+<td>28</td>
+<td><code>mtr</code>, <code>tcpdump</code></td>
+</tr>
+<tr>
+<td>Aplikasi error</td>
+<td>HTTP 500</td>
+<td>0</td>
+<td>log aplikasi</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Jebakan besar:</strong> exit code <code>curl</code> itu informasi, bukan gangguan. Biasakan cek <code>$?</code> — kebanyakan engineer cuma lihat outputnya.</p>
+<h3 id="hari-4-review-2-jam_1">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_1" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Diagram request flow</strong>: client → DNS → TCP → TLS → Nginx → Go API → Postgres/Redis. Gambar di <code>labs/week-02-networking/</code> (bisa pakai ASCII art, Mermaid, atau Excalidraw — yang penting ada).</li>
+<li><strong>Decision tree troubleshooting</strong> untuk: DNS failure, connection refused, timeout.</li>
+</ol>
+<p>Bentuknya gini:</p>
+<pre><code>Request gagal
+├─ curl exit 6  → DNS. Cek: dig, getent hosts, /etc/resolv.conf, resolver internal Docker
+├─ curl exit 7  → Nggak ada yang listen. Cek: ss -lntp, prosesnya hidup?, port-nya bener?
+├─ curl exit 28 → Timeout. Cek: firewall/SecurityGroup, routing, service overload
+└─ exit 0 tapi 5xx → Aplikasi. Cek: log aplikasi, dependency health, trace
+</code></pre>
+<h3 id="jebakan-umum-minggu-2">Jebakan umum minggu 2<a class="headerlink" href="#jebakan-umum-minggu-2" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>time_starttransfer</code> (TTFB) itu bukan "waktu jaringan"</strong> — udah termasuk waktu server mikir. <code>total - starttransfer</code> baru waktu kirim body.</li>
+<li><strong>Hasil <code>dig</code> belum tentu yang dipakai aplikasi.</strong> Ada cache, <code>systemd-resolved</code>, stub resolver <code>127.0.0.53</code>. Makanya <code>getent hosts</code> lebih jujur.</li>
+<li><strong>Ping diblok ≠ service mati.</strong> ICMP dan TCP itu jalan tol berbeda.</li>
+<li><strong><code>openssl s_client</code> tanpa <code>-servername</code></strong> bisa dapet sertifikat yang salah, karena SNI.</li>
+<li><strong>DNS di Docker Compose itu internal.</strong> <code>api</code> bisa resolve <code>redis</code>, tapi laptop lo nggak bisa. Ini sumber 90% kebingungan pemula.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-2">Acceptance criteria minggu 2<a class="headerlink" href="#acceptance-criteria-minggu-2" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Bisa jelasin beda <strong>DNS failure, TCP failure, HTTP error, timeout</strong> — dan mereproduksi keempatnya.</li>
+<li>Bisa nemuin port yang listen <strong>dan</strong> proses pemiliknya.</li>
+<li>Bisa ukur dan jelasin 5 fase latency satu request.</li>
+<li>Bisa buktiin versi TLS dan protokol (h2/h3) yang dipakai:</li>
+</ol>
+<p><code>bash
+   openssl s_client -connect example.com:443 -servername example.com -tls1_3 -alpn h2 -brief</code></p>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-02-networking/</code> — diagram arsitektur, hasil eksperimen (tabel error), runbook decision tree.</p>
+<hr />
+<h2 id="minggu-3-docker-production-fundamentals">Minggu 3 · Docker production fundamentals<a class="headerlink" href="#minggu-3-docker-production-fundamentals" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> operasi container dengan lifecycle, resource, dan network yang terkontrol.</p>
+<h3 id="hari-1-teori-2-jam_2">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_2" title="Permanent link">&para;</a></h3>
+<p>Image layer, container lifecycle, bridge network, volume, health check, cgroups, beda <code>CMD</code> vs <code>ENTRYPOINT</code>.<br />
+Referensi: <a href="https://docs.docker.com/get-started/">Docker Get Started</a> + <a href="https://docs.docker.com/reference/compose-file/services/">Compose file reference</a>.</p>
+<p><strong>Perubahan yang wajib lo tahu:</strong></p>
+<ul>
+<li><strong><code>docker-compose</code> (v1, Python) sudah dihapus.</strong> Sekarang <code>docker compose</code>. Semua tutorial lama yang pakai strip <code>-</code> itu usang.</li>
+<li><strong><code>depends_on</code> bentuk pendek itu jebakan.</strong> Dia cuma nunggu container <em>start</em>, bukan nunggu <em>siap</em>. Bentuk panjang dengan <code>condition: service_healthy</code> yang benar.</li>
+<li><strong><code>deploy.replicas</code> dan <code>update_config</code> itu fitur Swarm.</strong> Kalau lo pakai Compose biasa, jangan kaget waktu nggak jalan. Yang tetap jalan di Compose non-Swarm: <code>deploy.resources.limits</code>.</li>
+</ul>
+<h3 id="hari-2-praktik-2-jam_2">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_2" title="Permanent link">&para;</a></h3>
+<p>Bikin Compose stack: Go API + PostgreSQL + Redis. Ini versi yang udah bener:</p>
+<pre><code class="language-yaml"># docker/compose.yaml
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    user: &quot;10001:10001&quot;                 # jangan jalan sebagai root
+    env_file: ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy      # BUKAN cuma &quot;started&quot;
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;/app/sre-api&quot;, &quot;-healthcheck&quot;]   # atau wget, asal ada di image
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s                 # kasih waktu buat warm-up
+    deploy:
+      resources:
+        limits: { cpus: &quot;0.50&quot;, memory: 256M, pids: 200 }
+
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}   # dari .env, JANGAN ditulis di sini
+      POSTGRES_DB: ${PGDATABASE}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U ${PGUSER}&quot;]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;redis-cli&quot;, &quot;ping&quot;]
+      interval: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+</code></pre>
+<blockquote>
+<p>Catatan: <code>postgres</code> dan <code>redis</code> <strong>tidak punya <code>ports:</code></strong> — mereka cuma bisa diakses dari jaringan internal Compose. Ini kebiasaan yang bikin beda antara "lab" dan "calon insiden keamanan".</p>
+</blockquote>
+<pre><code class="language-bash">docker compose config                 # validasi sebelum jalan
+docker compose up -d --build --wait   # --wait = tunggu sampai healthcheck OK
+docker compose ps --format 'table {{.Name}}\t{{.Status}}\t{{.Health}}'
+docker compose logs -f api
+docker inspect &lt;container&gt;
+docker stats --no-stream
+docker network ls
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_2">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_2" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># 1. Batasi memori sampai mepet, lalu lihat apa yang terjadi
+docker run --rm --memory=64m --cpus=.5 --pids-limit=100 &lt;image&gt;
+# 2. Matikan dependency
+docker compose stop redis
+docker compose logs -f api            # apakah API panic, hang, atau gagal dengan terkendali?
+docker compose ps                     # health status berubah?
+# 3. Cari tahu kenapa container restart terus
+docker inspect --format '{{json .State}}' &lt;container&gt; | jq
+docker events --since 10m
+docker compose start redis
+</code></pre>
+<p><strong>Hal yang paling penting dari minggu ini:</strong> kalau Redis mati dan API lo malah <em>hang</em> (bukan balas 503 cepat), berarti lo baru nemuin bug nyata. Itu yang namanya <strong>fail without controlled degradation</strong>. Catat, terus perbaiki di minggu 6.</p>
+<h3 id="hari-4-review-2-jam_2">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_2" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Healthcheck yang <strong>beneran nguji kesiapan</strong> — bukan <code>test: ["CMD", "true"]</code>.</li>
+<li>Dokumentasi perbandingan di <code>labs/week-03-docker/commands.md</code>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Mekanisme</th>
+<th>Yang dijawab</th>
+<th>Yang TIDAK dijawab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>depends_on</code></td>
+<td>"apakah container lain sudah distart?"</td>
+<td>"apakah dia sudah siap menerima traffic?"</td>
+</tr>
+<tr>
+<td><code>healthcheck</code></td>
+<td>"apakah proses ini sehat?"</td>
+<td>"apakah dependency-nya sehat?"</td>
+</tr>
+<tr>
+<td>Application retry/backoff</td>
+<td>"gimana kalau dependency sebentar mati?"</td>
+<td>— (ini tanggung jawab aplikasi, bukan Docker)</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li><strong>.env.example + .gitignore.</strong> Password database nggak boleh ada di repo.</li>
+</ol>
+<h3 id="jebakan-umum-minggu-3">Jebakan umum minggu 3<a class="headerlink" href="#jebakan-umum-minggu-3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Healthcheck pakai <code>curl</code> di image distroless → <strong>selalu unhealthy</strong>, karena nggak ada <code>curl</code>.</li>
+<li>Tanpa <code>USER</code> di Dockerfile → container jalan sebagai <strong>root</strong>.</li>
+<li>Tanpa limit memori → yang kena OOM itu <strong>host</strong>, bukan container.</li>
+<li>Image tag <code>:latest</code> + layer cache → <strong>rollback jadi mustahil</strong>. Biasakan tag SHA atau versi.</li>
+<li>Volume database nggak dipisah → <code>docker compose down -v</code> = data hilang. Pahami beda <code>down</code> dan <code>down -v</code>.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-3">Acceptance criteria minggu 3<a class="headerlink" href="#acceptance-criteria-minggu-3" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Seluruh service hidup dari kondisi bersih dengan <strong>satu perintah</strong>.</li>
+<li>API <strong>gagal secara terkendali</strong> saat dependency nggak tersedia (bukan hang/panic).</li>
+<li>Setiap container punya limit resource masuk akal + healthcheck yang berfungsi.</li>
+<li>Nggak ada password hardcoded; <code>.env</code> ada di <code>.gitignore</code>, <code>.env.example</code> ada di repo.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-03-docker/</code>, <code>docker/compose.yaml</code>, <code>docker/Dockerfile</code>, <code>.env.example</code>, troubleshooting guide.</p>
+<hr />
+<h2 id="minggu-4-dns-tls-dan-reverse-proxy">Minggu 4 · DNS, TLS, dan reverse proxy<a class="headerlink" href="#minggu-4-dns-tls-dan-reverse-proxy" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> akses HTTP/HTTPS yang benar, dan bisa diagnosis masalah di depan aplikasi.</p>
+<h3 id="hari-1-teori-2-jam_3">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_3" title="Permanent link">&para;</a></h3>
+<p>Reverse proxy, TLS certificate, upstream health, request buffering, keep-alive, proxy timeout, graceful shutdown.<br />
+Referensi: <a href="https://nginx.org/en/docs/beginners_guide.html">NGINX Beginner's Guide</a> + <a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html">ngx_http_proxy_module</a>.</p>
+<p><strong>Yang berubah dan perlu lo tahu:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Hal</th>
+<th>Fakta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Default timeout nginx</td>
+<td><code>proxy_connect_timeout</code>, <code>proxy_read_timeout</code>, <code>proxy_send_timeout</code> semua <strong>60 detik</strong> — terlalu lama buat API modern</td>
+</tr>
+<tr>
+<td>Keep-alive upstream</td>
+<td>Mulai <strong>nginx 1.29.7</strong> <code>keepalive</code> di blok <code>upstream</code> dan <code>proxy_http_version 1.1</code> <strong>default ON</strong></td>
+</tr>
+<tr>
+<td>HTTP/3</td>
+<td>Modul <code>ngx_http_v3_module</code> ada sejak 1.25.0 tapi masih <strong>eksperimental</strong>; butuh UDP/443 terbuka</td>
+</tr>
+<tr>
+<td>Sertifikat pendek</td>
+<td>Let's Encrypt mulai terbitkan sertifikat <strong>6 hari</strong> (pertama 20 Feb <strong>[2025]</strong>, GA awal 2026) → renewal harus otomatis harian, cron bulanan = outage</td>
+</tr>
+<tr>
+<td>Alternatif</td>
+<td><strong>Caddy</strong> (HTTPS otomatis, paling enak buat lab), <strong>Traefik</strong> (cocok buat K8s/Docker), <strong>Envoy</strong> (kelas service mesh)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hari-2-praktik-2-jam_3">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_3" title="Permanent link">&para;</a></h3>
+<pre><code class="language-nginx"># nginx/nginx.conf
+upstream api {
+    server api:8080;
+    keepalive 32;
+}
+
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://api;
+        proxy_http_version 1.1;
+        proxy_set_header Connection &quot;&quot;;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_connect_timeout 5s;
+        proxy_read_timeout    30s;
+        proxy_send_timeout    30s;
+        proxy_next_upstream   error timeout http_502;
+    }
+
+    access_log /var/log/nginx/access.log;
+    error_log  /var/log/nginx/error.log warn;
+}
+</code></pre>
+<p>Tambahin ke compose, <strong>cuma nginx yang punya <code>ports:</code></strong>:</p>
+<pre><code class="language-yaml">  nginx:
+    image: nginx:1.29-alpine
+    ports:
+      - &quot;80:80&quot;
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api: { condition: service_healthy }
+</code></pre>
+<pre><code class="language-bash">docker compose up -d
+curl -v http://localhost/health
+docker compose exec nginx nginx -t     # SELALU ini sebelum reload
+docker compose logs nginx
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam-failure-matrix">Hari 3 · Eksperimen (2 jam) — Failure matrix<a class="headerlink" href="#hari-3-eksperimen-2-jam-failure-matrix" title="Permanent link">&para;</a></h3>
+<p>Ini bagian paling berharga minggu ini. Reproduksi 4 error, dan <strong>buktikan dari log</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Arti sebenarnya</th>
+<th>Cara bikin di lab</th>
+<th>Di mana cek</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>502 Bad Gateway</strong></td>
+<td>Nginx bisa nyambung tapi upstreamnya nolak/reset/header kegedean</td>
+<td>Matiin container <code>api</code></td>
+<td><code>error.log</code>: <code>connect() failed (111: Connection refused)</code></td>
+</tr>
+<tr>
+<td><strong>504 Gateway Timeout</strong></td>
+<td><code>proxy_read_timeout</code> habis — upstreamnya mikir kelewat lama</td>
+<td>Bikin endpoint <code>/slow?ms=60000</code></td>
+<td><code>error.log</code>: <code>upstream timed out</code></td>
+</tr>
+<tr>
+<td><strong>499</strong></td>
+<td><strong>Bukan standar HTTP.</strong> Kode internal nginx: client nutup koneksi duluan</td>
+<td>Client timeout lebih kecil dari <code>proxy_read_timeout</code></td>
+<td><code>access.log</code> kolom status</td>
+</tr>
+<tr>
+<td><strong>TLS handshake failure</strong></td>
+<td>Versi TLS/cipher/sertifikat nggak cocok</td>
+<td><code>curl --tls-max 1.1</code> ke server yang cuma nerima TLS 1.3</td>
+<td><code>error.log</code>: <code>SSL_do_handshake() failed</code></td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">docker compose stop api &amp;&amp; curl -sS -o /dev/null -w '%{http_code}\n' http://localhost/health
+docker compose exec nginx tail -5 /var/log/nginx/error.log
+docker compose start api
+</code></pre>
+<h3 id="hari-4-review-2-jam_3">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_3" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Dokumentasi request flow</strong> (update diagram minggu 2, sekarang ada proxy-nya).</li>
+<li><strong>Failure matrix</strong> di atas, diisi dengan log asli hasil eksperimen lo.</li>
+<li><strong>TLS lokal.</strong> Buat lab:</li>
+</ol>
+<p><code>bash
+   mkcert -install            # masukin CA lokal ke trust store
+   mkcert app.local 127.0.0.1 ::1</code></p>
+<p>Atau kalau mau lebih serius: <a href="https://github.com/smallstep/certificates">step-ca</a>.</p>
+<blockquote>
+<p>mkcert CA cuma dipercaya di mesin lo sendiri. <strong>Jangan</strong> dipakai buat domain publik.</p>
+</blockquote>
+<h3 id="jebakan-umum-minggu-4">Jebakan umum minggu 4<a class="headerlink" href="#jebakan-umum-minggu-4" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>502 dan 504 sering ketuker.</strong> Intinya: 502 = upstream <em>nolak</em>, 504 = upstream <em>kelamaan</em>.</li>
+<li>Lupa <code>proxy_set_header Host $host</code> → backend salah pilih vhost.</li>
+<li>Dua proxy beruntun → header <code>X-Forwarded-For</code> dobel atau ketimpa.</li>
+<li><code>proxy_read_timeout</code> lebih panjang dari timeout client → hasilnya <strong>499</strong>, bukan 504.</li>
+<li>Sertifikat 6 hari tanpa auto-renewal harian = outage berkala. Ini alasan kenapa ACME automation itu wajib dipahami.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-4">Acceptance criteria minggu 4<a class="headerlink" href="#acceptance-criteria-minggu-4" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Client akses API <strong>cuma lewat reverse proxy</strong>.</li>
+<li>Port Postgres dan Redis <strong>tidak terekspos ke host</strong> (buktikan dengan <code>ss -lntp</code> dan <code>nmap</code> dari luar).</li>
+<li>Kegagalan upstream menghasilkan error yang <strong>bisa ditelusuri dari log</strong>.</li>
+<li>Bisa jelasin dan reproduksi 502 / 504 / 499.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-04-reverse-proxy/</code> — konfigurasi nginx, diagram, failure matrix.</p>
+<hr />
+<h1 id="bulan-2-deployment-dan-operasi-production">Bulan 2: Deployment dan Operasi Production<a class="headerlink" href="#bulan-2-deployment-dan-operasi-production" title="Permanent link">&para;</a></h1>
+<p>Tujuan bulan ini: berhenti jadi orang yang takut deploy hari Jumat.</p>
+<hr />
+<h2 id="minggu-5-cicd-dan-release-management">Minggu 5 · CI/CD dan release management<a class="headerlink" href="#minggu-5-cicd-dan-release-management" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> hilangin deployment manual yang rawan lupa langkah.</p>
+<h3 id="kenapa-ini-minggu-pertama-bulan-2">Kenapa ini minggu pertama bulan 2<a class="headerlink" href="#kenapa-ini-minggu-pertama-bulan-2" title="Permanent link">&para;</a></h3>
+<p>Karena deployment manual itu sumber insiden nomor satu yang <strong>bisa dicegah dengan murah</strong>. Bukan karena engineer-nya ceroboh, tapi karena otak manusia nggak didesain buat ngikutin 14 langkah berurutan dengan konsisten.</p>
+<h3 id="hari-1-teori-2-jam_4">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_4" title="Permanent link">&para;</a></h3>
+<p>CI vs CD, immutable artifacts, versioning, environment separation, secrets, rollback.<br />
+Referensi: <a href="https://docs.github.com/en/actions">GitHub Actions docs</a>.</p>
+<p>Yang sering nggak diajarin tutorial:</p>
+<ul>
+<li><strong>Immutable artifact</strong>: satu build = satu artefak yang nggak pernah diubah. Kalau lo build ulang di tiap environment, lo nggak pernah nguji barang yang sama dengan yang jalan di produksi.</li>
+<li><strong>Concurrency group</strong>: dua push beruntun jangan bikin dua deploy nabrak.</li>
+<li><strong><code>permissions:</code> eksplisit</strong>: default repo lama itu <code>write</code>, dan itu bahaya. Tulis eksplisit.</li>
+<li><strong>OIDC, bukan secret statis</strong>: GitHub Actions bisa "login" ke AWS/GCP pakai token OIDC yang umurnya pendek. Nggak ada lagi AWS key yang berumur 5 tahun di repo.</li>
+<li><strong>Attestation</strong>: bukti kriptografis bahwa image ini dibangun dari commit ini, oleh workflow ini. Ini level "supply chain" — mulai jadi standar 2025+.</li>
+</ul>
+<h3 id="hari-2-praktik-2-jam_4">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_4" title="Permanent link">&para;</a></h3>
+<pre><code class="language-yaml"># .github/workflows/ci.yml
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:            # WAJIB: tulis eksplisit, jangan andalkan default
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go vet ./...
+      - run: go test -race -covermode=atomic ./...
+      - uses: golangci/golangci-lint-action@v9   # config v2 (golangci-lint migrate)
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env: { POSTGRES_PASSWORD: test, POSTGRES_DB: sre_lab }
+        options: &gt;-
+          --health-cmd &quot;pg_isready -U postgres&quot; --health-interval 5s
+          --health-retries 10
+        ports: [&quot;5432:5432&quot;]
+      redis:
+        image: redis:7-alpine
+        options: &gt;-
+          --health-cmd &quot;redis-cli ping&quot; --health-interval 5s --health-retries 10
+        ports: [&quot;6379:6379&quot;]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v7
+        with: { go-version-file: go.mod, cache: true }
+      - run: go test -tags=integration ./tests/integration/...
+
+  build:
+    needs: [test, integration]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write           # buat OIDC / attestation
+      attestations: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }
+      - id: meta
+        run: echo &quot;sha=$(git rev-parse --short=12 HEAD)&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;
+      - uses: docker/build-push-action@v7
+        with:
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository }}/api:sha-${{ steps.meta.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+</code></pre>
+<p>Lokal:</p>
+<pre><code class="language-bash">go test ./...
+go vet ./...
+docker build -t sre-lab-api:$(git rev-parse --short=12 HEAD) .
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_3">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_3" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Sengaja gagalin test</strong> → buktiin pipeline nolak release. Screenshot/log run merah itu bukti lo.</li>
+<li><strong>Tag berbasis commit SHA</strong> → <code>sha-abc123def456</code>. Bukan <code>latest</code>.</li>
+<li><strong>Uji rollback:</strong></li>
+</ol>
+<p><code>bash
+   # deploy versi lama dengan cara nunjuk digest image, bukan tag
+   docker pull ghcr.io/owner/api@sha256:&lt;digest-lama&gt;</code></p>
+<ol start="4">
+<li><strong>Cek kebocoran secret:</strong> jalanin <code>gitleaks detect</code> atau minimal grep manual. Pastikan nggak ada token di log.</li>
+</ol>
+<h3 id="hari-4-review-2-jam_4">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_4" title="Permanent link">&para;</a></h3>
+<p>Tulis <code>docs/release-process.md</code> yang njawab 4 pertanyaan ini:</p>
+<table>
+<thead>
+<tr>
+<th>Pertanyaan</th>
+<th>Jawaban yang harus ada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gimana cara build?</td>
+<td>Perintah + di mana jalannya</td>
+</tr>
+<tr>
+<td>Gimana cara publish image?</td>
+<td>Registry + siapa yang punya akses</td>
+</tr>
+<tr>
+<td>Gimana deploy versi tertentu?</td>
+<td>Nunjuk <strong>digest</strong>, bukan tag mutable</td>
+</tr>
+<tr>
+<td>Gimana balikin versi sebelumnya?</td>
+<td>Perintah rollback + berapa lama + apa yang diverifikasi setelahnya</td>
+</tr>
+</tbody>
+</table>
+<h3 id="jebakan-umum-minggu-5">Jebakan umum minggu 5<a class="headerlink" href="#jebakan-umum-minggu-5" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>latest</code> itu musuh rollback.</strong> Dia mutable; lo nggak pernah tahu persis apa yang jalan.</li>
+<li><strong><code>pull_request_target</code> + checkout PR head</strong> = celah RCE. Jangan.</li>
+<li><strong>Lupa <code>permissions:</code></strong> di repo lama → workflow dapet akses <code>write</code> gratis.</li>
+<li><strong>Attestation tanpa verifikasi</strong> = teater keamanan. Sertakan juga cara verifikasinya (<code>gh attestation verify</code>).</li>
+<li><strong>Cache Go bentrok sama matrix build</strong> → build sukses di satu versi, gagal di versi lain secara acak.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-5">Acceptance criteria minggu 5<a class="headerlink" href="#acceptance-criteria-minggu-5" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Test jalan otomatis tiap PR, selesai <strong>&lt; 10 menit</strong>.</li>
+<li>Image punya versi yang bisa dilacak (commit SHA) dan immutable.</li>
+<li>Test gagal → release ditolak (ada buktinya).</li>
+<li>Nggak ada secret di log/artefak; <code>permissions:</code> ditulis eksplisit.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>.github/workflows/</code>, integration tests, <code>docs/release-process.md</code>.</p>
+<hr />
+<h2 id="minggu-6-secrets-konfigurasi-dan-deployment">Minggu 6 · Secrets, konfigurasi, dan deployment<a class="headerlink" href="#minggu-6-secrets-konfigurasi-dan-deployment" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> deployment konsisten, aman, dan gampang di-rollback.</p>
+<h3 id="hari-1-teori-2-jam_5">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_5" title="Permanent link">&para;</a></h3>
+<p>Configuration management, environment variables, secret injection, readiness vs liveness, graceful shutdown, rolling deployment.</p>
+<p><strong>Konsep yang paling sering bikin insiden:</strong></p>
+<blockquote>
+<p><strong>Liveness probe yang ngecek dependency = mesin pembuat outage.</strong></p>
+</blockquote>
+<p>Kalau database down 30 detik, dan liveness lo ngecek database, Kubernetes akan <strong>restart semua pod</strong>. Sekarang lo punya: database down + semua aplikasi restart bersamaan + connection storm begitu DB balik. Ini namanya <strong>cascading failure</strong>.</p>
+<p>Aturan praktis:</p>
+<table>
+<thead>
+<tr>
+<th>Probe</th>
+<th>Pertanyaan</th>
+<th>Kalau gagal</th>
+<th>Boleh ngecek dependency?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>startupProbe</strong></td>
+<td>"udah selesai booting belum?"</td>
+<td>jangan restart, tunggu</td>
+<td>boleh (ini wajar)</td>
+</tr>
+<tr>
+<td><strong>readinessProbe</strong></td>
+<td>"boleh nerima traffic?"</td>
+<td>keluarin dari load balancer</td>
+<td><strong>ya, ini tempatnya</strong></td>
+</tr>
+<tr>
+<td><strong>livenessProbe</strong></td>
+<td>"prosesnya masih waras?"</td>
+<td>restart</td>
+<td><strong>jangan</strong> — cuma cek proses masih responsif</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hari-2-praktik-2-jam_5">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_5" title="Permanent link">&para;</a></h3>
+<p>Graceful shutdown di Go — ini kodenya, dan tiap baris ada alasan:</p>
+<pre><code class="language-go">func main() {
+    ctx, stop := signal.NotifyContext(context.Background(),
+        syscall.SIGINT, syscall.SIGTERM)
+    defer stop()
+
+    srv := &amp;http.Server{
+        Addr:              &quot;:8080&quot;,
+        Handler:           mux,
+        ReadHeaderTimeout: 5 * time.Second,   // cegah slowloris
+    }
+
+    go func() {
+        if err := srv.ListenAndServe(); err != nil &amp;&amp; !errors.Is(err, http.ErrServerClosed) {
+            slog.Error(&quot;server failed&quot;, &quot;err&quot;, err)
+            os.Exit(1)
+        }
+    }()
+
+    slog.Info(&quot;server ready&quot;, &quot;addr&quot;, srv.Addr)
+    &lt;-ctx.Done()                              // dapet SIGTERM
+    slog.Info(&quot;shutting down gracefully&quot;)
+
+    // timeout ini HARUS lebih kecil dari terminationGracePeriodSeconds (K8s)
+    // atau dari waktu yang dikasih orchestrator lo
+    c, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+    defer cancel()
+
+    if err := srv.Shutdown(c); err != nil {
+        slog.Error(&quot;forced shutdown&quot;, &quot;err&quot;, err)
+        _ = srv.Close()
+    }
+    db.Close()      // tutup pool koneksi dengan rapi
+    redis.Close()
+    slog.Info(&quot;shutdown complete&quot;)
+}
+</code></pre>
+<p>Dua endpoint yang beda:</p>
+<pre><code class="language-go">mux.HandleFunc(&quot;GET /healthz&quot;, func(w http.ResponseWriter, r *http.Request) {
+    // liveness: cuma bilang &quot;proses gue hidup&quot;
+    w.WriteHeader(http.StatusOK)
+    _, _ = w.Write([]byte(&quot;ok&quot;))
+})
+
+mux.HandleFunc(&quot;GET /readyz&quot;, func(w http.ResponseWriter, r *http.Request) {
+    // readiness: cek dependency yang wajib
+    c, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+    defer cancel()
+
+    if err := db.PingContext(c); err != nil {
+        http.Error(w, &quot;db not ready&quot;, http.StatusServiceUnavailable)
+        return
+    }
+    if err := redis.Ping(c).Err(); err != nil {
+        http.Error(w, &quot;redis not ready&quot;, http.StatusServiceUnavailable)
+        return
+    }
+    w.WriteHeader(http.StatusOK)
+})
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_4">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_4" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># 1. Kirim request terus-terusan
+hey -n 20000 -c 50 http://localhost/health &amp;
+
+# 2. Di sesi lain, kirim SIGTERM
+docker compose stop api       # atau: kill -TERM &lt;PID&gt;
+
+# 3. Lihat: berapa 5xx yang muncul?
+# target: 0
+</code></pre>
+<p>Lalu:</p>
+<ul>
+<li><strong>Simulasi startup gagal</strong>: kasih password DB salah → <code>readyz</code> harus 503, dan container nggak pernah dibilang healthy.</li>
+<li><strong>Dependency belum siap</strong>: matiin Redis → <code>readyz</code> 503, <code>healthz</code> tetap 200. Ini beda yang penting.</li>
+<li><strong>Catat berapa lama</strong> dari SIGTERM sampai proses benar-benar exit.</li>
+</ul>
+<h3 id="hari-4-review-2-jam_5">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_5" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Deployment checklist</strong> (di <code>docs/deployment.md</code>): pre-check, langkah deploy, post-check (health, metrics, log), kriteria "kapan harus rollback".</li>
+<li><strong>Rollback procedure</strong>: perintah spesifik + estimasi waktu + apa yang diverifikasi.</li>
+<li><strong>Catat keterbatasan lab dengan jujur.</strong> Docker Compose <strong>tidak punya</strong> perintah <code>rollout</code>; <code>update_config</code> itu fitur Swarm. Jadi nol downtime di Compose itu terbatas — tulis ini, jangan pura-pura. Ini justru nilai plus di mata reviewer: lo tahu batas alat lo.</li>
+</ol>
+<h3 id="jebakan-umum-minggu-6">Jebakan umum minggu 6<a class="headerlink" href="#jebakan-umum-minggu-6" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Shutdown timeout <strong>lebih besar</strong> dari grace period orchestrator → proses dipaksa mati di tengah-tengah, request putus.</li>
+<li>Secret di environment variable gampang bocor ke <code>docker inspect</code>, log error, dan crash report.</li>
+<li>SIGTERM nggak nyampe ke proses lo kalau PID 1 di container itu shell, bukan binary lo. Pakai exec form di Dockerfile, atau <code>init: true</code>.</li>
+<li>Readiness tanpa <strong>connection drain</strong> → 502 saat rolling update meski aplikasinya sehat.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-6">Acceptance criteria minggu 6<a class="headerlink" href="#acceptance-criteria-minggu-6" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Aplikasi berhenti <strong>graceful</strong> saat SIGTERM, dan request in-flight selesai.</li>
+<li><code>readyz</code> <strong>tidak</strong> bilang siap saat kondisi wajib belum terpenuhi.</li>
+<li>Deployment gagal nggak menimpa versi sehat tanpa rencana recovery.</li>
+<li>Nggak ada secret plaintext di Git (SOPS/age atau secret manager).</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-06-deployment/</code> — konfigurasi, kode shutdown, deployment checklist, laporan eksperimen.</p>
+<hr />
+<h2 id="minggu-7-backup-dan-disaster-recovery">Minggu 7 · Backup dan disaster recovery<a class="headerlink" href="#minggu-7-backup-dan-disaster-recovery" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> data bisa dipulihkan, bukan cuma "pernah jalanin cron".</p>
+<h3 id="hari-1-teori-2-jam_6">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_6" title="Permanent link">&para;</a></h3>
+<p>Logical vs physical backup, retention, RPO, RTO, point-in-time recovery (PITR), backup off-site.<br />
+Referensi: <a href="https://www.postgresql.org/docs/current/backup.html">PostgreSQL Backup and Restore</a> dan <a href="https://www.postgresql.org/docs/current/continuous-archiving.html">Continuous Archiving &amp; PITR</a>.</p>
+<p><strong>Definisi yang harus lo hapal:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+<th>Contoh target lab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RPO</strong> (Recovery Point Objective)</td>
+<td>Seberapa banyak data yang <strong>boleh hilang</strong></td>
+<td>"maksimal 5 menit transaksi"</td>
+</tr>
+<tr>
+<td><strong>RTO</strong> (Recovery Time Objective)</td>
+<td>Berapa lama <strong>boleh</strong> nggak bisa dipakai</td>
+<td>"maksimal 30 menit"</td>
+</tr>
+<tr>
+<td><strong>PITR</strong></td>
+<td>Balik ke titik waktu tertentu, bukan cuma ke backup terakhir</td>
+<td>"balikin ke 10:47 sebelum ada DELETE salah"</td>
+</tr>
+</tbody>
+</table>
+<p>Perbedaan paling penting: <code>pg_dump</code> itu <strong>logical backup</strong>. Bisa restore ke titik backup, tapi <strong>nggak bisa PITR</strong>. PITR butuh <strong>base backup + WAL archiving</strong>.</p>
+<p>Tool yang dipakai di dunia nyata:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Versi (2025)</th>
+<th>Cocok buat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>pgBackRest</strong></td>
+<td>v2.57.0 (18 Okt 2025)</td>
+<td>Standar de-facto: full/incr/diff, kompresi, enkripsi, S3, PITR</td>
+</tr>
+<tr>
+<td><strong>Barman</strong></td>
+<td>3.14.1 (Jun 2025)</td>
+<td>Tradisional, kuat di enterprise</td>
+</tr>
+<tr>
+<td><strong>WAL-G</strong></td>
+<td>3.0.5 (Feb 2025)</td>
+<td>Ringan, cloud-native</td>
+</tr>
+<tr>
+<td><strong>CloudNativePG + plugin-barman-cloud</strong></td>
+<td>CNPG ≥ 1.26</td>
+<td>Kalau Postgres jalan di Kubernetes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hari-2-praktik-2-jam_6">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_6" title="Permanent link">&para;</a></h3>
+<p>Mulai dari yang sederhana (roadmap lo):</p>
+<pre><code class="language-bash">docker compose exec -T postgres pg_dump -U app -d sre_lab -Fc &gt; backup.dump
+pg_restore --list backup.dump          # lihat isinya tanpa restore
+</code></pre>
+<p>Lalu tingkatkan ke PITR dengan pgBackRest + MinIO (S3-compatible lokal):</p>
+<pre><code class="language-bash"># stanza = &quot;set konfigurasi backup&quot; di pgBackRest
+pgbackrest --stanza=app --type=full backup
+pgbackrest --stanza=app --type=incr backup
+pgbackrest --stanza=app info           # lihat daftar backup + ukuran + waktu
+pgbackrest --stanza=app verify         # cek integritas repo
+</code></pre>
+<p>Yang wajib ada di konfigurasi:</p>
+<pre><code class="language-ini">[global]
+repo1-type=s3
+repo1-s3-bucket=sre-lab-backup
+repo1-s3-endpoint=minio:9000
+repo1-cipher-type=aes-256-cbc         # backup terenkripsi
+repo1-cipher-pass=&lt;dari secret, bukan plaintext&gt;
+repo1-retention-full=7
+repo1-retention-diff=14
+compress-type=zst
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam-restore-drill">Hari 3 · Eksperimen (2 jam) — Restore drill<a class="headerlink" href="#hari-3-eksperimen-2-jam-restore-drill" title="Permanent link">&para;</a></h3>
+<p>Ini inti minggu ini. <strong>Backup yang belum pernah di-restore itu bukan backup, cuma harapan.</strong></p>
+<pre><code class="language-bash"># 1. Siapkan database baru yang KOSONG (instance terpisah!)
+docker compose -f docker/compose.restore.yaml up -d postgres-restore
+
+# 2. Restore
+pgbackrest --stanza=app --type=time \
+  --target=&quot;2026-10-12 10:00:00+00&quot; --target-action=promote restore
+
+# 3. Verifikasi — jangan cuma lihat &quot;restore selesai&quot;
+psql -h localhost -U app -d sre_lab -c &quot;SELECT count(*) FROM orders;&quot;
+psql -c &quot;SELECT md5(string_agg(id::text, ',' ORDER BY id)) FROM orders;&quot;   # checksum sederhana
+psql -c &quot;\d+ orders&quot;        # constraint, index, foreign key ikut kebawa?
+</code></pre>
+<p>Ukur dan catat:</p>
+<table>
+<thead>
+<tr>
+<th>Metrik</th>
+<th>Cara ukur</th>
+<th>Target lab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Waktu backup full</td>
+<td><code>time pgbackrest --type=full backup</code></td>
+<td>catat apa adanya</td>
+</tr>
+<tr>
+<td>Ukuran backup</td>
+<td><code>pgbackrest info</code></td>
+<td>catat + bandingkan dengan ukuran DB</td>
+</tr>
+<tr>
+<td>Waktu restore</td>
+<td><code>time pgbackrest ... restore</code></td>
+<td>bandingkan dengan RTO</td>
+</tr>
+<tr>
+<td>Waktu verifikasi</td>
+<td>waktu yang lo butuh buat yakin datanya benar</td>
+<td>sering kelewat, padahal ini bagian RTO</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Simulasikan kehilangan data cuma di database yang disposable.</strong> Jangan pernah latihan <code>DROP TABLE</code> di database pribadi atau punya orang lain. Ini aturan yang nggak bisa ditawar.</p>
+</blockquote>
+<h3 id="hari-4-review-2-jam_6">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_6" title="Permanent link">&para;</a></h3>
+<p>Tulis <code>docs/disaster-recovery.md</code> berisi:</p>
+<ol>
+<li><strong>Target RPO dan RTO</strong> buat lab, beserta alasan kenapa angka itu.</li>
+<li><strong>Recovery runbook</strong>: langkah berurutan, siapa yang jalanin, apa yang diverifikasi.</li>
+<li><strong>Retention &amp; lokasi</strong>: backup disimpan di mana, berapa lama, terenkripsi apa nggak.</li>
+<li><strong>Yang belum ditangani</strong> — ditulis eksplisit. Contoh: "backup belum diuji restore otomatis berkala", "belum ada off-site ke region lain". Ini yang bikin dokumen lo kelihatan ditulis oleh orang yang pernah kena insiden.</li>
+</ol>
+<h3 id="jebakan-umum-minggu-7">Jebakan umum minggu 7<a class="headerlink" href="#jebakan-umum-minggu-7" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>pg_dump</code> tanpa pernah di-restore sering dianggap "backup aman" padahal nggak bisa PITR.</li>
+<li>Lupa <code>archive_mode = on</code> → WAL nggak kearsip → PITR gagal total.</li>
+<li>Retensi WAL lebih pendek dari retensi full backup → backup jadi nggak berguna.</li>
+<li>Backup dan WAL di bucket yang sama tanpa object lock → kena ransomware, hilang dua-duanya.</li>
+<li><strong>Verifikasi cuma "restore exit code 0".</strong> Itu bukan bukti datanya benar.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-7">Acceptance criteria minggu 7<a class="headerlink" href="#acceptance-criteria-minggu-7" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Restore benar-benar berhasil ke instance/database terpisah.</li>
+<li>Data hasil restore lolos verifikasi (jumlah row + constraint + checksum).</li>
+<li>Durasi recovery diukur dan dibandingkan dengan target RTO.</li>
+<li>Backup terenkripsi dan lokasinya terpisah dari volume database.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-07-backup-recovery/</code> — script backup/restore, runbook, hasil uji recovery.</p>
+<hr />
+<h2 id="minggu-8-production-readiness-dan-reliability-baseline">Minggu 8 · Production readiness dan reliability baseline<a class="headerlink" href="#minggu-8-production-readiness-dan-reliability-baseline" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> gabungin deployment, jaringan, dan recovery jadi sistem yang bisa dioperasikan.</p>
+<h3 id="hari-1-teori-2-jam_7">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_7" title="Permanent link">&para;</a></h3>
+<p>Production Readiness Review (PRR), dependency mapping, failure mode, operational checklist, single point of failure.</p>
+<p>Referensi: <a href="https://sre.google/sre-book/evolving-sre-engagement-model/">Google SRE — Evolving SRE Engagement Model (PRR)</a> dan <a href="https://sre.google/sre-book/launch-checklist/">Launch Coordination Checklist</a>.</p>
+<p><strong>PRR itu bukan formulir.</strong> Dia jawab: "kalau sistem ini rusak jam 3 pagi, apakah orang yang lagi jaga bisa ngerti dan benerin tanpa nanya-nanya?"</p>
+<h3 id="hari-2-praktik-2-jam_7">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_7" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker compose config            # validasi
+docker compose up -d --build --wait
+docker compose ps
+curl -fsS http://localhost/health
+curl -fsS http://localhost/readyz
+</code></pre>
+<p>Syaratnya: <strong>satu perintah</strong> dari repo kosong sampai sistem jalan. Kalau lo harus ngejalanin 5 perintah tambahan dari ingatan, berarti reproduksinya belum selesai — dan itu bug.</p>
+<h3 id="hari-3-eksperimen-2-jam_5">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_5" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">sudo reboot                      # atau docker compose down &amp;&amp; docker compose up -d
+</code></pre>
+<p>Lalu verifikasi, dan ini yang sering bikin malu:</p>
+<ul>
+<li>[ ] Aplikasi balik online <strong>tanpa campur tangan manual</strong>?</li>
+<li>[ ] Data Postgres masih ada (volume persist)?</li>
+<li>[ ] Env/secret masih terbaca?</li>
+<li>[ ] Healthcheck jalan lagi?</li>
+<li>[ ] Log masih nyambung?</li>
+</ul>
+<p>Ulangi recovery dari kondisi service mati, lalu tulis: berapa lama dari reboot sampai <code>/readyz</code> balas 200.</p>
+<h3 id="hari-4-review-2-jam_7">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_7" title="Permanent link">&para;</a></h3>
+<p>Bikin <code>docs/production-readiness.md</code> dengan 5 kategori:</p>
+<p><strong>1. Security</strong></p>
+<ul>
+<li>[ ] Nggak ada secret di repo/image (<code>gitleaks</code>, <code>trivy</code>)</li>
+<li>[ ] Container non-root, image di-scan</li>
+<li>[ ] Port internal nggak terekspos</li>
+<li>[ ] TLS aktif, sertifikat punya auto-renewal</li>
+</ul>
+<p><strong>2. Availability</strong></p>
+<ul>
+<li>[ ] Minimal 2 instance (atau catat eksplisit kalau cuma 1)</li>
+<li>[ ] Healthcheck + readiness terpisah</li>
+<li>[ ] Graceful shutdown + rollback teruji</li>
+</ul>
+<p><strong>3. Observability</strong></p>
+<ul>
+<li>[ ] Metrics (RED) — <em>ini kepakai mulai minggu 9</em></li>
+<li>[ ] Log terstruktur dan ada correlation ID</li>
+<li>[ ] Alert buat "service down"</li>
+<li>[ ] Dashboard yang njawab "lagi sehat nggak?"</li>
+</ul>
+<p><strong>4. Recovery</strong></p>
+<ul>
+<li>[ ] Backup otomatis + restore pernah diuji</li>
+<li>[ ] RPO/RTO tertulis</li>
+<li>[ ] Runbook buat 3 skenario kegagalan terbesar</li>
+</ul>
+<p><strong>5. Deployment</strong></p>
+<ul>
+<li>[ ] Pipeline otomatis, artifact immutable</li>
+<li>[ ] Rollback teruji</li>
+<li>[ ] Nggak ada langkah manual yang wajib</li>
+</ul>
+<p>Lengkapi dengan <strong>dependency map + FMEA sederhana</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Gagalnya gimana</th>
+<th>Dampak</th>
+<th>Gimana deteksinya</th>
+<th>Mitigasi</th>
+<th>SPOF?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PostgreSQL</td>
+<td>mati / lambat</td>
+<td>semua endpoint tulis gagal</td>
+<td>readiness + latency query</td>
+<td>connection pool + timeout + backup</td>
+<td><strong>ya</strong></td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>mati</td>
+<td>cache miss → DB kebanjiran</td>
+<td>metrics hit ratio</td>
+<td>fallback: anggap cache kosong</td>
+<td>ya (tapi ada fallback)</td>
+</tr>
+<tr>
+<td>Nginx</td>
+<td>mati</td>
+<td>semua akses gagal</td>
+<td>healthcheck external</td>
+<td>—</td>
+<td><strong>ya</strong></td>
+</tr>
+</tbody>
+</table>
+<h3 id="jebakan-umum-minggu-8">Jebakan umum minggu 8<a class="headerlink" href="#jebakan-umum-minggu-8" title="Permanent link">&para;</a></h3>
+<ul>
+<li>PRR jadi dokumen sekali pakai yang langsung basi.</li>
+<li>FMEA tanpa angka "gimana deteksinya" → nggak bisa ditindaklanjuti.</li>
+<li>Dependency pihak ketiga (auth provider, payment gateway) nggak masuk peta — padahal itu yang paling sering bikin outage.</li>
+<li>Nggak ada yang ditulis sebagai pemilik on-call.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-8">Acceptance criteria minggu 8<a class="headerlink" href="#acceptance-criteria-minggu-8" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Sistem bisa dibangun dan dijalanin ulang <strong>hanya dari repository</strong>.</li>
+<li>Semua langkah pemulihan <strong>terdokumentasi DAN teruji</strong>.</li>
+<li>Risiko yang belum ditangani <strong>ditulis eksplisit</strong>.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>docs/production-readiness.md</code>, diagram arsitektur v1, checklist audit.</p>
+<hr />
+<h1 id="bulan-3-observability-dan-sre-fundamentals">Bulan 3: Observability dan SRE Fundamentals<a class="headerlink" href="#bulan-3-observability-dan-sre-fundamentals" title="Permanent link">&para;</a></h1>
+<p>Tujuan bulan ini: berhenti nunggu user ngeluh, dan mulai ngomong pakai angka.</p>
+<hr />
+<h2 id="minggu-9-metrics-dengan-prometheus">Minggu 9 · Metrics dengan Prometheus<a class="headerlink" href="#minggu-9-metrics-dengan-prometheus" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> tahu kondisi service dari metrics, bukan dari chat user.</p>
+<h3 id="hari-1-teori-2-jam_8">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_8" title="Permanent link">&para;</a></h3>
+<p>Counter, gauge, histogram, scrape interval, labels, cardinality, PromQL.<br />
+Referensi: <a href="https://prometheus.io/docs/tutorials/getting_started/">Prometheus Getting Started</a>.</p>
+<p><strong>Versi yang relevan:</strong></p>
+<ul>
+<li><strong>Prometheus 3.0</strong> rilis 14 Nov 2024 — rilis mayor pertama setelah 7 tahun: UI baru, Remote Write 2.0, UTF-8 di nama metric/label, OTLP receiver. (<a href="https://prometheus.io/blog/2024/11/14/prometheus-3-0/">blog</a>)</li>
+<li>Rilis 2025: <strong>3.2.0</strong> (Feb), <strong>3.3.0</strong> (Apr), <strong>3.4.0</strong> (Mei), <strong>3.5.0</strong> (Jul), <strong>3.8.0</strong> (Des). Hari ini 3.15.x; kalau mau stabil panjang, ikutin jalur LTS <strong>3.13.x</strong>.</li>
+<li><strong>Native histograms stabil sejak 3.8.0</strong>, tapi <strong>nggak aktif default</strong> — harus <code>scrape_native_histograms: true</code>.</li>
+</ul>
+<p><strong>4 tipe metric, dan analoginya:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tipe</th>
+<th>Analogi</th>
+<th>Contoh</th>
+<th>Operasi yang benar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Counter</strong></td>
+<td>Odometer mobil — cuma naik</td>
+<td>total request, total error</td>
+<td><code>rate()</code>, <code>increase()</code></td>
+</tr>
+<tr>
+<td><strong>Gauge</strong></td>
+<td>Speedometer — naik turun</td>
+<td>koneksi DB aktif, memori</td>
+<td>langsung dipakai, <code>avg_over_time()</code></td>
+</tr>
+<tr>
+<td><strong>Histogram</strong></td>
+<td>Ember ukuran: berapa request yang &lt;10ms, &lt;50ms, &lt;100ms...</td>
+<td>latency request</td>
+<td><code>histogram_quantile()</code></td>
+</tr>
+<tr>
+<td><strong>Summary</strong></td>
+<td>Kuantil dihitung di aplikasi</td>
+<td>jarang dipakai di Prometheus</td>
+<td>hati-hati, nggak bisa diagregasi</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hari-2-praktik-2-jam_8">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_8" title="Permanent link">&para;</a></h3>
+<p>Instrumentasi Go:</p>
+<pre><code class="language-go">import (
+    &quot;github.com/prometheus/client_golang/prometheus&quot;
+    &quot;github.com/prometheus/client_golang/prometheus/promhttp&quot;
+)
+
+var (
+    httpRequests = prometheus.NewCounterVec(
+        prometheus.CounterOpts{Name: &quot;http_server_requests_total&quot;,
+            Help: &quot;Total HTTP requests&quot;},
+        []string{&quot;method&quot;, &quot;route&quot;, &quot;status&quot;},   // route, BUKAN path mentah!
+    )
+    httpDuration = prometheus.NewHistogramVec(
+        prometheus.HistogramOpts{
+            Name:    &quot;http_server_request_duration_seconds&quot;,
+            Help:    &quot;Request duration in seconds&quot;,
+            Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5},
+        },
+        []string{&quot;method&quot;, &quot;route&quot;},
+    )
+    inFlight = prometheus.NewGauge(prometheus.GaugeOpts{
+        Name: &quot;http_server_requests_in_flight&quot;,
+        Help: &quot;Requests currently being served&quot;,
+    })
+)
+
+func init() {
+    prometheus.MustRegister(httpRequests, httpDuration, inFlight)
+}
+
+// middleware
+func instrument(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        inFlight.Inc()
+        defer inFlight.Dec()
+        start := time.Now()
+        rw := &amp;statusRecorder{ResponseWriter: w, status: 200}
+        next.ServeHTTP(rw, r)
+
+        route := r.Pattern                      // &quot;/orders/{id}&quot; — kardinalitas rendah
+        if route == &quot;&quot; {
+            route = &quot;unmatched&quot;                 // JANGAN pakai r.URL.Path mentah
+        }
+        httpDuration.WithLabelValues(r.Method, route, ).
+            Observe(time.Since(start).Seconds())
+        httpRequests.WithLabelValues(r.Method, route, strconv.Itoa(rw.status)).Inc()
+    })
+}
+
+mux.Handle(&quot;GET /metrics&quot;, promhttp.Handler())
+</code></pre>
+<p>Konfigurasi scrape:</p>
+<pre><code class="language-yaml"># observability/prometheus/prometheus.yml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: api
+    scrape_native_histograms: true     # WAJIB kalau mau native histogram
+    static_configs:
+      - targets: [&quot;api:8080&quot;]
+
+  - job_name: postgres
+    static_configs:
+      - targets: [&quot;postgres-exporter:9187&quot;]
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_6">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_6" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">curl -fsS http://localhost:8080/metrics | grep http_server
+docker compose logs prometheus
+</code></pre>
+<p>Lakukan:</p>
+<ol>
+<li>Kirim 100 request normal.</li>
+<li>Kirim 20 request yang sengaja error (misal <code>POST /orders</code> dengan body rusak).</li>
+<li>Cek di Prometheus UI: <code>http_server_requests_total</code> naik sesuai jumlah? <code>status="500"</code> naik 20?</li>
+<li>Bikin endpoint lambat, cek histogram bucket mana yang naik.</li>
+</ol>
+<pre><code class="language-bash"># kirim error dan hitung
+for i in $(seq 1 20); do curl -sS -o /dev/null -X POST -d 'bad' http://localhost/orders; done
+curl -sS http://localhost:8080/metrics | grep 'http_server_requests_total{.*status=&quot;500&quot;'
+</code></pre>
+<h3 id="hari-4-review-2-jam-query-wajib">Hari 4 · Review (2 jam) — Query wajib<a class="headerlink" href="#hari-4-review-2-jam-query-wajib" title="Permanent link">&para;</a></h3>
+<p>Simpan di <code>labs/week-09-prometheus/*.promql</code>:</p>
+<pre><code class="language-promql"># Request rate (requests/detik) per route
+sum by (route) (rate(http_server_requests_total[5m]))
+
+# Error ratio (0..1)
+sum by (route) (
+  rate(http_server_requests_total{status=~&quot;5..&quot;}[5m])
+) / sum by (route) (rate(http_server_requests_total[5m]))
+
+# p95 latency — agregasi bucket DULU, baru quantile
+histogram_quantile(0.95,
+  sum by (le, route) (rate(http_server_request_duration_seconds_bucket[5m]))
+)
+
+# Request in-flight (saturasi)
+http_server_requests_in_flight
+
+# Cek kardinalitas: 10 metric paling &quot;gemuk&quot;
+topk(10, count by (__name__)({__name__=~&quot;.+&quot;}))
+</code></pre>
+<h3 id="jebakan-umum-minggu-9">Jebakan umum minggu 9<a class="headerlink" href="#jebakan-umum-minggu-9" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>histogram_quantile</code> itu aproksimasi</strong>, diasumsikan distribusi seragam dalam bucket. Bucket terlalu lebar = hasil ngaco. Quantile yang jatuh di bucket <code>+Inf</code> nggak ada artinya.</li>
+<li><strong>Jangan rata-ratakan hasil quantile antar instance.</strong> Yang benar: jumlahkan <code>_bucket</code> dulu, baru hitung quantile.</li>
+<li><strong>Kardinalitas adalah pembunuh nomor satu.</strong> Label <code>user_id</code>, <code>path</code> mentah, <code>request_id</code> → Prometheus meledak. Pakai <code>http_route</code> (pola, bukan nilai).</li>
+<li><strong><code>rate()</code> butuh range selector minimal 4× scrape interval.</strong> Interval 15s tapi pakai <code>[30s]</code> = hasilnya rewel.</li>
+<li>Native histogram nggak aktif sendiri — harus disetel di scrape config.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-9">Acceptance criteria minggu 9<a class="headerlink" href="#acceptance-criteria-minggu-9" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Prometheus berhasil scrape API (target UP, ada di <code>/targets</code>).</li>
+<li>Metrics berubah sesuai traffic dan error (bukti sebelum/sesudah).</li>
+<li>Bisa jalanin query request rate, error ratio, dan p95 — dan hasilnya masuk akal.</li>
+<li>Nggak ada label berkardinalitas tinggi.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-09-prometheus/</code> — instrumentasi Go, <code>prometheus.yml</code>, file <code>.promql</code>.</p>
+<hr />
+<h2 id="minggu-10-grafana-dan-alerting">Minggu 10 · Grafana dan alerting<a class="headerlink" href="#minggu-10-grafana-dan-alerting" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> ubah metrics jadi informasi operasional.</p>
+<h3 id="hari-1-teori-2-jam_9">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_9" title="Permanent link">&para;</a></h3>
+<p>Dashboard design, RED metrics, USE metrics, alert threshold, alert fatigue, symptom-based alerting.</p>
+<p><strong>RED vs USE</strong> — dua kacamata yang beda:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>RED</strong> (untuk service/request)</th>
+<th><strong>USE</strong> (untuk resource/infra)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>R</strong>ate</td>
+<td>request per detik</td>
+<td><strong>U</strong>tilization: % waktu resource sibuk</td>
+</tr>
+<tr>
+<td><strong>E</strong>rror</td>
+<td>jumlah/jenis error</td>
+<td><strong>S</strong>aturation: seberapa numpuk antrean</td>
+</tr>
+<tr>
+<td><strong>D</strong>uration</td>
+<td>distribusi latency</td>
+<td><strong>E</strong>rror: error di level resource</td>
+</tr>
+</tbody>
+</table>
+<p>Pakai RED buat API, USE buat CPU/memori/disk/koneksi DB. Jangan dicampur jadi satu panel yang nggak jelas.</p>
+<p><strong>Prinsip alerting yang bikin hidup on-call lo waras:</strong></p>
+<ol>
+<li><strong>Alert berbasis gejala, bukan penyebab.</strong> "User ngalamin error 5%" lebih baik dari "CPU 80%" kalau CPU 80% nggak bikin user rugi.</li>
+<li><strong>Setiap alert harus bisa ditindaklanjuti.</strong> Kalau nggak ada yang bisa lo lakuin, itu bukan alert — itu grafik.</li>
+<li><strong>Tiap alert wajib punya runbook.</strong> Kalau nggak ada runbook-nya, berarti lo nyiapin alarm tanpa petunjuk jalan keluar.</li>
+<li><strong>Severity harus beda perlakuan</strong>: page (bangunin orang) vs ticket (dilihat besok).</li>
+</ol>
+<p><strong>Versi yang relevan:</strong> Grafana 12.0 rilis 5 Mei <strong>[2025]</strong>; sekarang 13.x. <strong>Promtail EOL 2 Maret 2026</strong> — log pipeline pakai <strong>Grafana Alloy</strong>.</p>
+<h3 id="hari-2-praktik-2-jam_9">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_9" title="Permanent link">&para;</a></h3>
+<p>Dashboard yang harus ada (RED + USE):</p>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>Query</th>
+<th>Tipe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Request rate</td>
+<td><code>sum by (route) (rate(http_server_requests_total[5m]))</code></td>
+<td>Time series</td>
+</tr>
+<tr>
+<td>Error rate (%)</td>
+<td>error ratio × 100</td>
+<td>Time series + threshold merah</td>
+</tr>
+<tr>
+<td>p95 / p99 latency</td>
+<td><code>histogram_quantile(0.95, ...)</code></td>
+<td>Time series</td>
+</tr>
+<tr>
+<td>Request in-flight</td>
+<td><code>http_server_requests_in_flight</code></td>
+<td>Gauge</td>
+</tr>
+<tr>
+<td>CPU container</td>
+<td><code>rate(container_cpu_usage_seconds_total[5m])</code></td>
+<td>Time series</td>
+</tr>
+<tr>
+<td>Memory</td>
+<td><code>container_memory_usage_bytes</code> vs limit</td>
+<td>Time series</td>
+</tr>
+<tr>
+<td>DB connections</td>
+<td><code>pg_stat_activity_count</code></td>
+<td>Time series + threshold</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Provisioning as code</strong> — ini yang bikin dashboard lo bisa di-review dan di-restore:</p>
+<pre><code class="language-yaml"># observability/grafana/provisioning/dashboards/default.yaml
+apiVersion: 1
+providers:
+  - name: sre-core
+    orgId: 1
+    folder: SRE
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: false      # KUNCI: sumber kebenaran = Git, bukan klik-klik UI
+    options:
+      path: /var/lib/grafana/dashboards
+</code></pre>
+<p>Alert rules (Grafana-managed):</p>
+<table>
+<thead>
+<tr>
+<th>Alert</th>
+<th>Kondisi</th>
+<th>Severity</th>
+<th>Runbook</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>APIDown</code></td>
+<td><code>up{job="api"} == 0</code> selama 1m</td>
+<td><strong>page</strong></td>
+<td><code>runbooks/api-down.md</code></td>
+</tr>
+<tr>
+<td><code>HighErrorRate</code></td>
+<td>error ratio &gt; 1% selama 5m</td>
+<td><strong>page</strong></td>
+<td><code>runbooks/high-error-rate.md</code></td>
+</tr>
+<tr>
+<td><code>HighLatency</code></td>
+<td>p95 &gt; 300ms selama 10m</td>
+<td>ticket</td>
+<td><code>runbooks/high-latency.md</code></td>
+</tr>
+<tr>
+<td><code>DBConnectionsHigh</code></td>
+<td>koneksi &gt; 80% max selama 5m</td>
+<td>ticket</td>
+<td><code>runbooks/db-saturation.md</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="hari-3-eksperimen-2-jam_7">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_7" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker compose stop api           # (1) matiin API
+# catat: berapa detik dari mati sampai alert &quot;firing&quot;?
+
+docker compose start api
+# (2) naikin error rate: kirim request rusak terus-terusan
+# (3) bikin latency tinggi: endpoint /slow?ms=2000, kirim beban
+</code></pre>
+<p>Ukur 3 hal untuk tiap alert, dan tulis hasilnya:</p>
+<table>
+<thead>
+<tr>
+<th>Alert</th>
+<th>Berapa lama sampai firing?</th>
+<th>Pesannya actionable?</th>
+<th>False positive?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>APIDown</td>
+<td>?</td>
+<td>ya/tidak</td>
+<td>?</td>
+</tr>
+<tr>
+<td>HighErrorRate</td>
+<td>?</td>
+<td>ya/tidak</td>
+<td>?</td>
+</tr>
+</tbody>
+</table>
+<p>Kalau alert terlalu lama atau pesannya nggak jelas, <strong>perbaiki aturannya sekarang</strong> — bukan pas insiden beneran.</p>
+<h3 id="hari-4-review-2-jam_8">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_8" title="Permanent link">&para;</a></h3>
+<p>Bikin <strong>alert runbook</strong> di <code>labs/week-10-grafana/runbooks/</code>. Format wajib:</p>
+<pre><code class="language-markdown">## Gejala
+Apa yang terlihat user / apa yang muncul di alert.
+
+## Kemungkinan penyebab (urut dari yang paling sering)
+1. ...
+2. ...
+
+## Query yang dicek dulu
+- ...
+
+## Mitigasi cepat
+1. ...
+
+## Kapan eskalasi
+Kalau ... dalam ... menit, escalate ke ...
+</code></pre>
+<h3 id="jebakan-umum-minggu-10">Jebakan umum minggu 10<a class="headerlink" href="#jebakan-umum-minggu-10" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>allowUiUpdates: true</code> → dashboard berubah di UI, hilang pas redeploy. <strong>Drift.</strong></li>
+<li>Alert tanpa <code>for:</code> → flapping (nyala-mati-nyala-mati), bikin on-call kebal.</li>
+<li>Satu contact point buat semua severity → yang penting tenggelam.</li>
+<li>Nggak ada <strong>mute timings</strong> buat maintenance window → alert noise pas maintenance.</li>
+<li>Alert "CPU &gt; 80%" tanpa konteks dampak = alert yang nggak pernah ditindaklanjuti.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-10">Acceptance criteria minggu 10<a class="headerlink" href="#acceptance-criteria-minggu-10" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Dashboard nunjukin traffic dan kondisi service <strong>real time</strong>, dan bisa di-reprovision dari nol.</li>
+<li>Alert service-down kepicu dalam target waktu (misal <strong>&lt; 2 menit</strong>).</li>
+<li>Setiap alert penting punya instruksi tindakan yang jelas.</li>
+<li>Pipeline log jalan lewat <strong>Alloy</strong>, bukan Promtail.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-10-grafana/</code> — dashboard JSON, alert rules, runbook.</p>
+<hr />
+<h2 id="minggu-11-logs-dan-distributed-tracing">Minggu 11 · Logs dan distributed tracing<a class="headerlink" href="#minggu-11-logs-dan-distributed-tracing" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> nyambungin gejala di metrics ke penyebab di request tertentu.</p>
+<h3 id="konsep-kunci-tiga-pertanyaan-tiga-alat">Konsep kunci: tiga pertanyaan, tiga alat<a class="headerlink" href="#konsep-kunci-tiga-pertanyaan-tiga-alat" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Alat</th>
+<th>Njawab</th>
+<th>Analogi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Metrics</strong></td>
+<td>"Ada yang aneh nggak?"</td>
+<td>Alarm kebakaran</td>
+</tr>
+<tr>
+<td><strong>Logs</strong></td>
+<td>"Apa persisnya yang terjadi?"</td>
+<td>CCTV</td>
+</tr>
+<tr>
+<td><strong>Traces</strong></td>
+<td>"Di titik mana waktunya habis?"</td>
+<td>Peta rute kurir</td>
+</tr>
+</tbody>
+</table>
+<p>Urutannya: metrics bilang <strong>ada masalah</strong> → logs bilang <strong>request mana</strong> → trace bilang <strong>di span mana</strong>.</p>
+<h3 id="hari-1-teori-2-jam_10">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_10" title="Permanent link">&para;</a></h3>
+<p>Structured logging, correlation ID, trace/span, context propagation, sampling.<br />
+Referensi: <a href="https://opentelemetry.io/docs/">OpenTelemetry Documentation</a>.</p>
+<p><strong>Status OTel yang perlu lo tahu:</strong></p>
+<ul>
+<li><strong>OTLP sudah stable</strong> untuk traces, metrics, dan logs.</li>
+<li><strong>Semantic conventions</strong>: HTTP spans dan DB client spans sudah <strong>Stable</strong>. Pakai env <code>OTEL_SEMCONV_STABILITY_OPT_IN=http,database</code> kalau mau metric nama baru yang stabil.</li>
+<li><strong>Propagasi konteks</strong> pakai standar <a href="https://www.w3.org/TR/trace-context/">W3C Trace Context</a> (<code>traceparent</code>) — ini yang bikin trace nyambung lintas service, bahkan lintas vendor.</li>
+</ul>
+<h3 id="hari-2-praktik-2-jam_10">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_10" title="Permanent link">&para;</a></h3>
+<p><strong>Structured logging</strong> — pakai <code>log/slog</code> bawaan Go (sejak Go 1.21), jangan tambah library kalau nggak perlu:</p>
+<pre><code class="language-go">logger := slog.New(slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{
+    Level: slog.LevelInfo,
+}))
+slog.SetDefault(logger)
+
+// di handler
+span := trace.SpanFromContext(r.Context())
+slog.InfoContext(r.Context(), &quot;request_done&quot;,
+    &quot;method&quot;, r.Method,
+    &quot;route&quot;,  r.Pattern,
+    &quot;status&quot;, rw.status,
+    &quot;duration_ms&quot;, time.Since(start).Milliseconds(),
+    &quot;trace_id&quot;, span.SpanContext().TraceID().String(),
+    &quot;request_id&quot;, r.Header.Get(&quot;X-Request-Id&quot;),
+)
+</code></pre>
+<p><strong>Tracing dengan OTel:</strong></p>
+<pre><code class="language-go">import &quot;go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp&quot;
+
+handler := otelhttp.NewHandler(mux, &quot;sre-api&quot;)
+</code></pre>
+<p><strong>Yang paling sering bikin trace putus:</strong> lupa nerusin <code>context.Context</code>.</p>
+<pre><code class="language-go">// SALAH — trace putus
+func createOrder(ctx context.Context, o Order) error {
+    return db.QueryRow(&quot;INSERT ...&quot;)            // context.Background() implicit? tergantung driver
+}
+
+// BENAR
+func createOrder(ctx context.Context, o Order) error {
+    return db.QueryRowContext(ctx, &quot;INSERT ...&quot;)
+}
+</code></pre>
+<p><strong>Pipeline log pakai Alloy</strong> (bukan Promtail):</p>
+<pre><code class="language-river">// observability/otel/config.alloy
+loki.source.docker &quot;local&quot; {
+  host       = &quot;unix:///var/run/docker.sock&quot;
+  targets    = [{__meta_docker_container_name = &quot;sre-api&quot;, job = &quot;api&quot;}]
+  forward_to = [loki.process.json.receiver]
+}
+
+loki.process &quot;json&quot; {
+  stage.json {
+    expressions = {level = &quot;level&quot;, msg = &quot;msg&quot;, trace_id = &quot;trace_id&quot;, route = &quot;route&quot;}
+  }
+  stage.labels { values = {level = &quot;&quot;} }
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write &quot;default&quot; {
+  endpoint { url = &quot;http://loki:3100/loki/api/v1/push&quot; }
+}
+
+otelcol.receiver.otlp &quot;default&quot; {
+  grpc {}
+  output { traces = [otelcol.processor.tail_sampling.default.input] }
+}
+
+otelcol.processor.tail_sampling &quot;default&quot; {
+  policy { latency = &quot;500ms&quot; }              // simpan trace lambat
+  policy { status_code { status_codes = [&quot;ERROR&quot;] } }   // SELALU simpan trace error
+  policy { probabilistic { sampling_percentage = 1 } }  // baseline 1%
+  output { traces = [otelcol.exporter.otlp.tempo.input] }
+}
+
+otelcol.exporter.otlp &quot;tempo&quot; {
+  client { endpoint = &quot;tempo:4317&quot; }
+}
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_8">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_8" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Bikin endpoint yang lambat karena query database (misal <code>SELECT pg_sleep(1)</code> atau query tanpa index).</li>
+<li>Kirim request, ambil <code>trace_id</code> dari response header atau log.</li>
+<li>Cari log berdasarkan <code>trace_id</code> di Loki:</li>
+</ol>
+<p><code>logql
+   {job="api"} | json | trace_id="&lt;trace-id&gt;"</code></p>
+<ol start="4">
+<li>Buka trace di Tempo, dan jawab: <strong>dari total 1,2 detik, berapa yang habis di span database?</strong></li>
+</ol>
+<p>Ini momen "oh, ternyata" yang paling sering kejadian minggu ini: lo kira aplikasinya lelet, ternyata 90% waktunya numpuk nunggu database.</p>
+<h3 id="hari-4-review-2-jam_9">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_9" title="Permanent link">&para;</a></h3>
+<p>Tulis <code>labs/week-11-observability/</code> berisi panduan: <strong>cara nTelusuri satu request dari dashboard ke log ke trace</strong>, langkah demi langkah, dengan screenshot.</p>
+<h3 id="jebakan-umum-minggu-11">Jebakan umum minggu 11<a class="headerlink" href="#jebakan-umum-minggu-11" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Trace putus</strong> karena <code>context</code> nggak diteruskan ke fungsi turunan.</li>
+<li><strong>Correlation ID ada tapi nggak masuk log.</strong> Harus di-inject tiap kali nulis log.</li>
+<li><strong>Tail sampling tanpa policy 100% untuk error</strong> → trace yang paling penting justru kebuang.</li>
+<li>Ngira semua semconv sudah stabil — sebagian masih <em>Mixed</em>. Cek dulu.</li>
+<li>Log JSON tapi level-nya nggak konsisten (<code>level</code> vs <code>severity</code>) → query LogQL berantakan.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-11">Acceptance criteria minggu 11<a class="headerlink" href="#acceptance-criteria-minggu-11" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Log terstruktur, bisa difilter berdasarkan request/trace ID.</li>
+<li>Trace nunjukin durasi span aplikasi <strong>dan</strong> dependency.</li>
+<li>Request lambat bisa ditelusuri tanpa nebak.</li>
+<li><code>traceparent</code> diteruskan dan trace nggak putus.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-11-observability/</code> — konfigurasi telemetry, contoh log tersanitasi, troubleshooting guide.</p>
+<hr />
+<h2 id="minggu-12-sli-slo-error-budget-dan-incident-response">Minggu 12 · SLI, SLO, error budget, dan incident response<a class="headerlink" href="#minggu-12-sli-slo-error-budget-dan-incident-response" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> mulai mikir kayak SRE, bukan cuma operator monitoring.</p>
+<h3 id="hari-1-teori-2-jam_11">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_11" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Definisi gampangnya</th>
+<th>Contoh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SLI</strong></td>
+<td>Angka yang diukur dari sisi user</td>
+<td>"persentase request valid yang balas non-5xx"</td>
+</tr>
+<tr>
+<td><strong>SLO</strong></td>
+<td>Target dari angka itu</td>
+<td>"99,5% selama 30 hari rolling"</td>
+</tr>
+<tr>
+<td><strong>SLA</strong></td>
+<td>Janji ke user, biasanya ada konsekuensi (denda/credit)</td>
+<td>"99,9% per bulan, kalau melanggar dapat credit"</td>
+</tr>
+<tr>
+<td><strong>Error budget</strong></td>
+<td>Sisa "jatah gagal" sebelum nabrak SLO</td>
+<td>99,5% dari 1 juta request = 5.000 request boleh gagal</td>
+</tr>
+</tbody>
+</table>
+<p>Baca: <a href="https://sre.google/workbook/implementing-slos/">Google SRE Workbook — Implementing SLOs</a>.</p>
+<p><strong>Kenapa error budget itu ide yang brilian?</strong> Karena dia ngubah perdebatan "boleh nggak kita rilis fitur baru?" dari perdebatan opini jadi <strong>perdebatan angka</strong>.</p>
+<ul>
+<li>Budget masih banyak → gas, rilis agresif.</li>
+<li>Budget habis → freeze rilis, kerjaan dialihin ke reliabilitas.</li>
+</ul>
+<h3 id="hari-2-praktik-2-jam_11">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_11" title="Permanent link">&para;</a></h3>
+<p>Tulis <code>docs/slo.md</code>. Contoh buat lab:</p>
+<pre><code class="language-markdown">## SLI 1 — Availability
+Definisi   : proporsi request valid yang tidak menghasilkan 5xx
+Sumber data: http_server_requests_total (diukur di reverse proxy / load balancer)
+Window     : 30 hari rolling
+Eksklusi   : request dengan path /health* dan /metrics; request dari load generator internal
+Catatan    : diukur dari sisi klien (proxy), bukan dari internal aplikasi
+
+## SLO 1 — Availability
+Target: 99,5% selama 30 hari rolling
+Error budget: 0,5% × total request ≈ 5.000 request gagal per 1 juta
+</code></pre>
+<pre><code class="language-markdown">## SLI 2 — Latency
+Definisi   : proporsi request valid yang selesai &lt; 300 ms
+Kondisi    : beban ≤ 50 VU, diukur pakai k6
+Window     : 30 hari rolling
+
+## SLO 2 — Latency
+Target: 95% request valid &lt; 300 ms
+</code></pre>
+<p><strong>Penting:</strong> tulis dengan jujur bahwa ini <strong>target latihan</strong>, bukan klaim performa.</p>
+<h3 id="hari-3-eksperimen-2-jam-alerting-on-slo">Hari 3 · Eksperimen (2 jam) — Alerting on SLO<a class="headerlink" href="#hari-3-eksperimen-2-jam-alerting-on-slo" title="Permanent link">&para;</a></h3>
+<p>Di sinilah teori ketemu praktik. Pakai <strong>multiwindow, multi-burn-rate</strong> dari <a href="https://sre.google/workbook/alerting-on-slos/">Google SRE Workbook — Alerting on SLOs</a>:</p>
+<table>
+<thead>
+<tr>
+<th>Jendela panjang</th>
+<th>Jendela pendek</th>
+<th>Burn rate</th>
+<th>Error budget habis</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 jam</td>
+<td>5 menit</td>
+<td><strong>14,4</strong></td>
+<td>2% dalam 1 jam</td>
+<td><strong>Page</strong></td>
+</tr>
+<tr>
+<td>6 jam</td>
+<td>30 menit</td>
+<td><strong>6</strong></td>
+<td>5% dalam 6 jam</td>
+<td><strong>Page</strong></td>
+</tr>
+<tr>
+<td>3 hari</td>
+<td>6 jam</td>
+<td><strong>1</strong></td>
+<td>10% dalam 3 hari</td>
+<td>Ticket</td>
+</tr>
+</tbody>
+</table>
+<p>Contoh rule (untuk SLO 99,9% → budget 0,1%):</p>
+<pre><code class="language-yaml">groups:
+- name: slo-recording
+  interval: 30s
+  rules:
+  - record: job:slo_errors_per_request:ratio_rate5m
+    expr: |
+      sum(rate(http_server_requests_total{status=~&quot;5..&quot;}[5m]))
+      / sum(rate(http_server_requests_total[5m]))
+  - record: job:slo_errors_per_request:ratio_rate1h
+    expr: |
+      sum(rate(http_server_requests_total{status=~&quot;5..&quot;}[1h]))
+      / sum(rate(http_server_requests_total[1h]))
+
+- name: slo-alerting
+  rules:
+  - alert: HighErrorBudgetBurn
+    expr: |
+      (job:slo_errors_per_request:ratio_rate1h &gt; (14.4 * 0.001)
+        and job:slo_errors_per_request:ratio_rate5m &gt; (14.4 * 0.001))
+      or
+      (job:slo_errors_per_request:ratio_rate6h &gt; (6 * 0.001)
+        and job:slo_errors_per_request:ratio_rate30m &gt; (6 * 0.001))
+    for: 2m
+    labels: { severity: page }
+    annotations:
+      summary: &quot;Burn rate tinggi — budget 30 hari bisa habis dalam hitungan jam&quot;
+      runbook_url: &quot;https://github.com/&lt;user&gt;/production-reliability-lab/blob/main/runbooks/high-error-rate.md&quot;
+</code></pre>
+<p>Uji dengan:</p>
+<pre><code class="language-bash">promtool check rules rules/slo.yml          # sintaks
+promtool test rules rules/slo_test.yml      # unit test aturan — INI yang sering kelewat
+</code></pre>
+<p><strong>Simulasi insiden</strong> (2 jam):</p>
+<ol>
+<li>Mulai dari traffic normal (k6 ringan).</li>
+<li>Rusak sesuatu (matiin Redis, bikin query lambat).</li>
+<li>Catat <strong>timeline</strong>: jam berapa mulai, jam berapa alert nyala, jam berapa mitigasi, jam berapa pulih.</li>
+<li>Hitung berapa error budget yang habis.</li>
+</ol>
+<h3 id="hari-4-review-2-jam-postmortem-blameless">Hari 4 · Review (2 jam) — Postmortem blameless<a class="headerlink" href="#hari-4-review-2-jam-postmortem-blameless" title="Permanent link">&para;</a></h3>
+<p>Bikin <code>postmortems/incident-001.md</code>:</p>
+<pre><code class="language-markdown"># Incident 001 — &lt;judul singkat&gt;
+
+## Metadata
+Severity: SEV2 | Durasi: 34 menit | Penulis: &lt;lo&gt; | Tanggal: YYYY-MM-DD
+
+## Impact
+- 12% request gagal selama 34 menit
+- ~4.200 request terdampak
+- Error budget 30 hari terpakai 8%
+
+## Timeline (semua waktu UTC)
+- 10:14 — deploy versi sha-abc123
+- 10:31 — alert HighErrorBudgetBurn firing
+- 10:33 — on-call mulai investigasi
+- 10:41 — hipotesis: connection pool habis
+- 10:47 — rollback ke sha-9f8e21
+- 10:48 — error rate normal
+
+## Root cause
+&lt;satu kalimat yang jujur&gt;
+
+## Contributing factors (5-whys)
+1. Kenapa? ... → kenapa? ... (sampai ketemu akar proses, bukan akar orang)
+
+## What went well
+- Alert kepicu dalam 17 menit
+- Rollback jalan tanpa drama
+
+## What went wrong
+- Dashboard nggak nunjukin saturasi connection pool
+- Nggak ada alert buat saturasi
+
+## Action items
+| # | Tindakan | Owner | Tenggat | Prioritas |
+| 1 | Tambah panel connection pool + alert | lo | +1 minggu | P1 |
+</code></pre>
+<p><strong>Blameless artinya:</strong> fokus ke "sistem mana yang memungkinkan ini terjadi", bukan "siapa yang salah". Kalau postmortem lo nyebut nama orang sebagai penyebab, postmortem itu gagal.</p>
+<h3 id="jebakan-umum-minggu-12">Jebakan umum minggu 12<a class="headerlink" href="#jebakan-umum-minggu-12" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SLO diukur dari metrik internal aplikasi</strong>, bukan dari sisi user. Aplikasi yang crash sebelum nyatat metrik nggak pernah kehitung sebagai error — padahal itu error terburuk.</li>
+<li><strong>Alert statis "error rate &gt; 1%"</strong> tanpa burn rate → banyak false positive, terutama di traffic rendah.</li>
+<li><strong>Service dengan traffic rendah</strong> butuh aturan khusus: 1 request gagal per jam bisa jadi burn rate 1000×.</li>
+<li>Postmortem tanpa action item ber-owner dan tenggat = curhatan, bukan postmortem.</li>
+<li>Severity nggak ditetapkan di 5 menit pertama → respons jadi kacau.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-12">Acceptance criteria minggu 12<a class="headerlink" href="#acceptance-criteria-minggu-12" title="Permanent link">&para;</a></h3>
+<ol>
+<li>SLI bisa dihitung dari metrics yang udah dikumpulkan (sumber data + window jelas).</li>
+<li>SLO punya periode evaluasi dan aturan pengukuran yang jelas.</li>
+<li>Alert burn rate terpasang dan diuji (<code>promtool test rules</code>).</li>
+<li>Laporan insiden berisi bukti, dampak, dan tindakan pencegahan.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>docs/slo.md</code>, <code>docs/incident-response.md</code>, <code>postmortems/incident-001.md</code>.</p>
+<hr />
+<h1 id="bulan-4-automation-cloud-dan-reliability-engineering">Bulan 4: Automation, Cloud, dan Reliability Engineering<a class="headerlink" href="#bulan-4-automation-cloud-dan-reliability-engineering" title="Permanent link">&para;</a></h1>
+<p>Tujuan bulan ini: buktiin lo bisa bangun ulang semuanya, ukur kapasitasnya, dan pulihkan saat rusak.</p>
+<hr />
+<h2 id="minggu-13-terraform-dan-infrastructure-as-code">Minggu 13 · Terraform dan Infrastructure as Code<a class="headerlink" href="#minggu-13-terraform-dan-infrastructure-as-code" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> infrastruktur reproducible dan bisa direview lewat Git.</p>
+<h3 id="hari-1-teori-2-jam_12">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_12" title="Permanent link">&para;</a></h3>
+<p>Provider, resource, variable, output, state, dependency graph, drift.<br />
+Referensi: <a href="https://developer.hashicorp.com/terraform/tutorials">Terraform Tutorials</a>.</p>
+<p><strong>Konteks yang wajib lo tahu sebelum milih:</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Terraform</th>
+<th>OpenTofu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lisensi</td>
+<td>BUSL 1.1 (bukan open source) sejak 2023</td>
+<td>MPL-2.0 (open source, Linux Foundation)</td>
+</tr>
+<tr>
+<td>Kepemilikan</td>
+<td>HashiCorp — <strong>diakuisisi IBM, selesai 27 Feb 2025</strong></td>
+<td>Komunitas</td>
+</tr>
+<tr>
+<td>Ekosistem</td>
+<td>Registry utama, paling lengkap</td>
+<td>Registry sendiri (3.900+ provider)</td>
+</tr>
+<tr>
+<td>Fitur khas</td>
+<td>HCP Terraform, Sentinel</td>
+<td>State encryption fleksibel, OCI registry (sejak 1.10, Jun <strong>2025</strong>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rekomendasi gue:</strong> pakai <strong>OpenTofu</strong> buat lab (gratis, bebas, sintaksnya sama). Tapi <strong>pahami bahwa di kantor lo kemungkinan besar ketemu Terraform</strong>, dan dua-duanya bisa hidup berdampingan. Yang penting lo ngerti konsepnya: <strong>state, plan, apply, drift.</strong></p>
+<h3 id="hari-2-praktik-2-jam_12">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_12" title="Permanent link">&para;</a></h3>
+<pre><code class="language-hcl"># infra/terraform/main.tf
+terraform {
+  required_version = &quot;~&gt; 1.9&quot;
+  required_providers {
+    aws = {
+      source  = &quot;hashicorp/aws&quot;
+      version = &quot;~&gt; 6.0&quot;          # PINNING WAJIB: cegah breaking change dadakan
+    }
+  }
+  backend &quot;s3&quot; {
+    bucket         = &quot;sre-lab-tfstate&quot;
+    key            = &quot;lab/network.tfstate&quot;
+    region         = &quot;ap-southeast-1&quot;
+    dynamodb_table = &quot;tf-locks&quot;   # locking: cegah dua apply nabrak
+    encrypt        = true         # state bisa berisi secret!
+  }
+}
+
+variable &quot;environment&quot; {
+  type    = string
+  default = &quot;lab&quot;
+}
+
+variable &quot;allowed_ssh_cidr&quot; {
+  type        = string
+  description = &quot;CIDR yang boleh SSH. Jangan pernah 0.0.0.0/0 di produksi.&quot;
+}
+
+resource &quot;aws_vpc&quot; &quot;main&quot; {
+  cidr_block           = &quot;10.20.0.0/16&quot;
+  enable_dns_hostnames = true
+  tags = { Name = &quot;${var.environment}-vpc&quot;, Env = var.environment }
+}
+
+output &quot;vpc_id&quot; {
+  value       = aws_vpc.main.id
+  description = &quot;ID VPC lab&quot;
+}
+</code></pre>
+<pre><code class="language-bash">terraform fmt -check       # atau: tofu fmt -check
+terraform init
+terraform validate
+terraform plan -out=tfplan # SIMPAN PLAN-nya
+terraform show -json tfplan &gt; plan.json
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_9">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_9" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># 1. Ubah konfigurasi, lihat bedanya
+terraform plan -out=tfplan2
+terraform show -json tfplan2 | jq '.resource_changes[].change.actions'
+
+# 2. Drift detection: ubah manual di cloud, lalu plan lagi
+terraform plan -refresh-only
+
+# 3. Import resource yang sudah ada (bukan terraform import CLI)
+#    import block tersedia sejak TF 1.5
+</code></pre>
+<pre><code class="language-hcl">import {
+  to = aws_vpc.main
+  id = &quot;vpc-0abc123&quot;
+}
+</code></pre>
+<pre><code class="language-bash"># 4. Scan keamanan IaC (tfsec sudah dilebur ke Trivy)
+trivy config .
+
+# 5. Cek apakah state berisi rahasia
+terraform state list
+terraform state show aws_db_instance.main | grep -i password
+</code></pre>
+<p><strong>Jangan pernah:</strong> commit file state (<code>*.tfstate</code>) ke Git. Isinya bisa berisi password database dalam teks biasa.</p>
+<h3 id="hari-4-review-2-jam_10">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_10" title="Permanent link">&para;</a></h3>
+<p>Tulis <code>docs/infrastructure.md</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Bagian</th>
+<th>Isi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provisioning</td>
+<td>Perintah init→plan→apply, plus prasyarat (kredensial, backend)</td>
+</tr>
+<tr>
+<td>Perubahan</td>
+<td>Alur review: PR → <code>plan -out</code> → review → <code>apply tfplan</code></td>
+</tr>
+<tr>
+<td>Cleanup</td>
+<td><code>terraform destroy</code> dan <strong>resource apa yang bisa jadi biaya tak terduga</strong></td>
+</tr>
+<tr>
+<td>Biaya</td>
+<td>Estimasi per resource, dan budget alert</td>
+</tr>
+</tbody>
+</table>
+<h3 id="jebakan-umum-minggu-13">Jebakan umum minggu 13<a class="headerlink" href="#jebakan-umum-minggu-13" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>terraform apply</code> <strong>tanpa <code>-out</code></strong> → rencana yang dieksekusi bisa beda dari yang lo review.</li>
+<li>Pakai <strong>workspace</strong> buat bedain dev/prod dalam satu state → blast radius gede banget. Pakai <strong>directory per environment</strong> + backend terpisah.</li>
+<li>State di repo Git atau lokal → secret bocor plaintext.</li>
+<li>Provider tanpa version pin → <code>init</code> ulang di CI bisa narik versi baru yang nabrak.</li>
+<li>Lupa <code>terraform destroy</code> → VPS dan NAT gateway jadi tagihan bulanan.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-13">Acceptance criteria minggu 13<a class="headerlink" href="#acceptance-criteria-minggu-13" title="Permanent link">&para;</a></h3>
+<ol>
+<li><code>terraform validate</code> (atau <code>tofu validate</code>) lolos, <code>fmt -check</code> bersih.</li>
+<li>Perubahan bisa direview lewat <code>plan -out</code> sebelum apply.</li>
+<li>Provisioning dan cleanup terdokumentasi; biaya dipahami sebelum apply.</li>
+<li>Nggak ada state file atau secret ke-commit.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>infra/terraform/</code> — file <code>.tf</code>, contoh variable, <code>docs/infrastructure.md</code>.</p>
+<hr />
+<h2 id="minggu-14-cloud-networking-dan-security">Minggu 14 · Cloud networking dan security<a class="headerlink" href="#minggu-14-cloud-networking-dan-security" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> paham gimana service jalan di jaringan cloud yang aman.</p>
+<h3 id="hari-1-teori-2-jam_13">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_13" title="Permanent link">&para;</a></h3>
+<p>VPC, subnet, route table, security group/firewall, IAM, load balancer, object storage, managed database.<br />
+<strong>Pilih SATU provider.</strong> Jangan coba AWS + GCP + Azure sekaligus — lo cuma bakal hapal nama produknya, bukan konsepnya.</p>
+<h3 id="hari-2-praktik-2-jam_13">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_13" title="Permanent link">&para;</a></h3>
+<p>Bikin diagram jaringan dulu <strong>sebelum</strong> nulis konfigurasi. Pola yang benar:</p>
+<pre><code>                 Internet
+                     │
+              [Load Balancer]        ← publik: cuma 80/443
+                     │
+        ┌────────────┴────────────┐
+   Public Subnet             Private Subnet
+   (NAT Gateway)             ┌──────────────┐
+                             │  App (Go)    │  ← nggak punya public IP
+                             │  Postgres    │  ← nggak punya public IP
+                             │  Redis       │  ← nggak punya public IP
+                             └──────────────┘
+                     │
+              Object Storage (backup, terenkripsi)
+</code></pre>
+<p>Aturannya:</p>
+<table>
+<thead>
+<tr>
+<th>Yang boleh publik</th>
+<th>Yang tidak boleh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Load balancer: 80/443</td>
+<td>Database (5432, 6379)</td>
+</tr>
+<tr>
+<td>(opsional) bastion/SSM</td>
+<td>SSH ke app server langsung</td>
+</tr>
+<tr>
+<td>—</td>
+<td>Port metrik internal (9090, 3100)</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-hcl">resource &quot;aws_instance&quot; &quot;app&quot; {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = &quot;t3.small&quot;
+  subnet_id     = aws_subnet.private.id            # private, bukan public
+  iam_instance_profile = aws_iam_instance_profile.app.name  # role, BUKAN access key
+
+  metadata_options {                                # IMDSv2 WAJIB
+    http_tokens   = &quot;required&quot;
+    http_endpoint = &quot;enabled&quot;
+  }
+
+  vpc_security_group_ids = [aws_security_group.app.id]
+}
+
+resource &quot;aws_security_group&quot; &quot;app&quot; {
+  name   = &quot;sre-lab-app&quot;
+  vpc_id = aws_vpc.main.id
+
+  ingress {                       # cuma dari load balancer
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = &quot;tcp&quot;
+    security_groups = [aws_security_group.lb.id]
+  }
+
+  egress {                        # keluar lewat NAT
+    from_port   = 0
+    to_port     = 0
+    protocol    = &quot;-1&quot;
+    cidr_blocks = [&quot;0.0.0.0/0&quot;]
+  }
+}
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_10">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_10" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># 1. Buktikan port DB nggak bisa diakses dari internet
+nmap -Pn -p 5432 &lt;public-ip-app&gt;        # harus filtered/closed
+
+# 2. Buktikan port publik bisa
+curl -fsS -o /dev/null -w '%{http_code}\n' https://lab.domain-lo/
+
+# 3. Cek DNS dan TLS
+dig +short lab.domain-lo
+openssl s_client -connect lab.domain-lo:443 -servername lab.domain-lo -brief
+
+# 4. Akses admin tanpa SSH key permanen
+aws ssm start-session --target i-0abc   # zero standing access
+
+# 5. Budget alert — pasang SEBELUM deploy
+aws budgets create-budget --account-id $ACC --budget file://budget.json \
+  --notifications-with-subscribers file://notify.json
+</code></pre>
+<h3 id="hari-4-review-2-jam_11">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_11" title="Permanent link">&para;</a></h3>
+<p>Tulis <code>docs/security-review.md</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Pertanyaan yang dijawab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Attack surface</strong></td>
+<td>Port apa yang terbuka dari internet? Siapa yang perlu?</td>
+</tr>
+<tr>
+<td><strong>Hak akses</strong></td>
+<td>Pakai role atau user permanen? Apa scope izinnya?</td>
+</tr>
+<tr>
+<td><strong>Eksposur jaringan</strong></td>
+<td>Ada resource berharga di subnet publik?</td>
+</tr>
+<tr>
+<td><strong>Backup</strong></td>
+<td>Di mana, terenkripsi, bisa di-restore?</td>
+</tr>
+<tr>
+<td><strong>Biaya</strong></td>
+<td>Berapa per bulan? Ada budget alert?</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Fakta yang harus bikin lo waspada:</strong> AWS Free Tier berubah <strong>15 Juli 2025</strong> — bukan lagi "12 bulan gratis", melainkan kredit $100 (+$100 tambahan) yang berlaku <strong>6 bulan</strong>. Habis itu, tagihan jalan. NAT gateway (~$0,045/jam + biaya data) adalah tersangka utama tagihan lab yang ditinggal nyala.</p>
+<h3 id="jebakan-umum-minggu-14">Jebakan umum minggu 14<a class="headerlink" href="#jebakan-umum-minggu-14" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Node di public subnet "biar gampang SSH" → pakai private subnet + SSM/NAT.</li>
+<li>IAM policy <code>Action: "*"</code> / <code>Resource: "*"</code> pas debugging, lupa dibalikin.</li>
+<li>Nggak pasang budget alert sebelum deploy.</li>
+<li>NAT gateway ditinggal nyala seminggu.</li>
+<li>Security group inbound <code>0.0.0.0/0</code> ke port database.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-14">Acceptance criteria minggu 14<a class="headerlink" href="#acceptance-criteria-minggu-14" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Cuma port yang dibutuhkan yang bisa diakses dari luar.</li>
+<li>Akses administrasi dibatasi (role + least privilege, bukan user permanen).</li>
+<li>Diagram jaringan sesuai konfigurasi aktual.</li>
+<li>Budget alert aktif.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-14-cloud/</code> — diagram jaringan, Terraform, <code>docs/security-review.md</code>.</p>
+<hr />
+<h2 id="minggu-15-kubernetes-dan-orchestration">Minggu 15 · Kubernetes dan orchestration<a class="headerlink" href="#minggu-15-kubernetes-dan-orchestration" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> paham konsep orchestration, dan <strong>kapan K8s itu perlu</strong>.</p>
+<h3 id="hari-1-teori-2-jam_14">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_14" title="Permanent link">&para;</a></h3>
+<p>Pod, Deployment, ReplicaSet, Service, ConfigMap, Secret, probe, requests/limits, rolling update.<br />
+Referensi: <a href="https://kubernetes.io/docs/tutorials/kubernetes-basics/">Kubernetes Basics</a>.</p>
+<p><strong>Versi &amp; fakta yang relevan:</strong></p>
+<ul>
+<li><strong>Kubernetes 1.34 rilis 27 Agustus 2025</strong> (58 enhancement). Yang penting buat lo: <code>spec.podReplacementPolicy</code> stable, Pod-level resources beta, <strong>dukungan containerd 1.x berakhir di v1.35</strong>.</li>
+<li><strong>Ingress NGINX di-retire</strong>: maintenance best-effort cuma sampai Maret 2026, setelahnya nggak ada security fix. Rekomendasi resmi: pindah ke <strong>Gateway API</strong>.</li>
+<li><strong>Pod Security Admission</strong> (built-in sejak 1.25) menggantikan PodSecurityPolicy yang udah dihapus.</li>
+</ul>
+<h3 id="hari-2-praktik-2-jam_14">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_14" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># kind = paling dekat ke upstream dan cepat buat CI
+kind create cluster --name sre --image kindest/node:v1.34.0
+kubectl cluster-info
+kubectl get nodes
+</code></pre>
+<p>Roadmap lo mulai dari <code>nginx</code> buat kenalan workflow — boleh, tapi <strong>jangan berhenti di situ</strong>. Deploy image API lo sendiri:</p>
+<pre><code class="language-yaml"># kubernetes/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-api
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }   # nol downtime
+  selector:
+    matchLabels: { app: sre-api }
+  template:
+    metadata:
+      labels: { app: sre-api }
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: api
+          image: ghcr.io/&lt;user&gt;/sre-api:sha-abc123    # BUKAN :latest
+          ports: [{ containerPort: 8080 }]
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [&quot;ALL&quot;] }
+          startupProbe:
+            httpGet: { path: /healthz, port: 8080 }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: { path: /readyz, port: 8080 }
+            periodSeconds: 5
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8080 }    # Cuma cek proses, BUKAN dependency
+            periodSeconds: 10
+            failureThreshold: 3
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: sre-api }
+spec:
+  minAvailable: 2
+  selector: { matchLabels: { app: sre-api } }
+</code></pre>
+<pre><code class="language-bash">kubectl apply -f kubernetes/
+kubectl rollout status deployment/sre-api
+kubectl get pods -w
+kubectl port-forward svc/sre-api 8080:80
+curl -fsS http://localhost:8080/readyz
+</code></pre>
+<h3 id="hari-3-eksperimen-2-jam_11">Hari 3 · Eksperimen (2 jam)<a class="headerlink" href="#hari-3-eksperimen-2-jam_11" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">kubectl scale deployment sre-api --replicas=5
+kubectl delete pod &lt;pod-name&gt;              # lihat dia diganti otomatis
+kubectl rollout history deployment/sre-api
+kubectl set image deployment/sre-api api=ghcr.io/&lt;user&gt;/sre-api:sha-bad123
+kubectl rollout status deployment/sre-api  # harus gagal kalau probe bener
+kubectl rollout undo deployment/sre-api    # balikin
+kubectl describe pod &lt;pod-name&gt;            # baca Events — ini sumber kebenaran
+kubectl logs &lt;pod-name&gt; --previous         # log dari pod yang crash
+kubectl debug -it &lt;pod-name&gt; --image=busybox:1.36 --target=api   # ephemeral container
+kubectl top pod --sort-by=memory
+</code></pre>
+<p><strong>Eksperimen yang paling berharga:</strong> set <code>readinessProbe</code> ke path yang nggak ada, lalu deploy. Lo bakal lihat rollout mandek tanpa bikin service down. Itu contoh nyata kenapa probe itu pelindung, bukan formalitas.</p>
+<h3 id="hari-4-review-2-jam_12">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam_12" title="Permanent link">&para;</a></h3>
+<p>Tulis perbandingan yang jujur:</p>
+<table>
+<thead>
+<tr>
+<th>Hal</th>
+<th>Docker Compose</th>
+<th>Kubernetes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setup</td>
+<td>1 file, 1 perintah</td>
+<td>Banyak objek, learning curve curam</td>
+</tr>
+<tr>
+<td>Restart otomatis</td>
+<td><code>restart: unless-stopped</code></td>
+<td>ReplicaSet jaga desired state</td>
+</tr>
+<tr>
+<td>Scaling</td>
+<td>manual / Swarm</td>
+<td><code>scale</code>, HPA otomatis</td>
+</tr>
+<tr>
+<td>Rollout</td>
+<td><strong>nggak ada</strong> (recreate)</td>
+<td>rolling update + undo</td>
+</tr>
+<tr>
+<td>Self-healing</td>
+<td>cuma restart container</td>
+<td>reschedule ke node lain</td>
+</tr>
+<tr>
+<td>Networking</td>
+<td>DNS internal compose</td>
+<td>Service + Gateway API</td>
+</tr>
+<tr>
+<td><strong>Overhead</strong></td>
+<td>hampir nol</td>
+<td>harus paham 15+ objek, resource, storage, networking</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Kapan K8s itu benar-benar perlu:</strong> banyak service, butuh auto-scaling, butuh multi-node self-healing, tim sudah punya platform engineer.<br />
+<strong>Kapan K8s itu beban:</strong> satu service kecil, traffic rendah, tim 2 orang. Compose + satu VPS lebih murah dan lebih sedikit insiden.</p>
+<p>Jawaban yang matang di interview itu bukan "K8s keren", tapi "K8s menyelesaikan X dengan biaya Y; di kasus ini Y belum sepadan, dan ini alasannya."</p>
+<h3 id="jebakan-umum-minggu-15">Jebakan umum minggu 15<a class="headerlink" href="#jebakan-umum-minggu-15" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>limits</code> tanpa <code>requests</code> (atau sebaliknya) → QoS jadi Burstable/BestEffort, jadi korban pertama saat node kehabisan memori.</li>
+<li>Nggak ada <strong>startupProbe</strong> buat aplikasi yang booting lama → CrashLoopBackOff palsu.</li>
+<li><strong>Liveness = readiness</strong> → restart massal saat cuma overload.</li>
+<li>Masih pakai Ingress NGINX buat cluster baru (udah nggak dapat security fix).</li>
+<li>Image <code>:latest</code> → <code>rollout undo</code> nggak deterministik.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-15">Acceptance criteria minggu 15<a class="headerlink" href="#acceptance-criteria-minggu-15" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Deployment <strong>dan</strong> Service jalan dengan image API milik lab.</li>
+<li>Pod yang dihapus diganti otomatis sesuai desired state.</li>
+<li>Rollout, rollback, dan probe failure bisa diamati dan dijelaskan.</li>
+<li>Non-root + <code>readOnlyRootFilesystem</code> + requests/limits terpasang; PSA <code>restricted</code> aktif.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-15-kubernetes/</code> — manifest, diagram, hasil eksperimen.</p>
+<hr />
+<h2 id="minggu-16-load-testing-chaos-dan-final-incident-simulation">Minggu 16 · Load testing, chaos, dan final incident simulation<a class="headerlink" href="#minggu-16-load-testing-chaos-dan-final-incident-simulation" title="Permanent link">&para;</a></h2>
+<p><strong>Target:</strong> buktiin lo bisa ukur kapasitas, nemu bottleneck, dan pulihin sistem.</p>
+<h3 id="hari-1-teori-2-jam_15">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam_15" title="Permanent link">&para;</a></h3>
+<p>Capacity planning, Little's Law, queueing, saturation, retry storm, exponential backoff, timeout budget, circuit breaker.<br />
+Referensi: <a href="https://sre.google/workbook/">Google SRE Workbook</a>.</p>
+<p><strong>Rumus yang wajib lo pakai minggu ini:</strong></p>
+<blockquote>
+<p><strong>Little's Law: L = λ × W</strong><br />
+Jumlah request dalam sistem (L) = kedatangan per detik (λ) × waktu yang dihabiskan di sistem (W).</p>
+</blockquote>
+<p>Kenapa penting? Karena dia ngasih tahu <strong>berapa banyak concurrency yang lo butuh</strong> buat capai throughput tertentu. Kalau target 500 req/detik dengan latency 200ms, lo butuh minimal <code>500 × 0,2 = 100</code> request in-flight.</p>
+<blockquote>
+<p><strong>Utilisasi: ρ = λ / μ</strong><br />
+Saat ρ mendekati 1, <strong>latency meledak bukan linear, tapi eksponensial</strong>. Ini definisi <strong>saturasi</strong>.</p>
+</blockquote>
+<p>Ini alasan kenapa "server kita kuat 800 req/detik" itu omong kosong kalau nggak nyebut latency di angka itu.</p>
+<p><strong>Tiga pelindung yang harus lo terapkan:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Pola</th>
+<th>Masalah yang dicegah</th>
+<th>Nilai awal yang masuk akal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Timeout budget</strong></td>
+<td>Request numpuk nunggu dependency mati</td>
+<td>Total 2s: proxy 2s, app→DB 1s, app→Redis 200ms (menurun per hop)</td>
+</tr>
+<tr>
+<td><strong>Exponential backoff + jitter</strong></td>
+<td>Retry storm: semua client retry bareng</td>
+<td><code>min(2^n × base, cap)</code> + jitter acak</td>
+</tr>
+<tr>
+<td><strong>Circuit breaker</strong></td>
+<td>Terus nembak dependency yang udah jelas mati</td>
+<td>Buka setelah 50% error dalam 10s, setengah-buka setelah 30s</td>
+</tr>
+</tbody>
+</table>
+<p>Kenapa jitter itu penting: tanpa jitter, semua client retry <strong>pada detik yang sama</strong> → traffic jadi "gerombolan" yang makin nabrak.</p>
+<h3 id="hari-2-praktik-2-jam_15">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam_15" title="Permanent link">&para;</a></h3>
+<pre><code class="language-js">// loadtest/loadtest.js
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  scenarios: {
+    ramp: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '1m', target: 50 },    // naik pelan
+        { duration: '3m', target: 50 },    // tahan (steady state)
+        { duration: '1m', target: 0 },     // turun
+      ],
+    },
+  },
+  thresholds: {
+    http_req_duration: ['p(95)&lt;300'],     // GAGAL kalau p95 &gt; 300ms
+    http_req_failed:   ['rate&lt;0.01'],     // GAGAL kalau error &gt; 1%
+  },
+};
+
+export default function () {
+  const r = http.get('http://localhost/orders', { timeout: '2s' });  // timeout budget
+  check(r, { 'status 200': (x) =&gt; x.status === 200 });
+  sleep(1);
+}
+</code></pre>
+<pre><code class="language-bash">k6 run loadtest/loadtest.js
+k6 run --summary-mode=full --out json=loadtest/results.json loadtest/loadtest.js
+</code></pre>
+<blockquote>
+<p><strong>Catatan versi:</strong> k6 <strong>v1.0.0 rilis 6 Mei 2025</strong> (native TypeScript, SemVer, 2 tahun support). Sekarang udah <strong>v2.x</strong> — <strong>pin versi di CI</strong>, karena beda major bisa ngubah perilaku.</p>
+</blockquote>
+<p>Yang diukur dan dicatat per tahap beban:</p>
+<table>
+<thead>
+<tr>
+<th>VU</th>
+<th>Throughput (req/s)</th>
+<th>p50</th>
+<th>p95</th>
+<th>p99</th>
+<th>Error rate</th>
+<th>CPU</th>
+<th>Memori</th>
+<th>Koneksi DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>50</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>100</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>200</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Yang lo cari:</strong> titik di mana p95 mulai naik tajam sementara throughput datar. Itu kapasitas saturasi lo.</p>
+<h3 id="hari-3-eksperimen-2-jam-game-day">Hari 3 · Eksperimen (2 jam) — Game day<a class="headerlink" href="#hari-3-eksperimen-2-jam-game-day" title="Permanent link">&para;</a></h3>
+<p>Satu simulasi insiden terencana, 6 langkah:</p>
+<ol>
+<li><strong>Traffic normal</strong> — k6 jalan di 30 VU, catat baseline.</li>
+<li><strong>Rusak</strong> — pilih salah satu: bikin DB lambat (<code>SELECT pg_sleep(0.5)</code>), matiin Redis, atau inject latency 200ms pakai <a href="https://github.com/Shopify/toxiproxy">toxiproxy</a>.</li>
+<li><strong>Amati</strong> — alert apa yang nyala? Berapa lama? Dashboard apa yang paling kepakai?</li>
+<li><strong>Diagnosis</strong> — lewat metrics → logs → trace. Catat berapa menit yang lo butuh.</li>
+<li><strong>Mitigasi &amp; pulih</strong> — rollback / restart / failover. Catat dampaknya.</li>
+<li><strong>Ulangi setelah perbaikan</strong> — dan bandingkan angkanya.</li>
+</ol>
+<p>Bikin chaos experiment yang <strong>punya hipotesis tertulis</strong>:</p>
+<pre><code class="language-markdown">## Hipotesis
+Kalau Redis mati, API tetap balas dalam &lt; 500ms dan error rate &lt; 1%,
+karena cache miss jatuh ke database yang masih sanggup.
+
+## Metrik steady-state
+- p95 latency &lt; 300ms
+- error rate &lt; 1%
+
+## Blast radius
+Cuma container Redis di environment lab.
+
+## Abort condition
+Kalau error rate &gt; 20% selama 2 menit, eksperimen dihentikan otomatis
+dan Redis dinyalakan lagi.
+</code></pre>
+<blockquote>
+<p><strong>Chaos tanpa hipotesis dan abort condition itu namanya bukan eksperimen — itu sabotase.</strong> Bedanya cuma di disiplin ini.</p>
+</blockquote>
+<h3 id="hari-4-final-review-2-jam">Hari 4 · Final review (2 jam)<a class="headerlink" href="#hari-4-final-review-2-jam" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Incident report</strong> lengkap (format postmortem minggu 12).</li>
+<li><strong>Benchmark sebelum vs sesudah perbaikan</strong> — tabel di atas, dua versi.</li>
+<li><strong>Batas kapasitas yang terukur</strong>: "sistem ini sanggup X req/detik dengan p95 &lt; 300ms di spesifikasi A. Bottleneck-nya B, dan ini buktinya."</li>
+<li><strong>Rapikan semuanya</strong>: README utama, diagram final, runbook, instruksi reproduksi.</li>
+</ol>
+<p>Bikin <strong>README utama</strong> yang bikin reviewer langsung paham dalam 30 detik:</p>
+<pre><code class="language-markdown"># Production Reliability Lab
+
+Satu repository berisi production-like service, automated deployment,
+monitoring, alerting, simulasi insiden, dan dokumentasi reliability.
+
+## Cara jalanin dari nol
+git clone ... &amp;&amp; cd production-reliability-lab
+cp .env.example .env
+make up
+curl http://localhost/health
+
+## Yang ada di sini
+- Go HTTP API + PostgreSQL + Redis di balik Nginx
+- CI/CD GitHub Actions dengan image ber-tag commit SHA
+- Prometheus + Grafana + Loki/Alloy + OpenTelemetry
+- SLO, error budget, dan postmortem insiden
+- Terraform/OpenTofu, Kubernetes (kind), load test k6
+
+## Bukti yang bisa dicek
+| Minggu | Apa yang dibuktikan | Di mana |
+| 1 | Diagnosis CPU/OOM/down | labs/week-01-linux/ |
+...
+| 16 | Kapasitas &amp; pemulihan insiden | labs/week-16-final-capstone/ |
+</code></pre>
+<h3 id="jebakan-umum-minggu-16">Jebakan umum minggu 16<a class="headerlink" href="#jebakan-umum-minggu-16" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Cuma ngukur <strong>rata-rata latency</strong> — yang penting p95/p99 dan error rate.</li>
+<li>Naikin VU terus tanpa cek utilisasi → lo cuma ngukur antrean, bukan kapasitas.</li>
+<li>Load test dari laptop → yang kebatas bandwidth lo sendiri.</li>
+<li>Chaos tanpa abort condition → malah bikin insiden beneran.</li>
+<li>Retry di 3 lapis (client, LB, aplikasi) tanpa jitter → amplifikasi sampai 27×.</li>
+</ul>
+<h3 id="acceptance-criteria-minggu-16">Acceptance criteria minggu 16<a class="headerlink" href="#acceptance-criteria-minggu-16" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Load test bisa diulang dan punya threshold yang ngegagalkan CI.</li>
+<li>Bottleneck didukung data, bukan dugaan.</li>
+<li>Insiden bisa dideteksi, didiagnosis, dimitigasi, dipulihkan.</li>
+<li>Hasil sebelum/sesudah bisa dibandingkan kuantitatif.</li>
+</ol>
+<p><strong>Yang masuk GitHub:</strong> <code>labs/week-16-final-capstone/</code> — script k6, incident report, hasil benchmark, diagram final.</p>
+<hr />
+<h1 id="lampiran-a-ai-agent-workflow-products-yang-relevan-buat-sre">Lampiran A · AI Agent Workflow Products yang Relevan Buat SRE<a class="headerlink" href="#lampiran-a-ai-agent-workflow-products-yang-relevan-buat-sre" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Lo nyebut "AI agent workflow products" di awal. Gue nggak bikin ini jadi fokus utama (roadmap lo udah bagus), tapi gue kasih lampiran pendek karena <strong>ini area yang beneran lagi bergerak cepat</strong> dan bakal ngaruh ke kerjaan SRE.</p>
+</blockquote>
+<h2 id="kenapa-ini-relevan-buat-sre-bukan-cuma-buat-ai-engineer">Kenapa ini relevan buat SRE, bukan cuma buat "AI engineer"<a class="headerlink" href="#kenapa-ini-relevan-buat-sre-bukan-cuma-buat-ai-engineer" title="Permanent link">&para;</a></h2>
+<p>AI agent workflow itu intinya: <strong>serangkaian langkah di mana LLM bisa manggil tools, baca state, dan ambil keputusan</strong>. Kalau lo ganti "tools" dengan "perintah kubectl, query PromQL, API PagerDuty", hasilnya adalah... asisten on-call.</p>
+<p>Tiga kelas produk yang muncul:</p>
+<table>
+<thead>
+<tr>
+<th>Kelas</th>
+<th>Contoh</th>
+<th>Yang dikerjakan</th>
+<th>Status realistis 2025–2026</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Platform insiden + AI</strong></td>
+<td>incident.io, Rootly, PagerDuty</td>
+<td>Ringkas insiden, auto-draft postmortem, COPILOT buat on-call</td>
+<td>Sudah dipakai produksi; Rootly bikin API-nya AI-agent-first (2025)</td>
+</tr>
+<tr>
+<td><strong>AIOps di observability</strong></td>
+<td>Dynatrace, Datadog Bits AI, New Relic AI</td>
+<td>Korelasi metric/log/trace, usulin root cause</td>
+<td>Bagus buat hipotesis awal, <strong>jangan dipakai sebagai kesimpulan akhir</strong></td>
+</tr>
+<tr>
+<td><strong>Workflow automation klasik</strong></td>
+<td>StackStorm, Rundeck, n8n, Temporal</td>
+<td>Runbook otomatis, remidiasi ber-aturan</td>
+<td>Paling bisa dipercaya karena deterministik</td>
+</tr>
+</tbody>
+</table>
+<h2 id="perubahan-yang-perlu-lo-antisipasi">Perubahan yang perlu lo antisipasi<a class="headerlink" href="#perubahan-yang-perlu-lo-antisipasi" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Opsgenie end-of-sale 4 Juni 2025</strong>, dukungan berakhir 2027 → banyak tim migrasi ke Jira Service Management. Kalau lo kebetulan ketemu Opsgenie, tahu konteksnya.</li>
+<li>Platform insiden makin "AI-agent-first": bukan cuma notifikasi, tapi agent yang bisa <strong>nanya ke metrics</strong> dan <strong>nulis draft postmortem</strong>.</li>
+</ul>
+<h2 id="aturan-pakai-yang-gue-saranin">Aturan pakai yang gue saranin<a class="headerlink" href="#aturan-pakai-yang-gue-saranin" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>AI bagus buat hipotesis, bukan buat vonis.</strong> Biarkan dia ngusulin "kayaknya connection pool", tapi lo tetap harus buktiin dengan query.</li>
+<li><strong>Jangan kasih agent akses tulis ke produksi tanpa approval.</strong> Tool yang bisa <code>kubectl delete</code> itu harus ada human-in-the-loop.</li>
+<li><strong>Runbook tetap harus bisa dijalanin manual.</strong> Kalau cuma agent yang ngerti, saat agent-nya error lo nggak punya apa-apa.</li>
+<li><strong>Tulis audit trail.</strong> Tiap tindakan agent harus ke-log seperti tindakan manusia.</li>
+</ol>
+<p>Sumber buat mulai baca: <a href="https://incident.io/blog/sre-ai-tools-transform-devops-2025">incident.io — 5 AI-powered SRE tools</a>, <a href="https://thenewstack.io/ai-devops-vs-sre-agents-compare-ai-incident-response-tools/">The New Stack — AI DevOps vs SRE agents</a>.</p>
+<blockquote>
+<p>Pendapat gue: buat 16 minggu ini, <strong>jangan sisipin AI agent ke lab</strong>. Kuasai dulu fundamentals-nya. Agent yang jalan di atas observability yang buruk cuma bakal nge-hasilin hipotesis yang salah dengan lebih cepat.</p>
+</blockquote>
+<hr />
+<h1 id="lampiran-b-checklist-kelulusan-pribadi">Lampiran B · Checklist Kelulusan Pribadi<a class="headerlink" href="#lampiran-b-checklist-kelulusan-pribadi" title="Permanent link">&para;</a></h1>
+<p>Roadmap lo bilang: <em>"Jangan tandai minggu selesai hanya karena tutorialnya sudah ditonton."</em> Ini versi yang bisa lo pakai buat nguji diri sendiri.</p>
+<h2 id="per-minggu-tanya-4-hal-ini-sebelum-centang">Per minggu — tanya 4 hal ini sebelum centang<a class="headerlink" href="#per-minggu-tanya-4-hal-ini-sebelum-centang" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Bisa reproduksi?</strong> Ada perintahnya, dan perintah itu jalan dari repo yang baru di-clone.</li>
+<li><strong>Ada buktinya?</strong> Output, screenshot, angka — tersimpan di <code>evidence/</code> dan sudah disanitasi.</li>
+<li><strong>Bisa dijelaskan?</strong> Lo bisa nerangin ke orang lain tanpa buka catatan. Kalau nggak bisa, belum selesai.</li>
+<li><strong>Ada runbook-nya?</strong> Kalau ini rusak lagi, ada yang bisa lo (atau orang lain) lakuin tanpa nebak.</li>
+</ol>
+<h2 id="per-bulan-pertanyaan-level-atas">Per bulan — pertanyaan level atas<a class="headerlink" href="#per-bulan-pertanyaan-level-atas" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Bulan</th>
+<th>Kalau lo bisa jawab ini, bulan itu lulus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td>"Service lambat. Tanpa lihat dashboard, apa 5 perintah pertama yang lo jalanin, dan kenapa urutannya begitu?"</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>"Deploy barusan bikin error naik. Apa langkah rollback lo, dan berapa lama sampai normal?"</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>"Berapa availability layanan lo 30 hari terakhir, dan dari mana angka itu?"</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>"Sistem ini sanggup berapa req/detik sebelum p95 rusak? Bottleneck-nya apa? Kalau rusak jam 3 pagi, apa yang bikin dia pulih sendiri?"</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tanda-bahaya-bahwa-lo-cuma-nonton">Tanda bahaya bahwa lo cuma nonton<a class="headerlink" href="#tanda-bahaya-bahwa-lo-cuma-nonton" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Semua README isinya <strong>salinan dokumentasi</strong>, nggak ada output dari mesin lo sendiri.</li>
+<li><code>evidence/</code> kosong atau cuma ada screenshot halaman dokumentasi.</li>
+<li>Bisa jalanin <code>kubectl apply</code> tapi nggak bisa jelasin apa yang terjadi setelahnya.</li>
+<li>Nggak pernah sengaja ngerusak apa pun. (Ini tanda paling jelas.)</li>
+</ul>
+<hr />
+<h1 id="lampiran-c-referensi-utama-per-topik">Lampiran C · Referensi Utama per Topik<a class="headerlink" href="#lampiran-c-referensi-utama-per-topik" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th>Topik</th>
+<th>Sumber primer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Linux &amp; kernel</td>
+<td><a href="https://man7.org/linux/man-pages/">man7.org</a>, <a href="https://www.kernel.org/doc/html/latest/accounting/psi.html">PSI docs</a>, <a href="https://docs.kernel.org/admin-guide/cgroup-v2.html">cgroup v2</a></td>
+</tr>
+<tr>
+<td>Networking</td>
+<td><a href="https://www.cloudflare.com/learning/network-layer/">Cloudflare Learning Center</a>, <a href="https://blog.cloudflare.com/radar-2025-year-in-review/">Cloudflare Radar</a></td>
+</tr>
+<tr>
+<td>Docker</td>
+<td><a href="https://docs.docker.com/get-started/">Docker Get Started</a>, <a href="https://docs.docker.com/reference/compose-file/services/">Compose file reference</a></td>
+</tr>
+<tr>
+<td>Nginx</td>
+<td><a href="https://nginx.org/en/docs/beginners_guide.html">Beginner's Guide</a>, <a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html">ngx_http_proxy_module</a></td>
+</tr>
+<tr>
+<td>CI/CD</td>
+<td><a href="https://docs.github.com/en/actions">GitHub Actions docs</a>, <a href="https://docs.github.com/en/actions/concepts/security/artifact-attestations">Artifact attestations</a></td>
+</tr>
+<tr>
+<td>Go shutdown</td>
+<td><a href="https://pkg.go.dev/os/signal#NotifyContext">signal.NotifyContext</a>, <a href="https://pkg.go.dev/net/http#Server.Shutdown">http.Server.Shutdown</a></td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td><a href="https://www.postgresql.org/docs/current/backup.html">Backup &amp; Restore</a>, <a href="https://www.postgresql.org/docs/current/continuous-archiving.html">Continuous Archiving</a>, <a href="https://pgbackrest.org/">pgBackRest</a></td>
+</tr>
+<tr>
+<td>PRR</td>
+<td><a href="https://sre.google/sre-book/evolving-sre-engagement-model/">Evolving SRE Engagement Model</a>, <a href="https://sre.google/sre-book/launch-checklist/">Launch Checklist</a></td>
+</tr>
+<tr>
+<td>Prometheus</td>
+<td><a href="https://prometheus.io/docs/tutorials/getting_started/">Getting Started</a>, <a href="https://prometheus.io/docs/practices/histograms/">Histogram practices</a>, <a href="https://prometheus.io/docs/specs/native_histograms/">Native histograms</a></td>
+</tr>
+<tr>
+<td>Grafana</td>
+<td><a href="https://grafana.com/docs/grafana/latest/alerting/alerting-rules/">Alerting rules</a>, <a href="https://grafana.com/docs/grafana/latest/administration/provisioning/">Provisioning</a>, <a href="https://grafana.com/docs/loki/latest/setup/migrate/migrate-to-alloy/">Promtail → Alloy migration</a></td>
+</tr>
+<tr>
+<td>OpenTelemetry</td>
+<td><a href="https://opentelemetry.io/docs/">OTel docs</a>, <a href="https://opentelemetry.io/docs/specs/semconv/http/http-metrics/">Semconv HTTP</a>, <a href="https://www.w3.org/TR/trace-context/">W3C Trace Context</a></td>
+</tr>
+<tr>
+<td>SLO</td>
+<td><a href="https://sre.google/workbook/implementing-slos/">Implementing SLOs</a>, <a href="https://sre.google/workbook/alerting-on-slos/">Alerting on SLOs</a>, <a href="https://sre.google/workbook/error-budget-policy/">Error budget policy</a></td>
+</tr>
+<tr>
+<td>Postmortem</td>
+<td><a href="https://sre.google/sre-book/postmortem-culture/">Postmortem culture</a></td>
+</tr>
+<tr>
+<td>Terraform/OpenTofu</td>
+<td><a href="https://developer.hashicorp.com/terraform/tutorials">Terraform tutorials</a>, <a href="https://opentofu.org/">OpenTofu</a></td>
+</tr>
+<tr>
+<td>Kubernetes</td>
+<td><a href="https://kubernetes.io/docs/tutorials/kubernetes-basics/">K8s basics</a>, <a href="https://kubernetes.io/blog/2025/08/27/kubernetes-v1-34-release/">v1.34 release</a>, <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/">Probes</a></td>
+</tr>
+<tr>
+<td>Load test &amp; chaos</td>
+<td><a href="https://grafana.com/docs/k6/latest/">k6 docs</a>, <a href="https://chaos-mesh.org/">Chaos Mesh</a>, <a href="https://github.com/Shopify/toxiproxy">toxiproxy</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Penutup.</strong> Target 16 minggu ini bukan hapal 14 tools. Targetnya: <strong>kebiasaan</strong> — ukur, deteksi, diagnosis, mitigasi, pulihkan, lalu cegah hal yang sama terulang. Tools-nya bakal ganti (Promtail aja udah EOL). Kebiasaannya nggak.</p>
+<div class="foot"><span>README.md</span><span><a href="index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

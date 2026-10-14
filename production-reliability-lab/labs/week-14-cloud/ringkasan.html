@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 14 · Cloud Networking dan Security</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-14-cloud/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-14-cloud-networking-dan-security">Ringkasan — Minggu 14 · Cloud Networking dan Security</a><ul>
+<li><a href="#inti-5-kalimat">Inti 5 kalimat</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#perintah-kunci-output">Perintah kunci + output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan">Jebakan</a></li>
+<li><a href="#cheat-sheet-cepat">Cheat sheet cepat</a></li>
+<li><a href="#tanya-jawab-kilat">Tanya jawab kilat</a></li>
+<li><a href="#acceptance">Acceptance</a></li>
+<li><a href="#studi-kasus-mini">Studi kasus mini</a></li>
+<li><a href="#istilah-kunci-flashcard">Istilah kunci (flashcard)</a></li>
+<li><a href="#pertanyaan-wawancara">Pertanyaan wawancara</a></li>
+<li><a href="#pola-yang-sering-kelewat">Pola yang sering kelewat</a></li>
+<li><a href="#cek-cepat-sebelum-apply">Cek cepat sebelum apply</a></li>
+<li><a href="#satu-kalimat">Satu kalimat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-14-cloud-networking-dan-security">Ringkasan — Minggu 14 · Cloud Networking dan Security<a class="headerlink" href="#ringkasan-minggu-14-cloud-networking-dan-security" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman untuk dibaca ulang sebelum ujian/wawancara. Bukan pengganti bahan-bacaan.md.</p>
+</blockquote>
+<h2 id="inti-5-kalimat">Inti 5 kalimat<a class="headerlink" href="#inti-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Di cloud, batas jaringan itu nyata: public subnet buat pintu (LB 80/443), private subnet buat brankas (app/DB tanpa IP publik).</li>
+<li>Security group harus <strong>merujuk SG lain, bukan <code>0.0.0.0/0</code></strong> — database nggak boleh kebuka dari internet.</li>
+<li>Akses admin pakai <strong>IAM role + SSM</strong>, bukan access key permanen atau SSH publik (zero standing access).</li>
+<li><strong>IMDSv2 wajib</strong> (<code>http_tokens=required</code>) buat tutup celah SSRF curi kredensial role.</li>
+<li>Lab cloud bikin tagihan nyata — <strong>NAT Gateway</strong> dan lupa <code>destroy</code> adalah tersangka utama; pasang budget alert SEBELUM apply.</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<pre><code>Internet ──443──&gt; [Load Balancer]  (SG lb: 80/443 dari 0.0.0.0/0)
+                       │
+            Public subnet (NAT GW keluar)
+                       │
+            Private subnet ──8080(SG app ← SG lb)──&gt; App (Go)
+                                                       │ ├─5432 (SG db ← SG app)──&gt; Postgres
+                                                       │ ├─6379 (SG app)──&gt; Redis
+                                                       │ └─IMDSv2 (token)──&gt; IAM role ─&gt; S3
+            Admin: aws ssm start-session (bukan port 22 publik)
+</code></pre>
+<h2 id="perintah-kunci-output">Perintah kunci + output<a class="headerlink" href="#perintah-kunci-output" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 1. Build infra
+$ tofu apply tfplan
+# output: Apply complete! Resources: N added.
+# interpretasi: jaringan lab jadi.
+
+# 2. Buktikan port DB tertutup dari luar
+$ nmap -Pn -p 5432 &lt;public-ip-app&gt;
+# output: 5432/tcp filtered
+# interpretasi: database nggak reachable dari internet. BENAR.
+
+# 3. Buktikan LB kebuka
+$ curl -fsS -o /dev/null -w '%{http_code}\n' https://lab.domain-lo
+# output: 200
+# interpretasi: pintu publik jalan.
+
+# 4. Cek DNS
+$ dig +short lab.domain-lo
+# output: 52.x.x.x
+# interpretasi: A record menunjuk ke LB.
+
+# 5. Cek TLS
+$ openssl s_client -connect lab.domain-lo:443 -servername lab.domain-lo -brief
+# output: Verify return code: 0 (ok)
+# interpretasi: sertifikat valid.
+
+# 6. Admin tanpa SSH
+$ aws ssm start-session --target i-0abc
+# output: Starting session with SessionId: ...
+# interpretasi: akses tanpa port 22 publik (zero standing access).
+
+# 7. Cek IMDSv2 aktif
+$ aws ec2 describe-instances --instance-ids i-0abc \
+    --query 'Reservations[].Instances[].MetadataOptions.HttpTokens'
+# output: &quot;required&quot;
+# interpretasi: IMDSv2 wajib, SSRF nggak bisa ambil token.
+
+# 8. Di instance: IMDSv1 tanpa token harus 401
+$ curl -s -o /dev/null -w '%{http_code}\n' http://169.254.169.254/latest/meta-data/
+# output: 401
+# interpretasi: butuh PUT token dulu = IMDSv2 bekerja.
+
+# 9. Lihat SG db
+$ aws ec2 describe-security-groups --group-ids &lt;db-sg&gt;
+# output: UserIdGroupPairs: [{GroupId: sg-app}]
+# interpretasi: DB cuma buka dari SG app, bukan 0.0.0.0/0.
+
+# 10. Budget alert
+$ aws budgets describe-budgets --account-id $ACC --query 'Budgets[].BudgetName'
+# output: [&quot;sre-lab-budget&quot;]
+# interpretasi: guardrail aktif.
+
+# 11. Cek tagihan awal
+$ aws ce get-cost-and-usage --time-period Start=2025-08-01,End=2025-08-02 \
+    --granularity DAILY --metrics UnblendedCost
+# output: UnblendedCost { Amount: &quot;0.05&quot;, Unit: &quot;USD&quot; }
+# interpretasi: kecil, tapi naik kalau NAT ditinggal nyala.
+
+# 12. CLEANUP wajib
+$ tofu destroy
+# output: Destroy complete! Resources: N destroyed.
+# interpretasi: semua lab hilang; cek sisa NAT/EIP/volume.
+</code></pre>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Penyebab</th>
+<th>Cek</th>
+<th>Penyelesaian</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nmap</code> buka 5432</td>
+<td>SG db <code>0.0.0.0/0</code></td>
+<td>review SG db ingress</td>
+<td>ganti ke SG app</td>
+</tr>
+<tr>
+<td>App nggak reachable LB</td>
+<td>SG app nggak rujuk SG lb</td>
+<td><code>describe-security-groups</code></td>
+<td>tambah ingress dari SG lb</td>
+</tr>
+<tr>
+<td>App nggak bisa akses S3</td>
+<td>role/instance profile salah</td>
+<td><code>sts get-caller-identity</code> di instance</td>
+<td>pasang <code>iam_instance_profile</code></td>
+</tr>
+<tr>
+<td>IMDSv1 masih jalan</td>
+<td><code>http_tokens</code> bukan required</td>
+<td><code>describe-instances</code></td>
+<td>set <code>metadata_options.http_tokens=required</code></td>
+</tr>
+<tr>
+<td>Tagihan meledak</td>
+<td>NAT ditinggal nyala</td>
+<td>AWS Cost Explorer</td>
+<td><code>tofu destroy</code>, matikan NAT</td>
+</tr>
+<tr>
+<td>SSH masih bisa</td>
+<td>port 22 dibuka publik</td>
+<td><code>nmap -Pn -p 22</code></td>
+<td>tutup, pakai SSM</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan">Jebakan<a class="headerlink" href="#jebakan" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Node di public subnet "biar gampang SSH".</li>
+<li>IAM <code>Action:"*"/Resource:"*"</code> pas debug, lupa dibalikin.</li>
+<li>Nggak pasang budget alert sebelum deploy.</li>
+<li>NAT gateway ditinggal nyala seminggu.</li>
+<li>SG inbound <code>0.0.0.0/0</code> ke port database.</li>
+</ul>
+<h2 id="cheat-sheet-cepat">Cheat sheet cepat<a class="headerlink" href="#cheat-sheet-cepat" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mau ngapain</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build infra</td>
+<td><code>tofu apply tfplan</code></td>
+</tr>
+<tr>
+<td>Bukti DB tertutup</td>
+<td><code>nmap -Pn -p 5432 &lt;ip&gt;</code></td>
+</tr>
+<tr>
+<td>Bukti LB kebuka</td>
+<td><code>curl -fsS ... lab.domain</code></td>
+</tr>
+<tr>
+<td>Admin aman</td>
+<td><code>aws ssm start-session --target i-0abc</code></td>
+</tr>
+<tr>
+<td>Cek IMDSv2</td>
+<td><code>describe-instances ... HttpTokens</code></td>
+</tr>
+<tr>
+<td>Budget</td>
+<td><code>aws budgets create-budget ...</code></td>
+</tr>
+<tr>
+<td>Cek tagihan</td>
+<td><code>aws ce get-cost-and-usage ...</code></td>
+</tr>
+<tr>
+<td>Bersih</td>
+<td><code>tofu destroy</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="tanya-jawab-kilat">Tanya jawab kilat<a class="headerlink" href="#tanya-jawab-kilat" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Q: Kenapa SG rujuk SG, bukan CIDR?</strong> A: pas app nambah node, SG otomatis ikut.</li>
+<li><strong>Q: IMDSv2 cegah apa?</strong> A: SSRF ambil token role.</li>
+<li><strong>Q: Free Tier 2025?</strong> A: kredit $100 (+$100) / 6 bulan, bukan 12 bulan gratis.</li>
+<li><strong>Q: Akses admin?</strong> A: role + SSM, bukan SSH publik/access key.</li>
+<li><strong>Q: Tersangka tagihan?</strong> A: NAT Gateway + lupa destroy.</li>
+</ul>
+<h2 id="acceptance">Acceptance<a class="headerlink" href="#acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Cuma port yang dibutuhkan (80/443) yang kebuka dari luar; DB tertutup.</li>
+<li>Akses admin via role + least privilege, bukan user permanen.</li>
+<li>Diagram jaringan sesuai konfigurasi aktual (bukan tebakan).</li>
+<li>Budget alert aktif di ≤ 50% batas nyaman.</li>
+</ol>
+<h2 id="studi-kasus-mini">Studi kasus mini<a class="headerlink" href="#studi-kasus-mini" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Kasus A:</strong> app ditaruh di public subnet "biar gampang SSH". Bot scanner nemuin port 22 + app expose → kompromi. Pelajaran: private subnet + SSM.</li>
+<li><strong>Kasus B:</strong> SG db dibuka <code>0.0.0.0/0</code> buat "debug cepat". DB ke-scrape semalam. Pelajaran: SG rujuk SG app, bukan CIDR lebar.</li>
+<li><strong>Kasus C:</strong> IAM <code>Action:"*"</code> pas debug, lupa dibalikin. Eksploitasi lateral terjadi. Pelajaran: tulis policy sempit dari awal.</li>
+</ul>
+<h2 id="istilah-kunci-flashcard">Istilah kunci (flashcard)<a class="headerlink" href="#istilah-kunci-flashcard" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>VPC</strong> = jaringan terisolasi milik lo.</li>
+<li><strong>Subnet public</strong> = ada rute ke IGW, dapat IP publik.</li>
+<li><strong>Subnet private</strong> = tanpa IP publik, egress lewat NAT.</li>
+<li><strong>SG</strong> = firewall stateful per resource.</li>
+<li><strong>IMDSv2</strong> = metadata ber-token, cegah SSRF.</li>
+<li><strong>IAM role</strong> = identitas sementara, bukan access key.</li>
+<li><strong>Least privilege</strong> = izin sesedikit mungkin.</li>
+<li><strong>SSM</strong> = admin tanpa SSH publik.</li>
+</ul>
+<h2 id="pertanyaan-wawancara">Pertanyaan wawancara<a class="headerlink" href="#pertanyaan-wawancara" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Kenapa SG rujuk SG, bukan CIDR?</li>
+<li>Apa celah yang ditutup IMDSv2?</li>
+<li>Kenapa Free Tier 2025 beda?</li>
+<li>Kapan pakai SSM vs SSH?</li>
+<li>Tersangka tagihan lab?</li>
+</ol>
+<h2 id="pola-yang-sering-kelewat">Pola yang sering kelewat<a class="headerlink" href="#pola-yang-sering-kelewat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>NAT gateway ditinggal nyala.</li>
+<li>Budget alert dipasang sesudah, bukan sebelum.</li>
+<li>Port 22 dibuka publik.</li>
+<li><code>0.0.0.0/0</code> ke port DB.</li>
+</ul>
+<h2 id="cek-cepat-sebelum-apply">Cek cepat sebelum apply<a class="headerlink" href="#cek-cepat-sebelum-apply" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Cek</th>
+<th>Perintah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DB tertutup</td>
+<td><code>nmap -Pn -p 5432 &lt;ip&gt;</code></td>
+</tr>
+<tr>
+<td>LB kebuka</td>
+<td><code>curl ... lab.domain</code></td>
+</tr>
+<tr>
+<td>IMDSv2</td>
+<td><code>describe-instances ... HttpTokens</code></td>
+</tr>
+<tr>
+<td>Budget</td>
+<td><code>aws budgets describe-budgets</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="satu-kalimat">Satu kalimat<a class="headerlink" href="#satu-kalimat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Benteng cloud itu bertingkat: public cuma buat LB, private buat brankas, SG rujuk SG, dan budget alert dipasang sebelum, bukan sesudah, tombol apply ditekan.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-14-cloud/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

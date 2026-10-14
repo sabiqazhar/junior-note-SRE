@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Production Readiness Checklist</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/docs/production-readiness.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#production-readiness-checklist">Production Readiness Checklist</a><ul>
+<li><a href="#1-security">1. Security</a></li>
+<li><a href="#2-availability">2. Availability</a></li>
+<li><a href="#3-observability">3. Observability</a></li>
+<li><a href="#4-recovery">4. Recovery</a></li>
+<li><a href="#5-deployment">5. Deployment</a></li>
+<li><a href="#dependency-map">Dependency map</a></li>
+<li><a href="#risiko-yang-diterima-secara-eksplisit">Risiko yang diterima secara eksplisit</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="production-readiness-checklist">Production Readiness Checklist<a class="headerlink" href="#production-readiness-checklist" title="Permanent link">&para;</a></h1>
+<p>Dokumen ini diisi <strong>minggu 8</strong>, lalu direvisi di minggu 16.
+Pertanyaan yang dijawab PRR: kalau sistem ini rusak jam 3 pagi, apakah orang yang jaga bisa mengerti dan memperbaikinya tanpa bertanya?</p>
+<p>Cara isi: <code>TODO</code> (belum), <code>PARTIAL</code> (sebagian), <code>DONE</code> (teruji, ada bukti).
+Jangan tulis <code>DONE</code> kalau belum pernah diuji.</p>
+<h2 id="1-security">1. Security<a class="headerlink" href="#1-security" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Bukti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tidak ada secret di repo/image</td>
+<td></td>
+<td>hasil <code>gitleaks detect</code></td>
+</tr>
+<tr>
+<td>Container jalan non-root</td>
+<td></td>
+<td><code>docker inspect</code> / manifest k8s</td>
+</tr>
+<tr>
+<td>Image di-scan, tidak ada HIGH/CRITICAL</td>
+<td></td>
+<td>hasil <code>trivy image</code></td>
+</tr>
+<tr>
+<td>Port database &amp; Redis tidak terekspos</td>
+<td></td>
+<td><code>ss -lntp</code>, <code>nmap</code> dari luar</td>
+</tr>
+<tr>
+<td>TLS aktif + auto-renewal teruji</td>
+<td></td>
+<td><code>openssl s_client</code>, log renewal</td>
+</tr>
+<tr>
+<td>Security group tidak ada <code>0.0.0.0/0</code> ke port internal</td>
+<td></td>
+<td><code>terraform plan</code> / console</td>
+</tr>
+<tr>
+<td>IMDSv2 enforced (cloud)</td>
+<td></td>
+<td><code>metadata_options.http_tokens = required</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-availability">2. Availability<a class="headerlink" href="#2-availability" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Bukti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt; 1 instance (atau SPOF dinyatakan &amp; diterima)</td>
+<td></td>
+<td><code>docker compose ps</code> / <code>kubectl get pods</code></td>
+</tr>
+<tr>
+<td>Healthcheck + readiness terpisah</td>
+<td></td>
+<td><code>labs/week-06-deployment/</code></td>
+</tr>
+<tr>
+<td>Graceful shutdown teruji (0 5xx saat restart)</td>
+<td></td>
+<td>hasil <code>hey</code> saat SIGTERM</td>
+</tr>
+<tr>
+<td>Rollback teruji</td>
+<td></td>
+<td><code>docs/deployment.md</code></td>
+</tr>
+<tr>
+<td>PDB + HPA (kalau K8s)</td>
+<td></td>
+<td><code>kubernetes/deployment.yaml</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-observability">3. Observability<a class="headerlink" href="#3-observability" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Bukti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metrics RED tersedia</td>
+<td></td>
+<td><code>labs/week-09-prometheus/</code></td>
+</tr>
+<tr>
+<td>Log terstruktur + correlation/trace ID</td>
+<td></td>
+<td><code>labs/week-11-observability/</code></td>
+</tr>
+<tr>
+<td>Trace menyambung ke dependency</td>
+<td></td>
+<td>screenshot Tempo</td>
+</tr>
+<tr>
+<td>Alert "service down" terpicu &lt; 2 menit</td>
+<td></td>
+<td><code>labs/week-10-grafana/</code></td>
+</tr>
+<tr>
+<td>Dashboard bisa di-reprovision dari Git</td>
+<td></td>
+<td><code>observability/grafana/provisioning/</code></td>
+</tr>
+<tr>
+<td>Setiap alert punya runbook</td>
+<td></td>
+<td><code>runbooks/</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-recovery">4. Recovery<a class="headerlink" href="#4-recovery" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Bukti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backup otomatis jalan</td>
+<td></td>
+<td><code>pgbackrest info</code></td>
+</tr>
+<tr>
+<td>Restore pernah diuji ke instance terpisah</td>
+<td></td>
+<td><code>labs/week-07-backup-recovery/</code></td>
+</tr>
+<tr>
+<td>RPO/RTO tertulis dan diukur</td>
+<td></td>
+<td><code>docs/disaster-recovery.md</code></td>
+</tr>
+<tr>
+<td>Runbook untuk 3 skenario kegagalan terbesar</td>
+<td></td>
+<td><code>runbooks/</code></td>
+</tr>
+<tr>
+<td>Sistem pulih sendiri setelah reboot</td>
+<td></td>
+<td>hasil reboot minggu 8</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-deployment">5. Deployment<a class="headerlink" href="#5-deployment" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Status</th>
+<th>Bukti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pipeline otomatis (test + build)</td>
+<td></td>
+<td><code>.github/workflows/ci.yml</code></td>
+</tr>
+<tr>
+<td>Artefak immutable ber-tag commit SHA</td>
+<td></td>
+<td>daftar tag di registry</td>
+</tr>
+<tr>
+<td>Tidak ada langkah manual wajib</td>
+<td></td>
+<td><code>README.md</code> → "cara jalanin dari nol"</td>
+</tr>
+<tr>
+<td>Rollback teruji</td>
+<td></td>
+<td><code>docs/deployment.md</code></td>
+</tr>
+<tr>
+<td>Alerting tidak dalam kondisi berisik</td>
+<td></td>
+<td>daftar alert aktif 30 hari</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dependency-map">Dependency map<a class="headerlink" href="#dependency-map" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Failure mode</th>
+<th>Dampak</th>
+<th>Deteksi</th>
+<th>Mitigasi</th>
+<th>SPOF?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PostgreSQL</td>
+<td>Mati / lambat</td>
+<td>Semua endpoint tulis gagal</td>
+<td>readiness + latency query</td>
+<td>Pool + timeout + backup + PITR</td>
+<td><strong>Ya</strong></td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>Mati</td>
+<td>Cache miss → DB kebanjiran</td>
+<td>hit ratio metric</td>
+<td>Fallback: anggap cache kosong</td>
+<td>Ya, ada fallback</td>
+</tr>
+<tr>
+<td>Nginx</td>
+<td>Mati</td>
+<td>Semua akses gagal</td>
+<td>healthcheck eksternal</td>
+<td>—</td>
+<td><strong>Ya</strong></td>
+</tr>
+<tr>
+<td>Object storage</td>
+<td>Mati</td>
+<td>Backup gagal</td>
+<td>alert job backup</td>
+<td>Alert + retry</td>
+<td>Tidak langsung</td>
+</tr>
+<tr>
+<td>Provider auth (eksternal)</td>
+<td>Timeout</td>
+<td>Login gagal</td>
+<td>latency outbound</td>
+<td>Timeout + circuit breaker</td>
+<td>Ya</td>
+</tr>
+</tbody>
+</table>
+<h2 id="risiko-yang-diterima-secara-eksplisit">Risiko yang diterima secara eksplisit<a class="headerlink" href="#risiko-yang-diterima-secara-eksplisit" title="Permanent link">&para;</a></h2>
+<p>Tulis di sini, jangan disembunyikan:</p>
+<ol>
+<li>Single instance database — belum ada replika/standby. RTO saat DB rusak total = waktu restore penuh.</li>
+<li>Tidak ada multi-AZ; satu kegagalan zona = layanan tidak tersedia.</li>
+<li>Kapasitas belum diuji di atas titik saturasi produksi (baru level lab).</li>
+</ol>
+<p>Ditulis: ____ · Diperbarui: ____</p>
+<div class="foot"><span>production-reliability-lab/docs/production-readiness.md</span><span><a href="../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

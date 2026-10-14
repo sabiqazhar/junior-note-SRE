@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 12 · SLI, SLO, Error Budget, dan Incident Response</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-12-slo/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-12-sli-slo-error-budget-dan-incident-response">Perintah — Week 12 · SLI, SLO, Error Budget, dan Incident Response</a><ul>
+<li><a href="#persiapan">Persiapan</a><ul>
+<li><a href="#1-cek-stack-rules-termuat">1. Cek stack &amp; rules termuat</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-definisi-uji-rules">Hari 2 (definisi &amp; uji rules)</a><ul>
+<li><a href="#2-validasi-sintaks-rule">2. Validasi sintaks rule</a></li>
+<li><a href="#3-opsional-unit-test-rule">3. (Opsional) Unit test rule</a></li>
+<li><a href="#4-cek-recording-rule-availability-error-ratio-5m">4. Cek recording rule availability (error ratio 5m)</a></li>
+<li><a href="#5-cek-recording-rule-latency-p95">5. Cek recording rule latency p95</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-simulasi-insiden-burn-rate">Hari 3 (simulasi insiden &amp; burn-rate)</a><ul>
+<li><a href="#6-traffic-normal-baseline">6. Traffic normal (baseline)</a></li>
+<li><a href="#7-rusak-dependency-redis-down">7. Rusak dependency (Redis down)</a></li>
+<li><a href="#8-cek-error-ratio-melonjak">8. Cek error ratio melonjak</a></li>
+<li><a href="#9-cek-alert-firing">9. Cek alert firing</a></li>
+<li><a href="#10-hitung-burn-rate-manual-rumus">10. Hitung burn rate manual (rumus)</a></li>
+<li><a href="#11-cek-slow-burn-ticket">11. Cek slow burn (ticket)</a></li>
+<li><a href="#12-cara-kembali-normal-pulihkan-dependency">12. CARA KEMBALI NORMAL — pulihkan dependency</a></li>
+<li><a href="#13-verifikasi-recovery-error-ratio-normal">13. Verifikasi recovery (error ratio normal)</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-postmortem">Hari 4 (postmortem)</a><ul>
+<li><a href="#14-template-postmortem-sudah-ada">14. Template postmortem sudah ada</a></li>
+<li><a href="#15-pastikan-action-item-ber-owner-tenggat">15. Pastikan action item ber-owner &amp; tenggat</a></li>
+<li><a href="#16-cek-severity-ditetapkan-di-5-menit-pertama-dokumentasi">16. Cek severity ditetapkan di 5 menit pertama (dokumentasi)</a></li>
+<li><a href="#17-verifikasi-alert-gejala-bukan-penyebab-di-rules">17. Verifikasi alert gejala (bukan penyebab) di rules</a></li>
+</ul>
+</li>
+<li><a href="#cara-buktikan-acceptance-minggu-12">Cara buktikan acceptance minggu 12</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-12-sli-slo-error-budget-dan-incident-response">Perintah — Week 12 · SLI, SLO, Error Budget, dan Incident Response<a class="headerlink" href="#perintah-week-12-sli-slo-error-budget-dan-incident-response" title="Permanent link">&para;</a></h1>
+<p>Format: perintah → output → interpretasi.
+Fokus: SLI/SLO, multiwindow multi-burn-rate, promtool, simulasi insiden.</p>
+<h2 id="persiapan">Persiapan<a class="headerlink" href="#persiapan" title="Permanent link">&para;</a></h2>
+<h3 id="1-cek-stack-rules-termuat">1. Cek stack &amp; rules termuat<a class="headerlink" href="#1-cek-stack-rules-termuat" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose ps
+curl -fsS http://localhost:9090/api/v1/rules | jq '.data.groups[].rules[].name' 2&gt;/dev/null || echo &quot;cek UI: Status &gt; Rules&quot;
+</code></pre>
+<pre><code>NAME                STATUS
+sre-lab-api-1       Up
+sre-lab-prometheus-1 Up
+</code></pre>
+<p>Interpretasi: api &amp; prometheus Up. Rules dari <code>rules/slo.yml</code> harus terdaftar.</p>
+<h2 id="hari-2-definisi-uji-rules">Hari 2 (definisi &amp; uji rules)<a class="headerlink" href="#hari-2-definisi-uji-rules" title="Permanent link">&para;</a></h2>
+<h3 id="2-validasi-sintaks-rule">2. Validasi sintaks rule<a class="headerlink" href="#2-validasi-sintaks-rule" title="Permanent link">&para;</a></h3>
+<pre><code>promtool check rules observability/prometheus/rules/slo.yml
+</code></pre>
+<pre><code>Checking observability/prometheus/rules/slo.yml
+  SUCCESS: 7 rules found
+</code></pre>
+<p>Interpretasi: 7 rule (4 recording + 3 alerting) valid. Kalau gagal → indent YAML.</p>
+<h3 id="3-opsional-unit-test-rule">3. (Opsional) Unit test rule<a class="headerlink" href="#3-opsional-unit-test-rule" title="Permanent link">&para;</a></h3>
+<pre><code>promtool test rules observability/prometheus/rules/slo_test.yml
+</code></pre>
+<pre><code>SUCCESS: 4 tests found, 4 passed
+</code></pre>
+<p>Interpretasi: test case expr lolos. Ini yang sering kelewat — wajib buat CI.</p>
+<h3 id="4-cek-recording-rule-availability-error-ratio-5m">4. Cek recording rule availability (error ratio 5m)<a class="headerlink" href="#4-cek-recording-rule-availability-error-ratio-5m" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_errors_per_request:ratio_rate5m&quot;
+</code></pre>
+<pre><code>{} 0.002
+</code></pre>
+<p>Interpretasi: 0,2% error baseline. Di bawah budget 0,005 → belum ticket.</p>
+<h3 id="5-cek-recording-rule-latency-p95">5. Cek recording rule latency p95<a class="headerlink" href="#5-cek-recording-rule-latency-p95" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_latency_p95:histogram_quantile5m&quot;
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;} 0.18
+</code></pre>
+<p>Interpretasi: p95 180ms &lt; 0,3 → <code>HighLatencyP95</code> belum firing.</p>
+<h2 id="hari-3-simulasi-insiden-burn-rate">Hari 3 (simulasi insiden &amp; burn-rate)<a class="headerlink" href="#hari-3-simulasi-insiden-burn-rate" title="Permanent link">&para;</a></h2>
+<h3 id="6-traffic-normal-baseline">6. Traffic normal (baseline)<a class="headerlink" href="#6-traffic-normal-baseline" title="Permanent link">&para;</a></h3>
+<pre><code>for i in $(seq 1 200); do curl -sS -o /dev/null http://localhost/orders; done
+</code></pre>
+<p>Interpretasi: bangun baseline request sebelum di rusak.</p>
+<h3 id="7-rusak-dependency-redis-down">7. Rusak dependency (Redis down)<a class="headerlink" href="#7-rusak-dependency-redis-down" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose stop redis
+for i in $(seq 1 50); do curl -sS -o /dev/null http://localhost/orders; done
+</code></pre>
+<p>Interpretasi: request yang butuh Redis bakal gagal → error ratio naik.</p>
+<h3 id="8-cek-error-ratio-melonjak">8. Cek error ratio melonjak<a class="headerlink" href="#8-cek-error-ratio-melonjak" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_errors_per_request:ratio_rate1h&quot;
+</code></pre>
+<pre><code>{} 0.082
+</code></pre>
+<p>Interpretasi: 8,2% error. Burn rate = 0,082 / 0,005 = 16,4× &gt; 14,4 → page.</p>
+<h3 id="9-cek-alert-firing">9. Cek alert firing<a class="headerlink" href="#9-cek-alert-firing" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS http://localhost:9090/api/v1/alerts | jq '.data.alerts[]|{alert,state}'
+</code></pre>
+<pre><code>{&quot;alert&quot;:&quot;HighErrorBudgetBurn&quot;,&quot;state&quot;:&quot;firing&quot;}
+{&quot;alert&quot;:&quot;APIDown&quot;,&quot;state&quot;:&quot;inactive&quot;}
+</code></pre>
+<p>Interpretasi: burn-rate tinggi → page sesuai <code>severity: page</code> di rules.</p>
+<h3 id="10-hitung-burn-rate-manual-rumus">10. Hitung burn rate manual (rumus)<a class="headerlink" href="#10-hitung-burn-rate-manual-rumus" title="Permanent link">&para;</a></h3>
+<pre><code># burn rate = error_ratio / (1 - SLO) = 0.082 / 0.005 = 16.4
+echo &quot;scale=2; 0.082 / 0.005&quot; | bc
+</code></pre>
+<pre><code>16.40
+</code></pre>
+<p>Interpretasi: 16,4× — jauh di atas 14,4. 2% budget 30 hari habis &lt; 1 jam.</p>
+<h3 id="11-cek-slow-burn-ticket">11. Cek slow burn (ticket)<a class="headerlink" href="#11-cek-slow-burn-ticket" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_errors_per_request:ratio_rate6h&quot;
+</code></pre>
+<pre><code>{} 0.012
+</code></pre>
+<p>Interpretasi: 1,2% &gt; (1×0,005) → <code>SlowErrorBudgetBurn</code> (ticket) bisa firing.</p>
+<h3 id="12-cara-kembali-normal-pulihkan-dependency">12. CARA KEMBALI NORMAL — pulihkan dependency<a class="headerlink" href="#12-cara-kembali-normal-pulihkan-dependency" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose start redis
+curl -fsS &quot;http://localhost:9090/api/v1/query?query=up{job=%22api%22}&quot;
+</code></pre>
+<pre><code>{} 1
+</code></pre>
+<p>Interpretasi: <code>up==1</code>, error ratio turun ke baseline, alert <code>inactive</code> lagi.
+Verifikasi dengan angka, bukan perasaan.</p>
+<h3 id="13-verifikasi-recovery-error-ratio-normal">13. Verifikasi recovery (error ratio normal)<a class="headerlink" href="#13-verifikasi-recovery-error-ratio-normal" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_errors_per_request:ratio_rate5m&quot;
+</code></pre>
+<pre><code>{} 0.001
+</code></pre>
+<p>Interpretasi: kembali ~0,1%. Insiden teratasi.</p>
+<h2 id="hari-4-postmortem">Hari 4 (postmortem)<a class="headerlink" href="#hari-4-postmortem" title="Permanent link">&para;</a></h2>
+<h3 id="14-template-postmortem-sudah-ada">14. Template postmortem sudah ada<a class="headerlink" href="#14-template-postmortem-sudah-ada" title="Permanent link">&para;</a></h3>
+<pre><code>ls postmortems/incident-001.md
+</code></pre>
+<pre><code>postmortems/incident-001.md
+</code></pre>
+<p>Interpretasi: salin jadi <code>incident-002.md</code>, isi data simulasi (blameless).</p>
+<h3 id="15-pastikan-action-item-ber-owner-tenggat">15. Pastikan action item ber-owner &amp; tenggat<a class="headerlink" href="#15-pastikan-action-item-ber-owner-tenggat" title="Permanent link">&para;</a></h3>
+<pre><code>grep -n &quot;Owner\|Tenggat\|P1&quot; postmortems/incident-002.md
+</code></pre>
+<pre><code>| 1 | Tambah alert saturasi Redis | Deteksi | lo | +1 minggu | P1 |
+</code></pre>
+<p>Interpretasi: tanpa owner+tenggat, action item cuma harapan. Wajib diisi.</p>
+<h3 id="16-cek-severity-ditetapkan-di-5-menit-pertama-dokumentasi">16. Cek severity ditetapkan di 5 menit pertama (dokumentasi)<a class="headerlink" href="#16-cek-severity-ditetapkan-di-5-menit-pertama-dokumentasi" title="Permanent link">&para;</a></h3>
+<pre><code>grep -n &quot;Severity\|SEV&quot; docs/incident-response.md
+</code></pre>
+<pre><code>| SEV1 | ... | Langsung, 24/7 |
+</code></pre>
+<p>Interpretasi: severity ada di tabel, tetapkan &lt; 5 menit pas insiden.</p>
+<h3 id="17-verifikasi-alert-gejala-bukan-penyebab-di-rules">17. Verifikasi alert gejala (bukan penyebab) di rules<a class="headerlink" href="#17-verifikasi-alert-gejala-bukan-penyebab-di-rules" title="Permanent link">&para;</a></h3>
+<pre><code>grep -n &quot;up{job=\&quot;api\&quot;} == 0\|errors_per_request&quot; observability/prometheus/rules/slo.yml
+</code></pre>
+<pre><code>expr: up{job=&quot;api&quot;} == 0          # gejala: user nggak dilayani
+expr: job:slo_errors_per_request:ratio_rate1h &gt; (14.4 * 0.005)  # gejala error
+</code></pre>
+<p>Interpretasi: alert berbasis gejala (user terdampak), bukan "CPU tinggi".</p>
+<h2 id="cara-buktikan-acceptance-minggu-12">Cara buktikan acceptance minggu 12<a class="headerlink" href="#cara-buktikan-acceptance-minggu-12" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>promtool check/test</code> SUCCESS → perintah 2, 3.</li>
+<li>Recording &amp; alert burn-rate aktif → perintah 4, 9.</li>
+<li>Simulasi: error naik → alert firing → recovery → perintah 7–13.</li>
+<li>Postmortem blameless ber-owner → perintah 14, 15.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-12-slo/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

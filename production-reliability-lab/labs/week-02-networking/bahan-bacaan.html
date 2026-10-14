@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 02 · Networking untuk backend engineer — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-02-networking/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-02-networking-untuk-backend-engineer-bahan-bacaan">Minggu 02 · Networking untuk backend engineer — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-dns-dari-nama-jadi-alamat-ip">2.1 DNS: dari nama jadi alamat IP</a></li>
+<li><a href="#22-tcp-handshake-ketuk-pintu">2.2 TCP handshake: ketuk pintu</a></li>
+<li><a href="#23-tls-handshake-saling-kenal-bikin-kunci">2.3 TLS handshake: saling kenal &amp; bikin kunci</a></li>
+<li><a href="#24-http11-vs-http2-vs-http3">2.4 HTTP/1.1 vs HTTP/2 vs HTTP/3</a></li>
+<li><a href="#25-lima-fase-latency-satu-request">2.5 Lima fase latency satu request</a></li>
+<li><a href="#26-listening-socket-state">2.6 Listening socket &amp; state</a></li>
+<li><a href="#27-connection-timeout-vs-application-timeout">2.7 Connection timeout vs application timeout</a></li>
+<li><a href="#28-drop-vs-reject-firewall">2.8 DROP vs REJECT (firewall)</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar-satu-request-dari-client-ke-db">3. Mekanisme di balik layar: satu request dari client ke DB</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-02-networking-untuk-backend-engineer-bahan-bacaan">Minggu 02 · Networking untuk backend engineer — Bahan Bacaan<a class="headerlink" href="#minggu-02-networking-untuk-backend-engineer-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham konsepnya. Baru setelah itu kerjakan lab.md.</p>
+</blockquote>
+<hr />
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Bayangin lo dapet tiket: <em>"API kita lemot, tapi cuma buat user di region tertentu."</em> Lo buka Grafana, lihat latency p99 naik. Terus lo bingung: ini gara-gara kode lo, gara-gara database, atau gara-gara jaringan? Tanpa paham networking, debatnya cuma nebak. Dan nebak di produksi itu mahal: lo bisa salah naikin instance padahal masalahnya di DNS resolver yang timeout, atau salah nyalahin "jaringan lab" padahal sebenarnya aplikasi lo yang balas 500.</p>
+<p>Minggu ini ngajarin satu skill: <strong>bisa memecah satu request jadi fase-fase, dan nunjukin angka di tiap fase</strong>. Request itu kayak kurir yang harus lewat beberapa pos: cari alamat (DNS), ketuk pintu (TCP), saling kenal &amp; bikin kunci (TLS), baru ngobrol (HTTP), lalu antar barangnya (transfer body). Kalau lo bisa bilang "DNS 40ms, TCP 2ms, TLS 30ms, TTFB 200ms", debat "lelet di server atau jaringan?" selesai dalam 10 detik.</p>
+<p>Ini penting karena hampir semua layer di atas (load balancer, service mesh, CDN) cuma menambah fase ke perjalanan kurir ini. Kalau lo nggak paham fase dasarnya, lo nggak akan paham fase tambahannya.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-dns-dari-nama-jadi-alamat-ip">2.1 DNS: dari nama jadi alamat IP<a class="headerlink" href="#21-dns-dari-nama-jadi-alamat-ip" title="Permanent link">&para;</a></h3>
+<p>DNS itu buku telepon internet. <code>api.example.com</code> nggak bisa dikirimin paket langsung — harus jadi <code>93.184.216.34</code>. Resolusi itu sendiri butuh waktu dan bisa gagal.</p>
+<p>Ada dua cara ngecek yang sering disamain padahal beda:
+- <code>dig example.com</code> → nanya resolver publik, jujur soal apa kata DNS authority.
+- <code>getent hosts redis</code> → nanya resolver <strong>lokal</strong> aplikasi lo (bisa <code>systemd-resolved</code>, <code>/etc/hosts</code>, stub <code>127.0.0.53</code>). Ini yang dipakai program lo beneran.</p>
+<p>Di Docker Compose, <code>api</code> bisa resolve <code>redis</code> lewat DNS internal — tapi laptop lo nggak bisa. Ini sumber 90% kebingungan pemula.</p>
+<h3 id="22-tcp-handshake-ketuk-pintu">2.2 TCP handshake: ketuk pintu<a class="headerlink" href="#22-tcp-handshake-ketuk-pintu" title="Permanent link">&para;</a></h3>
+<p>Sebelum ngobrol, harus ada koneksi. TCP pakai 3-way handshake: SYN → SYN-ACK → ACK. Kalau <code>ss -lntp</code> nggak nemu yang listen di port tujuan, hasilnya <strong>connection refused</strong> (pintu dikunci). Kalau paket nyampe tapi nggak ada balasan (firewall DROP), hasilnya <strong>timeout</strong> (nggak ada yang nyahut).</p>
+<h3 id="23-tls-handshake-saling-kenal-bikin-kunci">2.3 TLS handshake: saling kenal &amp; bikin kunci<a class="headerlink" href="#23-tls-handshake-saling-kenal-bikin-kunci" title="Permanent link">&para;</a></h3>
+<p>Buat HTTPS, setelah TCP nyambung, client &amp; server nego versi TLS, cipher, dan tukar sertifikat. Di sini SNI (<code>-servername</code>) penting: server bisa punya banyak sertifikat, dan客家 client harus bilang "aku mau yang buat domain apa".</p>
+<p>Fakta 2025: <strong>OpenSSL 3.5 LTS</strong> rilis 8 April 2025 dan didukung sampai 2030. Versi ini yang bakal lo temuin di distro baru. Make sure lo ngetes dengan <code>openssl</code> yang support TLS 1.3.</p>
+<h3 id="24-http11-vs-http2-vs-http3">2.4 HTTP/1.1 vs HTTP/2 vs HTTP/3<a class="headerlink" href="#24-http11-vs-http2-vs-http3" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>HTTP/1.1</strong> — satu request per koneksi (keep-alive bikin beberapa, tapi serial).</li>
+<li><strong>HTTP/2</strong> — multiplexing di satu koneksi, ~50% traffic global 2025 (Cloudflare Radar).</li>
+<li><strong>HTTP/3</strong> — di atas QUIC (UDP), RFC 9114. Bukan eksperimen lagi: ~21% traffic global 2025. Butuh port UDP/443 terbuka.</li>
+</ul>
+<p>Lo nggak wajib kuasai QUIC minggu ini, tapi lo harus tau HTTP/3 itu ada dan beda transport.</p>
+<h3 id="25-lima-fase-latency-satu-request">2.5 Lima fase latency satu request<a class="headerlink" href="#25-lima-fase-latency-satu-request" title="Permanent link">&para;</a></h3>
+<p>Ini yang paling berguna. <code>curl -w</code> bisa cetak tiap fase:</p>
+<table>
+<thead>
+<tr>
+<th>Variabel curl</th>
+<th>Fase</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>time_namelookup</code></td>
+<td>DNS</td>
+<td>Waktu sampai dapet IP</td>
+</tr>
+<tr>
+<td><code>time_connect</code></td>
+<td>TCP</td>
+<td>+ waktu sampai TCP handshake selesai</td>
+</tr>
+<tr>
+<td><code>time_appconnect</code></td>
+<td>TLS</td>
+<td>+ waktu sampai TLS handshake selesai</td>
+</tr>
+<tr>
+<td><code>time_starttransfer</code> (TTFB)</td>
+<td>Server mikir + kirim header</td>
+<td>Waktu sampai byte pertama balik</td>
+</tr>
+<tr>
+<td><code>time_total</code></td>
+<td>Transfer body</td>
+<td>Waktu total sampai selesai</td>
+</tr>
+</tbody>
+</table>
+<p>Rumus praktis: <code>ttfb - appconnect</code> = waktu server mikir. <code>total - starttransfer</code> = waktu kirim body. Jangan campur.</p>
+<h3 id="26-listening-socket-state">2.6 Listening socket &amp; state<a class="headerlink" href="#26-listening-socket-state" title="Permanent link">&para;</a></h3>
+<p><code>ss -lntp</code> nunjukin port yang <strong>listen</strong> + proses pemiliknya. Tanpa <code>-p</code> lo cuma lihat port, bukan siapa. Ini hakim waktu debat "port bentrok atau nggak".</p>
+<h3 id="27-connection-timeout-vs-application-timeout">2.7 Connection timeout vs application timeout<a class="headerlink" href="#27-connection-timeout-vs-application-timeout" title="Permanent link">&para;</a></h3>
+<p>Dua timeout beda:
+- <strong>Connection timeout</strong> — "berapa lama nunggu pintu kebuka". Di <code>curl</code> itu <code>--connect-timeout</code>.
+- <strong>Read/operation timeout</strong> — "pintu udah kebuka, tapi nggak ada yang ngomong". Di <code>curl</code> itu <code>-m</code>/<code>--max-time</code>.</p>
+<p>Di nginx nanti (minggu 4) ini jadi <code>proxy_connect_timeout</code> vs <code>proxy_read_timeout</code>. Bedain sejak sekarang.</p>
+<h3 id="28-drop-vs-reject-firewall">2.8 DROP vs REJECT (firewall)<a class="headerlink" href="#28-drop-vs-reject-firewall" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REJECT</strong> → balikin "port unreachable" → client langsung dapet refused.</li>
+<li><strong>DROP</strong> → diam aja → client nunggu sampai timeout.</li>
+</ul>
+<p>Ini kenapa "timeout" sering kali bukan aplikasi lemot, tapi firewall/sg yang ngeblokir silently.</p>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar-satu-request-dari-client-ke-db">3. Mekanisme di balik layar: satu request dari client ke DB<a class="headerlink" href="#3-mekanisme-di-balik-layar-satu-request-dari-client-ke-db" title="Permanent link">&para;</a></h2>
+<p>Urutan sebenarnya (buat lo jelasin insiden dengan percaya diri):</p>
+<ol>
+<li><strong>DNS</strong> — client resolve <code>api.example.com</code>. Kalau gagal di sini, nggak ada paket sama sekali; <code>curl</code> exit 6 (<code>Could not resolve host</code>).</li>
+<li><strong>Routing</strong> — kernel cari jalan ke IP tujuan lewat <code>ip route</code>. Salah route = paket nyasar.</li>
+<li><strong>TCP handshake</strong> — SYN ke port 8080. Kalau nggak ada yang listen → <code>connection refused</code> (exit 7). Kalau di-DROP → tunggu sampai <code>--connect-timeout</code> habis (exit 28).</li>
+<li><strong>TLS</strong> (kalau HTTPS) — nego versi &amp; cipher, verifikasi sertifikat. Gagal → <code>SSL_ERROR</code> / <code>curl</code> exit 60.</li>
+<li><strong>HTTP</strong> — client kirim request. Server (nginx → Go API) proses, tanya Postgres/Redis.</li>
+<li><strong>Transfer body</strong> — response dikirim balik. Di sinilah <code>total - starttransfer</code> dihabiskan.</li>
+<li><strong>Tutup koneksi</strong> — keep-alive bisa dipakai ulang (mulai nginx 1.29.7 default ON, lihat minggu 4).</li>
+</ol>
+<p>Tiap nomor di atas punya angka sendiri di <code>curl -w</code>. Kalau step 1 lambat, langkah 2–7 nggak akan dibuka.</p>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti dengan bahasa sederhana</th>
+<th>Contoh konkret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DNS</strong></td>
+<td>Buku telepon yang ubah nama jadi IP</td>
+<td><code>dig api.example.com</code> → <code>93.184.216.34</code></td>
+</tr>
+<tr>
+<td><strong>TCP handshake</strong></td>
+<td>Ketuk pintu 3 kali sebelum ngobrol</td>
+<td>SYN → SYN-ACK → ACK</td>
+</tr>
+<tr>
+<td><strong>TLS</strong></td>
+<td>Protokol bikin koneksi terenkripsi &amp; terverifikasi</td>
+<td>HTTPS, butuh sertifikat valid</td>
+</tr>
+<tr>
+<td><strong>SNI</strong></td>
+<td>"Aku mau sertifikat buat domain apa"</td>
+<td><code>openssl s_client -servername api.example.com</code></td>
+</tr>
+<tr>
+<td><strong>TTFB</strong></td>
+<td>Waktu sampai byte pertama balik (termasuk server mikir)</td>
+<td><code>time_starttransfer</code> di curl</td>
+</tr>
+<tr>
+<td><strong>HTTP/3</strong></td>
+<td>HTTP di atas QUIC (UDP), RFC 9114</td>
+<td>~21% traffic global 2025</td>
+</tr>
+<tr>
+<td><strong>Connection refused</strong></td>
+<td>Port nggak ada yang listen</td>
+<td><code>curl</code> exit 7</td>
+</tr>
+<tr>
+<td><strong>Timeout</strong></td>
+<td>Nggak ada balasan (biasanya DROP/lemot)</td>
+<td><code>curl</code> exit 28</td>
+</tr>
+<tr>
+<td><strong>getent hosts</strong></td>
+<td>Resolusi ala aplikasi, bukan ala dig</td>
+<td><code>getent hosts redis</code> di container</td>
+</tr>
+<tr>
+<td><strong>DROP vs REJECT</strong></td>
+<td>Diam vs tolak tegas di firewall</td>
+<td>DROP → timeout; REJECT → refused</td>
+</tr>
+<tr>
+<td><strong>OpenSSL 3.5</strong></td>
+<td>LTS rilis 8 Apr 2025, support sampai 2030</td>
+<td><code>openssl version</code> → 3.5.x</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber (link)</th>
+<th>Bagian yang dibaca &amp; apa yang dicari</th>
+<th>Estimasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://www.cloudflare.com/learning/network-layer/">Cloudflare Learning Center — Network Layer</a></td>
+<td>Baca bagian DNS, TCP/IP, dan OSI vs TCP/IP model. Cari pemahaman tiap lapisan tempat fase request berjalan.</td>
+<td>30 menit</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://curl.se/docs/manpage.html">curl manpage — -w/--write-out</a></td>
+<td>Cari bagian <code>write-out</code> dan daftar <code>%{time_*}</code>, <code>%{http_version}</code>, <code>%{exitcode}</code>. Ini perintah paling sering lo pakai minggu ini.</td>
+<td>25 menit</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://openssl-library.org/post/2025-04-08-openssl-35-final-release/">OpenSSL 3.5 Final Release</a></td>
+<td>Baca pengumuman rilis: kenapa 3.5 itu LTS dan didukung sampai 2030. Lo bakal pakai <code>openssl s_client</code> dari versi ini.</td>
+<td>15 menit</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://www.rfc-editor.org/rfc/rfc9114.html">RFC 9114 — HTTP/3</a></td>
+<td>Cukup baca Introduction &amp; "HTTP/3 over QUIC". Pahami beda transport UDP/QUIC vs TCP.</td>
+<td>30 menit</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://blog.cloudflare.com/radar-2025-year-in-review/">Cloudflare Radar 2025 Year in Review</a></td>
+<td>Cari bagian protokol: HTTP/2 ~50%, HTTP/3 ~21% traffic global 2025. Bukti HTTP/3 bukan eksperimen.</td>
+<td>15 menit</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://everything.curl.dev/usingcurl/verbose/writeout">curl write-out explained (everything.curl.dev)</a></td>
+<td>Penjelasan tiap variabel write-out dengan contoh. Melengkapi manpage di baris 2.</td>
+<td>20 menit</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>curl</code> ke domain mati kasih exit code berapa, dan di fase mana request gagal? Gimana cara lo bedain itu dari "port nggak listen"?</li>
+<li>Kenapa <code>dig</code> bisa bilang IP benar, tapi aplikasi lo tetep "could not resolve host"? Perintah apa buat ngecek resolusi yang dipakai aplikasi beneran?</li>
+<li>Apa bedanya <code>time_connect</code> dan <code>time_appconnect</code>? Di HTTPS, mana yang lebih gede secara umum?</li>
+<li><code>TTFB</code> tinggi (mis. 800ms) tapi <code>total</code> cuma 805ms. Apa kesimpulan lo soal server vs jaringan?</li>
+<li><code>curl</code> exit 28 (timeout) ke suatu host. Sebutkan 3 kemungkinan penyebab di layer jaringan (bukan aplikasi).</li>
+<li>Kenapa <code>openssl s_client</code> tanpa <code>-servername</code> bisa dapet sertifikat yang salah?</li>
+<li>Apa bedanya firewall REJECT dan DROP dari sudut pandang client, dan kenapa itu penting buat troubleshooting?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataannya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Ping sukses berarti service hidup."</td>
+<td>ICMP dan TCP jalan tol beda. Bisa aja ping dibalas tapi port 8080 nggak listen (atau sebaliknya).</td>
+</tr>
+<tr>
+<td>"<code>dig</code> benar berarti aplikasi bisa connect."</td>
+<td>Ada cache, <code>systemd-resolved</code>, stub <code>127.0.0.53</code>. <code>getent hosts</code> lebih jujur soal resolusi nyata aplikasi.</td>
+</tr>
+<tr>
+<td>"TTFB itu waktu jaringan."</td>
+<td>TTFB udah termasuk waktu server mikir. <code>total - starttransfer</code> baru waktu kirim body.</td>
+</tr>
+<tr>
+<td>"Timeout pasti gara-gara server lemot."</td>
+<td>Sering kali firewall DROP atau routing salah — client nunggu sampai timeout tanpa ada balasan.</td>
+</tr>
+<tr>
+<td>"DNS di Docker sama dengan DNS di laptop."</td>
+<td>DNS Compose itu internal; <code>api</code> resolve <code>redis</code>, tapi laptop lo nggak. Ini 90% kebingungan pemula.</td>
+</tr>
+<tr>
+<td>"HTTP/3 masih eksperimen."</td>
+<td>RFC 9114 stabil; ~21% traffic global 2025 menurut Cloudflare Radar. Sudah produksi.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-02-networking/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

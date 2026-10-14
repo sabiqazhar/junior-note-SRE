@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 07 · Backup dan disaster recovery — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-07-backup-recovery/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-07-backup-dan-disaster-recovery-bahan-bacaan">Minggu 07 · Backup dan disaster recovery — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-rpo-dan-rto-dua-angka-yang-wajib-lo-tahu">2.1 RPO dan RTO — dua angka yang wajib lo tahu</a></li>
+<li><a href="#22-logical-vs-physical-backup">2.2 Logical vs physical backup</a></li>
+<li><a href="#23-pitr-butuh-wal-archiving">2.3 PITR butuh WAL archiving</a></li>
+<li><a href="#24-pgbackrest-standar-de-facto">2.4 pgBackRest — standar de-facto</a></li>
+<li><a href="#25-wal-g-alternatif-ringan">2.5 WAL-G — alternatif ringan</a></li>
+<li><a href="#26-retensi-off-site">2.6 Retensi &amp; off-site</a></li>
+<li><a href="#27-restore-drill-inti-minggu-ini">2.7 Restore drill — inti minggu ini</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check">6. Self-check</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-07-backup-dan-disaster-recovery-bahan-bacaan">Minggu 07 · Backup dan disaster recovery — Bahan Bacaan<a class="headerlink" href="#minggu-07-backup-dan-disaster-recovery-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah tanpa buka apa pun lain. Intinya satu: <strong>backup yang belum pernah di-restore bukan backup, cuma harapan.</strong> Baru setelah itu kerjakan lab.md.</p>
+</blockquote>
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Ada tim yang tiap Jumat jalanin <code>pg_dump</code> lalu simpen ke folder <code>backups/</code>. Mereka merasa aman. Enam bulan kemudian, disk produksi rusak. Pas mau restore, ketemu: file dump-nya rusak (karena disk yang sama ikut rusak), dan <code>pg_dump</code> nggak bisa balikin data ke "10 menit sebelum ada DELETE salah" karena <strong><code>pg_dump</code> itu logical backup, nggak support Point-in-Time Recovery (PITR)</strong>. Mereka punya backup, tapi nggak punya recovery.</p>
+<p>Kejadian kayak gini bukan langka. Rata-rata insiden data hilang itu bukan karena nggak ada backup, tapi karena: (1) backup disimpen di disk yang sama dengan database (sekali disk mati, dua-duanya hilang), (2) nggak pernah diuji restore-nya, (3) nggak tahu berapa lama Recovery Time Objective (RTO)-nya — pas dibutuhin baru sadar butuh 4 jam. Minggu ini lo bikin supaya "data bisa dipulihkan" itu <strong>terukur dan terbukti</strong>, bukan cuma "pernah jalanin cron".</p>
+<p>Analogi: backup itu kayak jaket pelampung di kapal. Kalau lo cuma taruh di gudang dan nggak pernah coba pakainya, pas kapal tenggelam lo baru tahu jaketnya bolong atau ukurannya salah. Drill restore = latihan pakai jaket pelampung <strong>di kolam dangkal</strong> (database disposable), bukan langsung di tengah laut.</p>
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-rpo-dan-rto-dua-angka-yang-wajib-lo-tahu">2.1 RPO dan RTO — dua angka yang wajib lo tahu<a class="headerlink" href="#21-rpo-dan-rto-dua-angka-yang-wajib-lo-tahu" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+<th>Contoh target lab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RPO</strong> (Recovery Point Objective)</td>
+<td>Maksimal data yang <em>boleh</em> hilang</td>
+<td>"≤ 5 menit transaksi"</td>
+</tr>
+<tr>
+<td><strong>RTO</strong> (Recovery Time Objective)</td>
+<td>Maksimal waktu sistem boleh mati</td>
+<td>"≤ 30 menit"</td>
+</tr>
+</tbody>
+</table>
+<p>RPO ditentukan oleh seberapa sering WAL diarsipkan (<code>archive_timeout</code>). RTO ditentukan oleh seberapa cepat lo bisa restore + replay + verifikasi. Dua angka ini harus <strong>tertulis dan diukur</strong>, bukan tebakan.</p>
+<h3 id="22-logical-vs-physical-backup">2.2 Logical vs physical backup<a class="headerlink" href="#22-logical-vs-physical-backup" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Logical</strong> (<code>pg_dump</code>/<code>pg_restore</code>): ekspor jadi SQL/biner. Gampang, portable, tapi lambat buat DB gede dan <strong>nggak bisa PITR</strong> — cuma bisa balik ke saat dump diambil.</li>
+<li><strong>Physical</strong> (base backup + WAL archive): salinan blok disk Postgres. Cepat restore DB besar, dan <strong>wajib buat PITR</strong>.</li>
+</ul>
+<pre><code class="language-bash"># Logical (cepat buat sanity check)
+docker compose exec -T postgres pg_dump -U app -d sre_lab -Fc &gt; backup.dump
+pg_restore --list backup.dump        # lihat isi tanpa restore
+
+# Physical + PITR (pgBackRest)
+pgbackrest --stanza=app --type=full backup
+pgbackrest --stanza=app --type=incr backup
+</code></pre>
+<h3 id="23-pitr-butuh-wal-archiving">2.3 PITR butuh WAL archiving<a class="headerlink" href="#23-pitr-butuh-wal-archiving" title="Permanent link">&para;</a></h3>
+<p>PITR = balik ke titik waktu tertentu (mis. 10:47 sebelum ada DELETE salah). Syarat mutlak: <strong><code>archive_mode = on</code></strong> dan WAL diarsipkan ke repo terpisah. Kalau <code>archive_mode</code> mati, WAL nggak kearsip → PITR gagal total, meski full backup ada.</p>
+<pre><code class="language-ini"># postgresql.conf (inti PITR)
+archive_mode = on
+archive_command = 'pgbackrest --stanza=app archive-push %p'
+archive_timeout = 60s        # WAL diarsipkan paling lambat tiap 60 detik -&gt; RPO ~1 file
+</code></pre>
+<h3 id="24-pgbackrest-standar-de-facto">2.4 pgBackRest — standar de-facto<a class="headerlink" href="#24-pgbackrest-standar-de-facto" title="Permanent link">&para;</a></h3>
+<p>Tool yang dipakai lab ini. Fitur: full/diff/incr, kompresi, enkripsi, repo S3/MinIO, dan PITR.</p>
+<pre><code class="language-ini"># pgbackrest.conf (repo)
+[global]
+repo1-type=s3
+repo1-s3-bucket=sre-lab-backup
+repo1-s3-endpoint=minio:9000
+repo1-cipher-type=aes-256-cbc     # backup terenkripsi
+repo1-cipher-pass=&lt;dari secret, BUKAN plaintext&gt;
+repo1-retention-full=7
+repo1-retention-diff=14
+compress-type=zst
+</code></pre>
+<pre><code class="language-bash">pgbackrest --stanza=app info        # daftar backup + ukuran + waktu
+pgbackrest --stanza=app verify      # cek integritas repo
+</code></pre>
+<h3 id="25-wal-g-alternatif-ringan">2.5 WAL-G — alternatif ringan<a class="headerlink" href="#25-wal-g-alternatif-ringan" title="Permanent link">&para;</a></h3>
+<p>WAL-G (v3.x) lebih minimalis &amp; cloud-native: satu binary yang ngurus base backup + WAL push ke S3/GCS/Azure. Cocok kalau lo mau setup simpel. Di lab ini kita pakai pgBackRest karena fitur retention &amp; verify-nya lebih lengkap, tapi tau WAL-G itu nilai plus buat wawancara.</p>
+<h3 id="26-retensi-off-site">2.6 Retensi &amp; off-site<a class="headerlink" href="#26-retensi-off-site" title="Permanent link">&para;</a></h3>
+<p>Backup dan WAL <strong>harus</strong> di bucket terpisah dari volume database. Lebih bagus lagi: beda region (off-site) dan pakai <strong>object lock / versioning</strong> supaya ransomware atau hapus tidak sengaja nggak ngerusak backup. Retensi WAL nggak boleh lebih pendek dari retensi full backup, kalau nggak backup jadi nggak berguna.</p>
+<h3 id="27-restore-drill-inti-minggu-ini">2.7 Restore drill — inti minggu ini<a class="headerlink" href="#27-restore-drill-inti-minggu-ini" title="Permanent link">&para;</a></h3>
+<p>Backup yang nggak pernah di-restore bukan bukti. Drill harus:
+1. Ke <strong>instance/database baru yang kosong</strong> (disposable — jangan restore menimpa produksi).
+2. Verifikasi datanya beneran benar: jumlah row, constraint, index, foreign key, dan checksum sederhana.
+3. Ukur waktunya, bandingkan dengan RTO.</p>
+<pre><code class="language-bash"># restore ke instance BARU, ke titik waktu tertentu
+pgbackrest --stanza=app --type=time \
+  --target=&quot;2026-10-12 10:00:00+00&quot; --target-action=promote restore
+
+psql -c &quot;SELECT count(*) FROM orders;&quot;
+psql -c &quot;SELECT md5(string_agg(id::text, ',' ORDER BY id)) FROM orders;&quot;  # checksum
+psql -c &quot;\d+ orders&quot;        # constraint &amp; index ikut kebawa?
+</code></pre>
+<blockquote>
+<p><strong>Simulasikan kehilangan data Cuma di database yang disposable.</strong> Jangan pernah latihan <code>DROP TABLE</code> di database pribadi atau produksi. Aturan nggak bisa ditawar.</p>
+</blockquote>
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Dari <code>pgbackrest backup</code> sampai data kembali, ini yang terjadi:</p>
+<ol>
+<li><strong>Full backup</strong> → pgBackRest salin semua file data Postgres ke repo (S3/MinIO), hitung checksum tiap file, tulis manifest.</li>
+<li><strong>WAL streaming/archive</strong> → tiap segmen WAL beres, <code>archive-push</code> kirim ke repo. Ini yang ngisi celah antar full backup (RPO kecil).</li>
+<li><strong>Incremental</strong> → cuma salin file yang berubah (atau blok yang berubah), hemat waktu &amp; tempat.</li>
+<li><strong>Restore</strong> → pgBackRest keluarkan base backup ke direktori data baru, lalu <strong>replay WAL</strong> sampai titik target (<code>--type=time</code>).</li>
+<li><strong>Promote</strong> (<code>--target-action=promote</code>) → pas sampai titik target, database diangkat jadi bisa dibaca/tulis (berhenti replay).</li>
+<li><strong>Verifikasi</strong> → cek row count, checksum, constraint. Bukan cuma "exit code 0".</li>
+<li><strong>Ukur</strong> → catat durasi backup + restore + verifikasi, bandingkan dengan RTO.</li>
+</ol>
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti sederhana</th>
+<th>Contoh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RPO</strong></td>
+<td>Maksimal data yang boleh hilang</td>
+<td>≤ 5 menit</td>
+</tr>
+<tr>
+<td><strong>RTO</strong></td>
+<td>Maksimal waktu mati</td>
+<td>≤ 30 menit</td>
+</tr>
+<tr>
+<td><strong>Logical backup</strong></td>
+<td>Ekspor jadi SQL/biner</td>
+<td><code>pg_dump</code></td>
+</tr>
+<tr>
+<td><strong>Physical backup</strong></td>
+<td>Salinan blok disk</td>
+<td>base backup pgBackRest</td>
+</tr>
+<tr>
+<td><strong>WAL</strong></td>
+<td>Log perubahan berurutan</td>
+<td><code>archive-push</code></td>
+</tr>
+<tr>
+<td><strong>PITR</strong></td>
+<td>Balik ke titik waktu tertentu</td>
+<td><code>--type=time</code></td>
+</tr>
+<tr>
+<td><strong>Stanza</strong></td>
+<td>Config "set backup" di pgBackRest</td>
+<td><code>--stanza=app</code></td>
+</tr>
+<tr>
+<td><strong>Base backup</strong></td>
+<td>Fondasi physical backup</td>
+<td>full backup</td>
+</tr>
+<tr>
+<td><strong>Archive mode</strong></td>
+<td>Apakah WAL diarsipkan</td>
+<td><code>archive_mode = on</code></td>
+</tr>
+<tr>
+<td><strong>Retention</strong></td>
+<td>Berapa lama backup disimpan</td>
+<td><code>retention-full=7</code></td>
+</tr>
+<tr>
+<td><strong>Off-site</strong></td>
+<td>Backup di lokasi beda</td>
+<td>bucket region lain</td>
+</tr>
+<tr>
+<td><strong>Object lock</strong></td>
+<td>Cegah hapus/ubah (ransomware)</td>
+<td>S3 object lock</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber</th>
+<th>Yang dicari</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://www.postgresql.org/docs/current/backup.html">PostgreSQL: Backup and Restore</a></td>
+<td>beda logical vs physical, kapan pakai masing-masing</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://www.postgresql.org/docs/current/continuous-archiving.html">Continuous Archiving &amp; PITR</a></td>
+<td><code>archive_mode</code>, <code>restore_command</code>, <code>recovery_target_time</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://pgbackrest.org/">pgBackRest</a></td>
+<td>fitur, user guide, command reference</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://pgbackrest.org/user-guide.html">pgBackRest User Guide</a></td>
+<td>setup stanza + S3 repo + restore</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://github.com/wal-g/wal-g">WAL-G — GitHub</a></td>
+<td>alternatif ringan buat base backup + WAL</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://www.postgresql.org/docs/current/app-pgdump.html"><code>pg_dump</code></a></td>
+<td>opsi <code>-Fc</code>, <code>-a</code>, <code>--clean</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-self-check">6. Self-check<a class="headerlink" href="#6-self-check" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Kenapa <code>pg_dump</code> nggak bisa PITR, dan apa yang dibutuhkan buat PITR?</li>
+<li>Apa beda RPO dan RTO, dan angka berapa yang lo pasang buat lab ini?</li>
+<li>Kalau <code>archive_mode = off</code>, apa yang rusak di rencana recovery lo?</li>
+<li>Kenapa restore harus ke instance BARU yang kosong, bukan menimpa produksi?</li>
+<li>Kenapa "exit code 0 pas restore" bukan bukti data benar?</li>
+<li>Apa bahaya kalau retensi WAL lebih pendek dari retensi full backup?</li>
+</ol>
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"<code>pg_dump</code> tiap malam = aman."</td>
+<td>Itu logical, nggak bisa PITR, dan belum tentu bisa di-restore.</td>
+</tr>
+<tr>
+<td>"Backup ada di folder yang sama, lebih gampang."</td>
+<td>Disk mati → backup ikut hilang. Harus terpisah + off-site.</td>
+</tr>
+<tr>
+<td>"Restore sukses karena nggak ada error."</td>
+<td>Exit 0 bukan bukti data benar; cek row/constraint/checksum.</td>
+</tr>
+<tr>
+<td>"WAL nggak penting, full backup cukup."</td>
+<td>Tanpa WAL, celah antar backup gede → RPO jelek, PITR gagal.</td>
+</tr>
+<tr>
+<td>"Drill restore ribet, nanti kalau butuh baru."</td>
+<td>Pas butuh baru tau rusak = terlambat. Drill minimal sebulan sekali.</td>
+</tr>
+<tr>
+<td>"Enkripsi backup optional."</td>
+<td>Backup sering jadi sumber bocor data; enkripsi wajib.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-07-backup-recovery/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

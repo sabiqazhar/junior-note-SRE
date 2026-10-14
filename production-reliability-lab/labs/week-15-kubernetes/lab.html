@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 15 · Kubernetes dan Orchestration</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-15-kubernetes/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-15-kubernetes-dan-orchestration">Lab — Minggu 15 · Kubernetes dan Orchestration</a><ul>
+<li><a href="#persiapan">Persiapan</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak</a></li>
+<li><a href="#hari-4-review-2-jam">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#cheat-sheet-per-hari">Cheat sheet per hari</a></li>
+<li><a href="#rubrik-observasi-per-hari">Rubrik observasi per hari</a></li>
+<li><a href="#troubleshooting-cepat">Troubleshooting cepat</a></li>
+<li><a href="#alat-bantu-wajib">Alat bantu wajib</a></li>
+<li><a href="#langkah-pemulihan-darurat">Langkah pemulihan darurat</a></li>
+<li><a href="#verifikasi-akhir">Verifikasi akhir</a></li>
+<li><a href="#daftar-periksa">Daftar periksa</a></li>
+<li><a href="#cara-buktikan">Cara buktikan</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-15-kubernetes-dan-orchestration">Lab — Minggu 15 · Kubernetes dan Orchestration<a class="headerlink" href="#lab-minggu-15-kubernetes-dan-orchestration" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti BERURUTAN, jangan lompat. Setiap langkah formatnya: perintah → Yang harus terjadi → Kalau gagal → Catat notes.</p>
+</blockquote>
+<h2 id="persiapan">Persiapan<a class="headerlink" href="#persiapan" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Docker sudah jalan (kind butuh docker).</li>
+<li>[ ] <code>kubectl</code> dan <code>kind</code> terinstall.</li>
+<li>[ ] Image API lab sudah build (tag immutable <code>sha-abc123</code>, <strong>bukan <code>:latest</code></strong>).</li>
+<li>Lab minggu ini lokal (kind) → <strong>nggak ada biaya cloud</strong>. Tapi cluster tetap perlu dibersihkan biar nggak makan RAM.</li>
+</ul>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Baca</strong> <code>bahan-bacaan.md</code> section 1–2 → <strong>Yang harus terjadi:</strong> paham Pod/Deployment/ReplicaSet/Service. → <strong>Kalau gagal:</strong> ulang section 2.1. → <strong>Catat notes:</strong> beda ketiganya di <code>notes.md</code>.</li>
+<li><strong>Beda probe</strong> → <strong>Yang harus terjadi:</strong> jelasin kenapa liveness nggak boleh cek DB. → <strong>Kalau gagal:</strong> ulang 2.2. → <strong>Catat notes:</strong> tabel startup/readiness/liveness.</li>
+<li><strong>QoS &amp; kapan overkill</strong> → <strong>Yang harus terjadi:</strong> bisa sebutkan kapan K8s nggak sepadan. → <strong>Kalau gagal:</strong> ulang 2.3 &amp; 2.5. → <strong>Catat notes:</strong> contoh kasus tim 2 orang.</li>
+<li><strong>Versi &amp; rekomendasi</strong> → <strong>Yang harus terjadi:</strong> tahu K8s 1.34, Ingress NGINX retire → Gateway API, PSA restricted. → <strong>Kalau gagal:</strong> ulang 2.6. → <strong>Catat notes:</strong> kenapa nggak pakai Ingress NGINX baru.</li>
+</ol>
+<hr />
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>kind create cluster --name sre --image kindest/node:v1.34.0</code></strong> → <strong>Yang harus terjadi:</strong> "Creating cluster sre ... done." → <strong>Kalau gagal:</strong> cek docker. → <strong>Catat notes:</strong> versi node 1.34.</li>
+<li><strong><code>kubectl cluster-info &amp;&amp; kubectl get nodes</code></strong> → <strong>Yang harus terjadi:</strong> node Ready. → <strong>Kalau gagal:</strong> cek kubeconfig. → <strong>Catat notes.</strong></li>
+<li><strong><code>kubectl apply -f kubernetes/</code></strong> → <strong>Yang harus terjadi:</strong> deployment + service created. → <strong>Kalau gagal:</strong> cek manifest (tag image). → <strong>Catat notes:</strong> perhatikan <code>replicas: 3</code>.</li>
+<li><strong><code>kubectl rollout status deployment/sre-api</code></strong> → <strong>Yang harus terjadi:</strong> "successfully rolled out". → <strong>Kalau gagal:</strong> <code>kubectl describe pod</code>. → <strong>Catat notes.</strong></li>
+<li><strong><code>kubectl get pods -w</code></strong> (Ctrl-C) → <strong>Yang harus terjadi:</strong> 3 pod Running 3/3. → <strong>Kalau gagal:</strong> <code>kubectl logs</code>. → <strong>Catat notes.</strong></li>
+<li><strong><code>kubectl port-forward svc/sre-api 8080:80</code></strong> + <strong><code>curl -fsS http://localhost:8080/readyz</code></strong> → <strong>Yang harus terjadi:</strong> <code>ok</code>. → <strong>Kalau gagal:</strong> cek Service selector. → <strong>Catat notes.</strong></li>
+<li><strong>Cek HPA:</strong> <strong><code>kubectl get hpa</code></strong> → <strong>Yang harus terjadi:</strong> min 3, max 20, target 70%. → <strong>Kalau gagal:</strong> cek <code>autoscaling/v2</code>. → <strong>Catat notes:</strong> behaviour scaling.</li>
+<li><strong>Cek PDB:</strong> <strong><code>kubectl get pdb</code></strong> → <strong>Yang harus terjadi:</strong> <code>minAvailable: 2</code>. → <strong>Kalau gagal:</strong> cek manifest. → <strong>Catat notes:</strong> jaga availabilitas saat evict.</li>
+</ol>
+<hr />
+<h2 id="hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak<a class="headerlink" href="#hari-3-eksperimen-2-jam-sengaja-rusak" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Self-healing:</strong> <strong><code>kubectl delete pod &lt;pod-name&gt;</code></strong> lalu <strong><code>kubectl get pods</code></strong> → <strong>Yang harus terjadi:</strong> pod baru muncul otomatis, tetap 3. → <strong>Kalau gagal:</strong> cek ReplicaSet. → <strong>Catat notes:</strong> ini acceptance #2.</li>
+<li><strong>Scale:</strong> <strong><code>kubectl scale deployment sre-api --replicas=5</code></strong> → <strong>Yang harus terjadi:</strong> 5 pod. → <strong>Kalau gagal:</strong> cek resource node. → <strong>Catat notes.</strong></li>
+<li><strong>Rollout gagal (probe):</strong> <strong><code>kubectl set image deployment/sre-api api=ghcr.io/&lt;user&gt;/sre-api:sha-bad123</code></strong> → <strong><code>kubectl rollout status deployment/sre-api</code></strong> → <strong>Yang harus terjadi:</strong> mandek/gagal karena probe. → <strong>Kalau gagal:</strong> <code>kubectl describe</code> cari Events. → <strong>Catat notes:</strong> ini cara rollback kebukti.</li>
+<li><strong>Rollback:</strong> <strong><code>kubectl rollout undo deployment/sre-api</code></strong> → <strong>Yang harus terjadi:</strong> balik ke ReplicaSet sehat. → <strong>Kalau gagal:</strong> <code>kubectl rollout history</code>. → <strong>Catat notes.</strong></li>
+<li><strong>Readiness eksperimen (paling berharga):</strong> set <code>readinessProbe</code> ke path salah, deploy → <strong>Yang harus terjadi:</strong> rollout mandek TANPA service down (pod lama tetap serve). → <strong>Kalau gagal:</strong> cek Endpoint. → <strong>Catat notes:</strong> bukti probe = pelindung.</li>
+<li><strong>Debug:</strong> <strong><code>kubectl logs &lt;pod&gt; --previous</code></strong>, <strong><code>kubectl describe pod &lt;pod&gt;</code></strong>, <strong><code>kubectl top pod --sort-by=memory</code></strong> → <strong>Yang harus terjadi:</strong> lihat penyebab crash. → <strong>Catat notes.</strong></li>
+</ol>
+<p>🧹 <strong>HARI 3 WAJIB — CLEANUP (lab lokal):</strong> cluster kind makan RAM; hapus setelah lab.</p>
+<pre><code class="language-bash">kubectl delete -f kubernetes/        # hapus manifest lab
+kind delete cluster --name sre       # hapus cluster lokal
+# Yang harus terjadi: &quot;Deleted nodes ... / Deleted cluster sre&quot;.
+# Pod yang dihapus di atas CUMA eksperimen — jangan dikira produksi.
+</code></pre>
+<hr />
+<h2 id="hari-4-review-2-jam">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Bandingkan</strong> Docker Compose vs K8s (tabel di <code>bahan-bacaan.md</code> section 2.5) → <strong>Yang harus terjadi:</strong> lo bisa jelasin kapan overkill. → <strong>Kalau gagal:</strong> ulang. → <strong>Catat notes.</strong></li>
+<li><strong>Verifikasi</strong> PSA <code>restricted</code>: non-root, <code>readOnlyRootFilesystem</code>, requests/limits ada. → <strong>Yang harus terjadi:</strong> <code>kubectl apply</code> lolos tanpa warning. → <strong>Kalau gagal:</strong> cek securityContext. → <strong>Catat notes.</strong></li>
+<li><strong>Simpan</strong> hasil eksperimen ke <code>evidence/</code>. → <strong>Yang harus terjadi:</strong> ada output <code>kubectl get pods</code> sebelum/sesudah delete. → <strong>Catat notes.</strong></li>
+</ol>
+<hr />
+<h2 id="cheat-sheet-per-hari">Cheat sheet per hari<a class="headerlink" href="#cheat-sheet-per-hari" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Hari</th>
+<th>Fokus</th>
+<th>Perintah inti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Teori</td>
+<td>bedah <code>deployment.yaml</code>, probe, QoS</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Praktik</td>
+<td><code>kind create</code>, <code>kubectl apply</code>, <code>rollout status</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Rusak</td>
+<td><code>delete pod</code>, <code>scale</code>, <code>set image</code>, <code>rollout undo</code>, <code>destroy cluster</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Review</td>
+<td>banding Compose vs K8s, cek PSA</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rubrik-observasi-per-hari">Rubrik observasi per hari<a class="headerlink" href="#rubrik-observasi-per-hari" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Hari</th>
+<th>Yang lo amati</th>
+<th>Tanda lulus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Paham Pod/Deployment/Probe</td>
+<td>Bisa jelasin bedanya tanpa catatan</td>
+</tr>
+<tr>
+<td>2</td>
+<td>App jalan di cluster</td>
+<td>3 pod Ready, <code>readyz</code> ok</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Self-healing &amp; rollback</td>
+<td>delete pod → ganti; undo jalan</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Review &amp; PSA</td>
+<td>Compose vs K8s, PSA restricted lolos</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting-cepat">Troubleshooting cepat<a class="headerlink" href="#troubleshooting-cepat" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Penyebab</th>
+<th>Solusi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CrashLoopBackOff</td>
+<td>app boot lama</td>
+<td>tambah startupProbe</td>
+</tr>
+<tr>
+<td>pod nggak dapat trafik</td>
+<td>readiness path salah</td>
+<td>perbaiki <code>/readyz</code></td>
+</tr>
+<tr>
+<td>OOMKilled</td>
+<td>memory &gt; limits</td>
+<td>naik limits/requests</td>
+</tr>
+<tr>
+<td>rollout mandek</td>
+<td>probe image gagal</td>
+<td><code>rollout undo</code></td>
+</tr>
+<tr>
+<td>restart massal</td>
+<td>liveness cek DB</td>
+<td>pisah liveness/readiness</td>
+</tr>
+<tr>
+<td>PSA reject</td>
+<td>root / <code>latest</code></td>
+<td>non-root + tag immutable</td>
+</tr>
+</tbody>
+</table>
+<h2 id="alat-bantu-wajib">Alat bantu wajib<a class="headerlink" href="#alat-bantu-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Alat</th>
+<th>Kegunaan</th>
+<th>Cara cek</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td>cluster lokal</td>
+<td><code>kind version</code></td>
+</tr>
+<tr>
+<td><code>kubectl</code></td>
+<td>kontrol cluster</td>
+<td><code>kubectl version</code></td>
+</tr>
+<tr>
+<td><code>kubectl</code> debug</td>
+<td>ephemeral container</td>
+<td><code>kubectl debug --help</code></td>
+</tr>
+<tr>
+<td><code>jq</code></td>
+<td>parse output JSON</td>
+<td><code>jq --version</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="langkah-pemulihan-darurat">Langkah pemulihan darurat<a class="headerlink" href="#langkah-pemulihan-darurat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Pod stuck: <code>kubectl describe pod</code> → lihat Events; <code>kubectl logs --previous</code> untuk crash terakhir.</li>
+<li>Rollout gagal: <code>kubectl rollout undo deployment/sre-api</code> untuk balik ke ReplicaSet sehat.</li>
+<li>Node panic: <code>kind delete cluster --name sre</code> lalu buat ulang (lab lokal, aman).</li>
+</ul>
+<h2 id="verifikasi-akhir">Verifikasi akhir<a class="headerlink" href="#verifikasi-akhir" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>kubectl get pods</code> nunjukin 3 pod dari image lab.</li>
+<li>[ ] <code>kubectl delete pod</code> → jumlah balik 3 otomatis.</li>
+<li>[ ] <code>kind delete cluster</code> selesai, nggak ada cluster nyangkut.</li>
+</ul>
+<h2 id="daftar-periksa">Daftar periksa<a class="headerlink" href="#daftar-periksa" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Deployment + Service jalan dengan image milik lab (tag immutable).</li>
+<li>[ ] <code>kubectl delete pod</code> → pod diganti otomatis (3 tetap).</li>
+<li>[ ] Rollout, rollback, probe failure bisa diamati.</li>
+<li>[ ] Non-root + readOnlyRootFilesystem + requests/limits; PSA restricted aktif.</li>
+<li>[ ] <code>kind delete cluster</code> selesai (nggak ada cluster nyangkut).</li>
+</ul>
+<h2 id="cara-buktikan">Cara buktikan<a class="headerlink" href="#cara-buktikan" title="Permanent link">&para;</a></h2>
+<p>Lo lulus kalau: (1) <code>kubectl get pods</code> nunjukin 3 pod dari image lab, (2) setelah <code>kubectl delete pod</code> jumlah balik 3 dalam hitungan detik, (3) <code>rollout undo</code> mengembalikan versi sehat, dan (4) <code>kubectl describe pod</code> nggak ada warning PSA. Bukti di <code>evidence/</code> sudah disanitasi.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-15-kubernetes/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

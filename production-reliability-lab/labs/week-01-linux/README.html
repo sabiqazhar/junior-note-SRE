@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 01 · Linux observability &amp; troubleshooting</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-01-linux/README.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#week-01-linux-observability-troubleshooting">Week 01 · Linux observability &amp; troubleshooting</a><ul>
+<li><a href="#tujuan-minggu-ini">Tujuan minggu ini</a></li>
+<li><a href="#konsep-kunci-yang-harus-lo-kuasai">Konsep kunci yang harus lo kuasai</a></li>
+<li><a href="#yang-dikerjakan-hari-14">Yang dikerjakan (Hari 1–4)</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#struktur-folder">Struktur folder</a></li>
+<li><a href="#aturan-bukti">Aturan bukti</a></li>
+<li><a href="#referensi">Referensi</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="week-01-linux-observability-troubleshooting">Week 01 · Linux observability &amp; troubleshooting<a class="headerlink" href="#week-01-linux-observability-troubleshooting" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Status: <code>TODO</code> → <code>IN_PROGRESS</code> → <code>DONE</code>
+Commit terakhir lab ini: <code>-</code></p>
+</blockquote>
+<h2 id="tujuan-minggu-ini">Tujuan minggu ini<a class="headerlink" href="#tujuan-minggu-ini" title="Permanent link">&para;</a></h2>
+<p>Pahami dan kuasai linux observability &amp; troubleshooting sampai bisa menjelaskannya dengan bukti, bukan tebakan.</p>
+<h2 id="konsep-kunci-yang-harus-lo-kuasai">Konsep kunci yang harus lo kuasai<a class="headerlink" href="#konsep-kunci-yang-harus-lo-kuasai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>uname/uptime/free/df</li>
+<li>ps/pgrep/lsof/ss</li>
+<li>journalctl/systemctl</li>
+<li>PSI &amp; cgroup v2</li>
+<li>bpftrace/bcc (opsional)</li>
+</ul>
+<h2 id="yang-dikerjakan-hari-14">Yang dikerjakan (Hari 1–4)<a class="headerlink" href="#yang-dikerjakan-hari-14" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <strong>Hari 1 · Teori (2 jam)</strong> — baca referensi, tulis catatan konsep di <code>notes.md</code> dengan bahasa lo sendiri.</li>
+<li>[ ] <strong>Hari 2 · Praktik (2 jam)</strong> — implementasi lab, uji kondisi normal, simpan output di <code>evidence/</code>.</li>
+<li>[ ] <strong>Hari 3 · Eksperimen (2 jam)</strong> — sengaja rusak, ukur, troubleshoot, catat apa yang lo pelajari.</li>
+<li>[ ] <strong>Hari 4 · Review (2 jam)</strong> — acceptance test, README, runbook, commit.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Bisa menunjuk proses/thread penyebab CPU tinggi dalam &lt;5 menit lengkap dengan bukti (<code>pidstat</code>, <code>top -H</code>, <code>ps -eLo</code>).</li>
+<li>Bisa membuktikan OOM: entri kernel <code>oom-kill</code> ATAU <code>systemd-oomd</code>, plus cgroup yang kena (<code>memory.events</code>, <code>memory.pressure</code>).</li>
+<li>Bisa membedakan service mati vs hidup tapi tidak menerima koneksi (<code>ss -lntp</code>, <code>curl</code>, <code>journalctl</code>).</li>
+<li>Bisa menjelaskan beda load average tinggi karena CPU vs karena I/O (PSI, <code>vmstat</code>).</li>
+</ol>
+<h2 id="struktur-folder">Struktur folder<a class="headerlink" href="#struktur-folder" title="Permanent link">&para;</a></h2>
+<pre><code>labs/week-01-linux/
+├── README.md        &lt;- file ini
+├── notes.md         &lt;- catatan konsep Hari 1
+├── commands.md      &lt;- semua perintah yang dijalankan + output yang disanitasi
+├── runbooks/        &lt;- cara memperbaiki kegagalan (Hari 4)
+└── evidence/        &lt;- bukti: screenshot, log, hasil pengukuran
+</code></pre>
+<h2 id="aturan-bukti">Aturan bukti<a class="headerlink" href="#aturan-bukti" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Setiap acceptance criteria di atas harus punya <strong>bukti yang bisa direproduksi</strong> (perintah + output).</li>
+<li>Output yang mengandung IP internal, token, password, atau data pribadi <strong>wajib disanitasi</strong> sebelum di-commit.</li>
+<li>Jangan tandai minggu ini selesai hanya karena tutorialnya sudah ditonton.</li>
+</ol>
+<h2 id="referensi">Referensi<a class="headerlink" href="#referensi" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://docs.kernel.org/admin-guide/cgroup-v2.html">Control Group v2 — The Linux Kernel documentation</a> — otoritas soal <code>memory.max</code>, <code>memory.current</code>, <code>memory.events</code> (counter <code>oom_kill</code>). Wajib buat paham kenapa container OOM padahal host lega.</li>
+<li><a href="https://docs.kernel.org/accounting/psi.html">PSI — Pressure Stall Information</a> — beda <code>some</code> vs <code>full</code>, dan kenapa stall &gt; utilisasi buat ngecek "CPU nggak 100% tapi lemot".</li>
+<li><a href="https://man7.org/linux/man-pages/man7/signal.7.html">signal(7) — Linux manual page</a> — tabel sinyal: SIGTERM (15) vs SIGKILL (9), dan sinyal mana yang bisa di-<em>catch</em>.</li>
+<li><a href="https://man7.org/linux/man-pages/man1/journalctl.1.html">journalctl(1) — Linux manual page</a> — flag <code>-u</code>, <code>-b</code>, <code>-k</code>, <code>-p</code>, <code>--since</code> yang lo pakai tiap minggu sampai minggu 16.</li>
+<li><a href="https://docs.kernel.org/admin-guide/sysctl/vm.html">Documentation for /proc/sys/vm/</a> — <code>overcommit_memory</code>, <code>overcommit_ratio</code>, <code>swappiness</code> yang nentuin kapan OOM muncul.</li>
+<li><a href="https://www.freedesktop.org/software/systemd/man/systemd-oomd.service.html">systemd-oomd.service(8)</a> — daemon OOM userspace yang mantau PSI; jelasin kenapa container mati tanpa jejak di <code>dmesg</code>.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-01-linux/README.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

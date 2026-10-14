@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Week 10 · Grafana dan Alerting</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-10-grafana/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-week-10-grafana-dan-alerting">Ringkasan — Week 10 · Grafana dan Alerting</a><ul>
+<li><a href="#inti-5-kalimat">Inti (5 kalimat)</a></li>
+<li><a href="#peta-konsep">Peta konsep</a></li>
+<li><a href="#query-perintah-kunci-output">Query / perintah kunci + output</a></li>
+<li><a href="#failure-matrix">Failure matrix</a></li>
+<li><a href="#jebakan">Jebakan</a></li>
+<li><a href="#acceptance">Acceptance</a></li>
+<li><a href="#satu-kalimat">Satu kalimat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-week-10-grafana-dan-alerting">Ringkasan — Week 10 · Grafana dan Alerting<a class="headerlink" href="#ringkasan-week-10-grafana-dan-alerting" title="Permanent link">&para;</a></h1>
+<h2 id="inti-5-kalimat">Inti (5 kalimat)<a class="headerlink" href="#inti-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Metrics dari minggu 9 baru berguna kalau dibungkus <strong>dashboard</strong> (biar gampang dibaca) dan <strong>alerting</strong> (biar narak lo pas rusak).</li>
+<li>Pakai dua kacamata: <strong>RED</strong> (Rate/Error/Duration) buat service, <strong>USE</strong> (Utilization/Saturation/Error) buat resource — jangan dicampur.</li>
+<li><strong>Alert berbasis gejala</strong>, bukan penyebab: "user kena error 5%" lebih penting dari "CPU 80%".</li>
+<li>Tiap alert wajib <strong>actionable + punya runbook + severity jelas</strong> (<code>page</code> vs <code>ticket</code>) dan pakai <code>for:</code> biar nggak flapping.</li>
+<li><strong>Provisioning as code</strong> (<code>allowUiUpdates: false</code>) + pipeline log lewat <strong>Alloy</strong> (bukan Promtail, EOL 2 Mar 2026) = dashboard &amp; alert bisa di-reprovision dari Git.</li>
+</ol>
+<h2 id="peta-konsep">Peta konsep<a class="headerlink" href="#peta-konsep" title="Permanent link">&para;</a></h2>
+<pre><code>Prometheus (metrik) ──recording rule──&gt; job:slo_*_rate5m
+                              │
+                              ├─ Alerting rule (rules/slo.yml)
+                              │     APIDown (page), HighLatencyP95 (ticket)
+                              ▼
+                   Alertmanager / Grafana contact point
+                      page ──&gt; on-call     ticket ──&gt; issue
+                              ▲
+Grafana ◄── PromQL query ────┘
+   ├─ Dashboard RED (rate/error/p95/in-flight)
+   └─ Dashboard USE (CPU/mem/DB conn)
+Provisioning as code: allowUiUpdates: false
+Log pipeline: Alloy (bukan Promtail)
+</code></pre>
+<h2 id="query-perintah-kunci-output">Query / perintah kunci + output<a class="headerlink" href="#query-perintah-kunci-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Query / YAML</th>
+<th>Output / Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RED rate: <code>sum by (route)(rate(http_server_requests_total[5m]))</code></td>
+<td>req/detik per route</td>
+</tr>
+<tr>
+<td>RED error: <code>sum(rate(...{status=~"5.."}[5m]))/sum(rate(...[5m]))</code></td>
+<td>error ratio global</td>
+</tr>
+<tr>
+<td>RED p95: <code>histogram_quantile(0.95, sum by (le,route)(rate(http_server_request_duration_seconds_bucket[5m])))</code></td>
+<td>p95 latency</td>
+</tr>
+<tr>
+<td>USE: <code>http_server_requests_in_flight</code></td>
+<td>saturasi request</td>
+</tr>
+<tr>
+<td><code>up{job="api"} == 0</code> (alert APIDown)</td>
+<td>1=hidup, 0=mati → page</td>
+</tr>
+<tr>
+<td><code>job:slo_latency_p95:histogram_quantile5m &gt; 0.3</code></td>
+<td>p95 &gt;300ms → ticket</td>
+</tr>
+<tr>
+<td><code>allowUiUpdates: false</code> (provisioning)</td>
+<td>cegah drift dari UI</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix">Failure matrix<a class="headerlink" href="#failure-matrix" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Penyebab</th>
+<th>Cek</th>
+<th>Mitigasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alert nggak nyala pas API mati</td>
+<td><code>for:</code> kepanjangan / target DOWN</td>
+<td><code>/targets</code>, cek <code>for: 1m</code></td>
+<td>perpendek <code>for:</code>, pastikan scrape jalan</td>
+</tr>
+<tr>
+<td>Alert flapping</td>
+<td><code>for:</code> = 0 / ambang di batas bergetar</td>
+<td>lihat history alert</td>
+<td>tambah <code>for: 2m</code>+</td>
+</tr>
+<tr>
+<td>Dashboard ilang pas redeploy</td>
+<td><code>allowUiUpdates: true</code></td>
+<td>provisioning YAML</td>
+<td>set <code>false</code>, definisikan di Git</td>
+</tr>
+<tr>
+<td>Alert noise pas maintenance</td>
+<td>nggak ada mute timing</td>
+<td>Alertmanager/Grafana mute</td>
+<td>buat maintenance window</td>
+</tr>
+<tr>
+<td>Page &amp; ticket nyamber</td>
+<td>1 contact point</td>
+<td>notification policy</td>
+<td>pisah channel per severity</td>
+</tr>
+<tr>
+<td>Pipeline log mati</td>
+<td>masih pakai Promtail</td>
+<td><code>config.alloy</code></td>
+<td>pakai Alloy</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan">Jebakan<a class="headerlink" href="#jebakan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>allowUiUpdates: true</code> → dashboard berubah di UI, hilang pas redeploy (drift).</li>
+<li>Alert tanpa <code>for:</code> → flapping, on-call kebal.</li>
+<li>Satu contact point buat semua severity → yang penting tenggelam.</li>
+<li>Nggak ada mute timing buat maintenance → noise.</li>
+<li>Alert "CPU &gt; 80%" tanpa konteks dampak = nggak ditindaklanjuti.</li>
+<li>Masih pakai Promtail (EOL 2 Mar 2026) → pakai Alloy.</li>
+</ul>
+<h2 id="acceptance">Acceptance<a class="headerlink" href="#acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Dashboard RED+USE real-time, bisa di-reprovision dari Git. ✅ provisioning YAML + <code>allowUiUpdates: false</code></li>
+<li>Alert service-down kepicu &lt; 2 menit. ✅ matiin api, ukur waktu ke firing</li>
+<li>Setiap alert punya severity, runbook, langkah diagnosis. ✅ <code>runbooks/</code></li>
+<li>Pipeline log lewat Alloy, bukan Promtail. ✅ <code>config.alloy</code></li>
+</ol>
+<h2 id="satu-kalimat">Satu kalimat<a class="headerlink" href="#satu-kalimat" title="Permanent link">&para;</a></h2>
+<p>Dashboard bagus nunjukin angka, tapi alert yang <em>gejala</em> + <em>actionable</em> + <em>provisioned as code</em> yang bikin lo bisa tidur tenang.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-10-grafana/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

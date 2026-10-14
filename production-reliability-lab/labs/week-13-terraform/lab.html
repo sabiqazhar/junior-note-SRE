@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 13 · Terraform dan Infrastructure as Code</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-13-terraform/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-13-terraform-dan-infrastructure-as-code">Lab — Minggu 13 · Terraform dan Infrastructure as Code</a><ul>
+<li><a href="#persiapan-baca-ini-sebelum-apply">Persiapan — BACA INI SEBELUM APPLY</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak</a></li>
+<li><a href="#hari-4-review-2-jam">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#cheat-sheet-per-hari">Cheat sheet per hari</a></li>
+<li><a href="#rubrik-observasi-per-hari">Rubrik observasi per hari</a></li>
+<li><a href="#troubleshooting-cepat">Troubleshooting cepat</a></li>
+<li><a href="#alat-bantu-wajib">Alat bantu wajib</a></li>
+<li><a href="#langkah-pemulihan-darurat">Langkah pemulihan darurat</a></li>
+<li><a href="#verifikasi-akhir">Verifikasi akhir</a></li>
+<li><a href="#daftar-periksa">Daftar periksa</a></li>
+<li><a href="#cara-buktikan">Cara buktikan</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-13-terraform-dan-infrastructure-as-code">Lab — Minggu 13 · Terraform dan Infrastructure as Code<a class="headerlink" href="#lab-minggu-13-terraform-dan-infrastructure-as-code" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti BERURUTAN, jangan lompat. Setiap langkah formatnya: perintah → Yang harus terjadi → Kalau gagal → Catat notes.</p>
+</blockquote>
+<h2 id="persiapan-baca-ini-sebelum-apply">Persiapan — BACA INI SEBELUM APPLY<a class="headerlink" href="#persiapan-baca-ini-sebelum-apply" title="Permanent link">&para;</a></h2>
+<p>⚠️ <strong>Peringatan biaya:</strong> Terraform di lab ini bikin resource AWS NYATA yang bisa ditagih. Yang paling sering bikin kaget: <strong>NAT Gateway (~$0,045/jam + biaya data processing)</strong> dan <strong>Elastic IP/volume yang kesisa</strong>. EC2 <code>t3.small</code> ~$0,02/jam — matikan di luar jam lab.</p>
+<p>⚠️ <strong>AWS Free Tier sudah berubah per 15 Juli 2025:</strong> bukan lagi "12 bulan gratis", tapi <strong>kredit $100 (+$100) berlaku 6 bulan</strong>. Habis itu, tagihan jalan otomatis.</p>
+<p>🔔 <strong>Pasang budget alert SEBELUM apply pertama</strong> (bukan sesudahnya):</p>
+<pre><code class="language-bash"># 1. Catat account ID
+aws sts get-caller-identity --query Account --output text
+
+# 2. Buat budget $20 (atau batas nyaman lo)
+cat &gt; budget.json &lt;&lt;'EOF'
+{
+  &quot;BudgetLimit&quot;: {&quot;Amount&quot;:&quot;20&quot;,&quot;Unit&quot;:&quot;USD&quot;},
+  &quot;TimeUnit&quot;:&quot;MONTHLY&quot;,
+  &quot;BudgetType&quot;:&quot;COST&quot;,
+  &quot;BudgetName&quot;:&quot;sre-lab-budget&quot;
+}
+EOF
+cat &gt; notify.json &lt;&lt;'EOF'
+[{
+  &quot;Notification&quot;: {&quot;NotificationType&quot;:&quot;ACTUAL&quot;,&quot;ComparisonOperator&quot;:&quot;GREATER_THAN&quot;,&quot;Threshold&quot;:50,&quot;ThresholdType&quot;:&quot;PERCENTAGE&quot;},
+  &quot;Subscribers&quot;: [{&quot;SubscriptionType&quot;:&quot;EMAIL&quot;,&quot;Address&quot;:&quot;lo@example.com&quot;}]
+}]
+EOF
+aws budgets create-budget --account-id $ACC \
+  --budget file://budget.json \
+  --notifications-with-subscribers file://notify.json
+# Yang harus terjadi: &quot;Budget sre-lab-budget created.&quot;
+# Kalau gagal: cek IAM permission budgets:*, dan pastikan $ACC ter-set.
+</code></pre>
+<ul>
+<li>[ ] Budget alert aktif di ≤ 50% batas nyaman.</li>
+<li>[ ] Alarm terpisah untuk "pengeluaran naik tajam" (optional tapi bagus).</li>
+<li>[ ] Sudah siap jalankan <code>tofu destroy</code> di Hari 3 &amp; 4.</li>
+</ul>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Baca</strong> <code>bahan-bacaan.md</code> sampai selesai → <strong>Yang harus terjadi:</strong> lo paham state/plan/drift. → <strong>Kalau gagal:</strong> balik ke section 1 &amp; 2. → <strong>Catat notes:</strong> tulis analogi "resep vs foto" di <code>notes.md</code>.</li>
+<li><strong>Buka</strong> <code>infra/terraform/main.tf</code> → <strong>Yang harus terjadi:</strong> paham <code>required_version</code>, <code>required_providers</code>, <code>aws_vpc</code>, <code>metadata_options</code> (IMDSv2). → <strong>Kalau gagal:</strong> baca Terraform Language Docs. → <strong>Catat notes:</strong> apa arti <code>version = "~&gt; 6.0"</code>.</li>
+<li><strong>Bedah</strong> tabel OpenTofu vs Terraform → <strong>Yang harus terjadi:</strong> lo bisa jelasin bedanya tanpa buka catatan. → <strong>Kalau gagal:</strong> ulang section 2.6. → <strong>Catat notes:</strong> kapan pakai yang mana.</li>
+<li><strong>Latihan mental:</strong> bayangin server mati, tulis urutan lo rebuild dari <code>tofu apply</code>. → <strong>Yang harus terjadi:</strong> urutan runtut (init→plan→apply). → <strong>Kalau gagal:</strong> ulang section 3. → <strong>Catat notes:</strong> kenapa state penting.</li>
+</ol>
+<hr />
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>tofu fmt -check</code></strong> → <strong>Yang harus terjadi:</strong> <code>main.tf</code> rapi, nol error. → <strong>Kalau gagal:</strong> <code>tofu fmt</code> lalu commit. → <strong>Catat notes:</strong> bedanya fmt vs validate.</li>
+<li><strong><code>tofu init</code></strong> → <strong>Yang harus terjadi:</strong> "Terraform has been successfully initialized!". → <strong>Kalau gagal:</strong> cek kredensial AWS (<code>aws configure</code>), cek <code>required_providers</code>. → <strong>Catat notes:</strong> apa yang didownload (provider di <code>.terraform/</code>).</li>
+<li><strong><code>tofu validate</code></strong> → <strong>Yang harus terjadi:</strong> "Success! The configuration is valid." → <strong>Kalau gagal:</strong> baca error baris berapa. → <strong>Catat notes:</strong> validate cek apa (sintaks, bukan keadaan cloud).</li>
+<li><strong><code>tofu plan -out=tfplan</code></strong> → <strong>Yang harus terjadi:</strong> "Plan: N to add, 0 to change, 0 to destroy." → <strong>Kalau gagal:</strong> cek region, cek quota. → <strong>Catat notes:</strong> simpan <code>tfplan</code>.</li>
+<li><strong><code>tofu show -json tfplan | jq '.resource_changes[].change.actions'</code></strong> → <strong>Yang harus terjadi:</strong> array <code>["create"]</code>. → <strong>Kalau gagal:</strong> pastikan <code>tfplan</code> ada. → <strong>Catat notes:</strong> ini bukti review otomatis.</li>
+<li><strong><code>tofu apply tfplan</code></strong> → <strong>Yang harus terjadi:</strong> "Apply complete! Resources: N added." → <strong>Kalau gagal:</strong> baca error (sering: quota/permission). → <strong>Catat notes:</strong> ID VPC dari <code>tofu output vpc_id</code>.</li>
+<li><strong>Verifikasi output:</strong> <strong><code>tofu output</code></strong> → <strong>Yang harus terjadi:</strong> daftar vpc_id, private_subnet_id, app_instance_id. → <strong>Kalau gagal:</strong> cek <code>output</code> block. → <strong>Catat notes:</strong> simpan ke <code>evidence/</code>.</li>
+</ol>
+<hr />
+<h2 id="hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak<a class="headerlink" href="#hari-3-eksperimen-2-jam-sengaja-rusak" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Drift manual:</strong> ubah sesuatu lewat console (misal ganti tag VPC) → <strong><code>tofu plan -refresh-only</code></strong> → <strong>Yang harus terjadi:</strong> Terraform laporkan perubahan. → <strong>Kalau gagal:</strong> pastikan state remote nyambung. → <strong>Catat notes:</strong> ini cara lo tahu ada drift.</li>
+<li><strong>Ubah kode, bandingkan:</strong> edit <code>main.tf</code> (tambah tag) → <strong><code>tofu plan -out=tfplan2</code></strong> → <strong><code>tofu show -json tfplan2 | jq '.resource_changes[].change.actions'</code></strong> → <strong>Yang harus terjadi:</strong> <code>["update"]</code> bukan recreate. → <strong>Kalau gagal:</strong> cek apa yang bikin force-replace. → <strong>Catat notes:</strong> bedanya update vs replace.</li>
+<li><strong>Import block:</strong> asumsikan ada VPC luar → tulis <code>import { to = aws_vpc.main id = "vpc-0abc" }</code> → <strong><code>tofu plan</code></strong> → <strong>Yang harus terjadi:</strong> Terraform tunjukin apa yang akan ditulis ke config. → <strong>Kalau gagal:</strong> pastikan ID benar. → <strong>Catat notes:</strong> kenapa <code>import</code> block lebih aman dari CLI.</li>
+<li><strong>Scan:</strong> <strong><code>trivy config .</code></strong> → <strong>Yang harus terjadi:</strong> daftar temuan (atau "no vulnerabilities"). → <strong>Kalau gagal:</strong> install trivy. → <strong>Catat notes:</strong> temuan paling mencolok.</li>
+<li><strong>Cek secret di state:</strong> <strong><code>tofu state show aws_instance.app | grep -i password</code></strong> → <strong>Yang harus terjadi:</strong> kosong. → <strong>Kalau gagal:</strong> rotate &amp; pindah ke Secret Manager. → <strong>Catat notes:</strong> bukti state bersih.</li>
+</ol>
+<p>🧹 <strong>HARI 3 WAJIB — CLEANUP (lab disposable):</strong> semua resource minggu 13 cuma buat belajar, bukan produksi.</p>
+<pre><code class="language-bash">tofu destroy
+# Yang harus terjadi: &quot;Destroy complete! Resources: N destroyed.&quot;
+# Kalau gagal: baca resource yang nolak dihapus (misal ada dependency), hapus manual di console lalu destroy lagi.
+# SETELAH destroy: cek console AWS untuk resource sisa (NAT gateway, EIP, volume) — itu yang sering tinggal &amp; ditagih.
+</code></pre>
+<hr />
+<h2 id="hari-4-review-2-jam">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Tulis</strong> bagian Provisioning di <code>docs/infrastructure.md</code> (init→plan→apply + prasyarat). → <strong>Yang harus terjadi:</strong> ada langkah reproduksi. → <strong>Kalau gagal:</strong> lihat template di <code>docs/infrastructure.md</code>.</li>
+<li><strong>Isi</strong> tabel Perubahan (PR → <code>plan -out</code> → review → <code>apply tfplan</code>). → <strong>Yang harus terjadi:</strong> alur review jelas.</li>
+<li><strong>Isi</strong> tabel Cleanup + Biaya (estimasi per resource, budget alert). → <strong>Yang harus terjadi:</strong> budget alert disebut.</li>
+<li><strong>Pastikan</strong> nggak ada <code>*.tfstate</code> ke-commit (cek <code>.gitignore</code>). → <strong>Yang harus terjadi:</strong> <code>git status</code> bersih dari tfstate.</li>
+</ol>
+<hr />
+<h2 id="cheat-sheet-per-hari">Cheat sheet per hari<a class="headerlink" href="#cheat-sheet-per-hari" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Hari</th>
+<th>Fokus</th>
+<th>Perintah inti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Teori</td>
+<td>baca <code>bahan-bacaan.md</code>, bedah <code>main.tf</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Praktik</td>
+<td><code>tofu fmt -check</code> → <code>init</code> → <code>validate</code> → <code>plan -out</code> → <code>apply tfplan</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Rusak</td>
+<td><code>plan -refresh-only</code>, <code>import {}</code>, <code>trivy config .</code>, <code>destroy</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Review</td>
+<td>isi <code>docs/infrastructure.md</code>, cek <code>.gitignore</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="rubrik-observasi-per-hari">Rubrik observasi per hari<a class="headerlink" href="#rubrik-observasi-per-hari" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Hari</th>
+<th>Yang lo amati</th>
+<th>Tanda lulus</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Paham konsep state/plan/drift</td>
+<td>Bisa jelasin tanpa buka catatan</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Resource benar-benar jalan</td>
+<td><code>apply tfplan</code> sukses, <code>output</code> muncul</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Kegagalan kecil terbukti</td>
+<td>Drift &amp; rollback &amp; scan tercatat</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Dokumentasi lengkap</td>
+<td><code>docs/infrastructure.md</code> + <code>.gitignore</code> ok</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting-cepat">Troubleshooting cepat<a class="headerlink" href="#troubleshooting-cepat" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Penyebab</th>
+<th>Solusi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>init</code> gagal</td>
+<td>versi provider ke-pin nggak ada</td>
+<td>longgarkan <code>~&gt; 6.0</code>, cek network</td>
+</tr>
+<tr>
+<td><code>plan</code> bilang destroy+recreate</td>
+<td>edit attribute yang force replace</td>
+<td>cek diff, pisah perubahan</td>
+</tr>
+<tr>
+<td><code>apply</code> bikin dobel</td>
+<td>state hilang</td>
+<td><code>import</code> block, jangan buat ulang</td>
+</tr>
+<tr>
+<td>drift terus muncul</td>
+<td>ada yang utak-atik console</td>
+<td>kembalikan lewat kode</td>
+</tr>
+<tr>
+<td>lock gagal</td>
+<td>dua <code>apply</code> berbarengan</td>
+<td>tunggu / 1 proses</td>
+</tr>
+<tr>
+<td>tagihan meledak</td>
+<td>lupa <code>destroy</code></td>
+<td><code>tofu destroy</code> + cek sisa</td>
+</tr>
+</tbody>
+</table>
+<h2 id="alat-bantu-wajib">Alat bantu wajib<a class="headerlink" href="#alat-bantu-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Alat</th>
+<th>Kegunaan</th>
+<th>Cara cek</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tofu</code> / <code>terraform</code></td>
+<td>eksekusi IaC</td>
+<td><code>tofu version</code></td>
+</tr>
+<tr>
+<td><code>jq</code></td>
+<td>parse JSON plan</td>
+<td><code>jq --version</code></td>
+</tr>
+<tr>
+<td><code>trivy</code></td>
+<td>scan keamanan</td>
+<td><code>trivy --version</code></td>
+</tr>
+<tr>
+<td><code>aws</code> CLI</td>
+<td>budget alert</td>
+<td><code>aws --version</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="langkah-pemulihan-darurat">Langkah pemulihan darurat<a class="headerlink" href="#langkah-pemulihan-darurat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>State rusak/hilang: jangan <code>apply</code> buta — pakai <code>import</code> block satu per satu.</li>
+<li><code>apply</code> gagal di tengah: <code>tofu plan</code> lagi untuk lihat sisa, lalu lanjut <code>apply tfplan</code>.</li>
+<li>Resource nolak <code>destroy</code>: cek dependency (<code>aws ec2 describe-*</code>), hapus manual lalu <code>destroy</code> lagi.</li>
+</ul>
+<h2 id="verifikasi-akhir">Verifikasi akhir<a class="headerlink" href="#verifikasi-akhir" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>git status</code> bersih dari <code>*.tfstate</code>.</li>
+<li>[ ] Budget alert tercatat aktif.</li>
+<li>[ ] Bukti <code>plan</code>/<code>apply</code>/<code>destroy</code> ada di <code>evidence/</code>.</li>
+</ul>
+<h2 id="daftar-periksa">Daftar periksa<a class="headerlink" href="#daftar-periksa" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>tofu validate</code> lolos, <code>fmt -check</code> bersih.</li>
+<li>[ ] Budget alert aktif SEBELUM apply.</li>
+<li>[ ] Tiap perubahan lewat <code>plan -out</code> → <code>apply tfplan</code>.</li>
+<li>[ ] Drift berhasil dideteksi hari 3.</li>
+<li>[ ] <code>trivy config .</code> pernah dijalankan.</li>
+<li>[ ] <code>tofu destroy</code> selesai + cek resource sisa di console.</li>
+<li>[ ] Nggak ada <code>*.tfstate</code> / secret ke-commit.</li>
+</ul>
+<h2 id="cara-buktikan">Cara buktikan<a class="headerlink" href="#cara-buktikan" title="Permanent link">&para;</a></h2>
+<p>Lo lulus minggu ini kalau: (1) <code>tofu apply tfplan</code> menghasilkan resource persis seperti <code>plan</code>, (2) <code>tofu plan -refresh-only</code> bisa nangkep drift yang lo bikin manual, (3) sesudah <code>tofu destroy</code> nggak ada resource AWS yang nyangkut (cek console). Bukti disimpan di <code>evidence/</code> dengan output yang sudah disanitasi (sensor IP/token).</p>
+<div class="foot"><span>production-reliability-lab/labs/week-13-terraform/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

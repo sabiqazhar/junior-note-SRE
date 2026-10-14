@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 06 · Secrets, konfigurasi, dan deployment</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-06-deployment/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-06-secrets-konfigurasi-dan-deployment">Ringkasan — Minggu 06 · Secrets, konfigurasi, dan deployment</a><ul>
+<li><a href="#inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat</a></li>
+<li><a href="#peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)</a></li>
+<li><a href="#perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output</a></li>
+<li><a href="#failure-matrix-decision-tree">Failure matrix / decision tree</a></li>
+<li><a href="#jebakan-umum">Jebakan umum</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-06-secrets-konfigurasi-dan-deployment">Ringkasan — Minggu 06 · Secrets, konfigurasi, dan deployment<a class="headerlink" href="#ringkasan-minggu-06-secrets-konfigurasi-dan-deployment" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman buat dibaca ulang sebelum ujian/wawancara. Bukan pengganti bahan-bacaan.md.</p>
+</blockquote>
+<h2 id="inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat<a class="headerlink" href="#inti-minggu-ini-dalam-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Config dan secret itu dua hal beda: config aman diliat, secret nggak — jangan taruh secret sebagai env var biasa yang gampang bocor ke <code>docker inspect</code>/log.</li>
+<li>Tiga probe punya tugas beda: startup ("udah boot?"), readiness ("boleh terima traffic?"), liveness ("proses waras?"); <strong>liveness jangan ngecek dependency</strong> atau lo bikin outage berantai.</li>
+<li>Graceful shutdown di Go = tangkap <code>SIGTERM</code> via <code>signal.NotifyContext</code>, selesaiin request in-flight, lalu tutup pool — dengan syarat timeout shutdown &lt; grace period orchestrator.</li>
+<li>Docker Compose <strong>nggak punya</strong> perintah <code>rollout</code>; zero-downtime di situ terbatas — catat keterbatasan ini jujur, jangan pura-pura.</li>
+<li>Rollback itu fitur yang harus diuji: nunjuk <strong>digest</strong> versi sebelumnya, bukan <code>:latest</code>, dan cuma jalan kalau ambang error/latency terlampaui.</li>
+</ol>
+<h2 id="peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)<a class="headerlink" href="#peta-konsep-daftar-bertingkat" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Konfigurasi &amp; secret</strong></li>
+<li>Config: port, nama DB, limit — aman diliat</li>
+<li>Secret: password, API key — jangan bocor</li>
+<li>12-factor: config lewat env, secret dipisah &amp; dienkripsi</li>
+<li>SOPS + age: file <code>.env</code> terenkripsi, dekripsi di memori (CI/lama)</li>
+<li><strong>Probe</strong></li>
+<li>startupProbe: tunggu boot selesai</li>
+<li>readinessProbe → <code>/readyz</code>: cek DB+Redis, cabut dari LB kalau gagal</li>
+<li>livenessProbe → <code>/healthz</code>: cuma cek proses, restart kalau gagal</li>
+<li>Di repo: Dockerfile <code>HEALTHCHECK</code> pakai <code>/healthz</code> (bukan <code>/readyz</code>)</li>
+<li><strong>Graceful shutdown</strong></li>
+<li><code>signal.NotifyContext(SIGINT, SIGTERM)</code></li>
+<li><code>srv.Shutdown(ctx)</code> — stop terima koneksi baru, selesaiin in-flight</li>
+<li><code>db.Close()</code> / <code>redis.Close()</code> — tutup pool rapi</li>
+<li>Syarat: <code>shutdownTimeout &lt; terminationGracePeriod</code></li>
+<li>Exec form / <code>init: true</code> biar sinyal nyampe ke PID 1</li>
+<li><strong>Deployment &amp; rollback</strong></li>
+<li>Rolling update (k8s: <code>rollout status</code>, <code>maxSurge</code>)</li>
+<li>Compose: <code>up -d</code> — ada jeda, bukan zero-downtime</li>
+<li>Rollback: <code>kubectl rollout undo</code> / tarik digest lama</li>
+<li>Kriteria objektif: error &gt;2% 5m, p95 &gt;2× baseline 10m, CrashLoop ≥3/5m</li>
+</ul>
+<h2 id="perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output<a class="headerlink" href="#perintah-kunci-yang-harus-lo-lihat-di-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah</th>
+<th>Yang dicari di output</th>
+<th>Artinya kalau beda</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sops --encrypt --age $K .env.example &gt; .env.enc</code></td>
+<td>file terenkripsi, bukan plaintext</td>
+<td>kalau masih plaintext → salah flag <code>--age</code></td>
+</tr>
+<tr>
+<td><code>sops --decrypt .env.enc</code></td>
+<td>isi sama dengan aslinya</td>
+<td>beda → key salah</td>
+</tr>
+<tr>
+<td><code>curl -w "%{http_code}" /health</code></td>
+<td><code>200</code></td>
+<td>bukan 200 → proses nggak jalan</td>
+</tr>
+<tr>
+<td><code>curl -w "%{http_code}" /readyz</code></td>
+<td><code>200</code> saat normal, <code>503</code> saat DB/Redis mati</td>
+<td><code>200</code> pas dependency mati → salah taruh cek di <code>/healthz</code></td>
+</tr>
+<tr>
+<td><code>docker compose stop api</code></td>
+<td>log <code>shutdown selesai</code>, ~0 5xx</td>
+<td>banyak 5xx → timeout shutdown &gt; grace period</td>
+</tr>
+<tr>
+<td><code>grep -n 'ENTRYPOINT' docker/Dockerfile</code></td>
+<td><code>["/app/sre-api"]</code> (exec form)</td>
+<td>shell form → sinyal nggak nyampe</td>
+</tr>
+<tr>
+<td><code>docker inspect --format='{{index .RepoDigests 0}}' &lt;svc&gt;</code></td>
+<td><code>sha256:...</code></td>
+<td><code>nil</code> → image lokal belum di-push</td>
+</tr>
+<tr>
+<td><code>kubectl rollout status deployment/sre-api</code></td>
+<td><code>successfully rolled out</code></td>
+<td>timeout → deploy gagal</td>
+</tr>
+<tr>
+<td><code>kubectl rollout undo deployment/sre-api</code></td>
+<td>pod baru dari ReplicaSet lama</td>
+<td>error → ReplicaSet lama sudah dihapus</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix-decision-tree">Failure matrix / decision tree<a class="headerlink" href="#failure-matrix-decision-tree" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Kemungkinan penyebab</th>
+<th>Cara buktikan</th>
+<th>Mitigasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Outage meluas saat DB flaky</td>
+<td>liveness ngecek DB → restart massal</td>
+<td>cek apakah <code>/healthz</code> ikut gagal saat DB mati</td>
+<td>pindahkan cek dependency ke <code>/readyz</code></td>
+</tr>
+<tr>
+<td>5xx saat SIGTERM</td>
+<td>timeout shutdown &gt; grace period</td>
+<td>bandingkan <code>shutdownTimeout</code> vs <code>terminationGracePeriod</code></td>
+<td>kecilkan <code>shutdownTimeout</code></td>
+</tr>
+<tr>
+<td>Sinyal nggak memicu shutdown</td>
+<td>PID 1 shell, bukan binary</td>
+<td><code>grep ENTRYPOINT Dockerfile</code></td>
+<td>pakai exec form / <code>init: true</code></td>
+</tr>
+<tr>
+<td>Secret bocor ke log</td>
+<td>env var biasa / <code>echo $SECRET</code></td>
+<td><code>docker inspect</code>, grep log</td>
+<td>pakai SOPS/secret manager</td>
+</tr>
+<tr>
+<td><code>readyz=200</code> padahal DB mati</td>
+<td>handler nggak ngecek DB beneran</td>
+<td>matiin DB, cek <code>readyz</code></td>
+<td>fix <code>handleReadyz</code> di <code>app/main.go</code></td>
+</tr>
+<tr>
+<td>Rollback gagal: digest hilang</td>
+<td>retensi image habis</td>
+<td><code>docker pull ...@sha256:lama</code> → <code>manifest unknown</code></td>
+<td>atur retensi registry</td>
+</tr>
+<tr>
+<td>Downtime saat <code>up -d</code></td>
+<td>Compose ganti container sekaligus</td>
+<td><code>docker compose ps</code> saat ganti</td>
+<td>catat keterbatasan; pakai k8s buat zero-downtime</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan-umum">Jebakan umum<a class="headerlink" href="#jebakan-umum" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Liveness ngecek dependency</strong> → mesin pembuat cascade failure. Readiness tempatnya.</li>
+<li><strong>Secret di env var biasa</strong> → bocor ke <code>docker inspect</code>, crash report, log.</li>
+<li><strong>PID 1 shell</strong> → <code>SIGTERM</code> nggak nyampe, shutdown nggak graceful.</li>
+<li><strong>Timeout shutdown &gt; grace period</strong> → proses dipaksa mati, request putus.</li>
+<li><strong><code>latest</code> buat rollback</strong> → tag mutable, nggak tahu persis versi yang kemarin.</li>
+<li><strong>Compose dianggap zero-downtime</strong> → <code>update_config</code> itu Swarm, Compose v2 nggak punya rollout.</li>
+<li><strong>Rollback cuma di kepala</strong> → kalau belum diuji, berarti belum punya rollback.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Aplikasi berhenti graceful saat SIGTERM; request in-flight selesai, ~0 5xx.</li>
+<li><code>/readyz</code> 503 saat dependency wajib mati; <code>/healthz</code> tetap 200.</li>
+<li>Startup gagal (password salah) → container nggak pernah healthy.</li>
+<li>Nggak ada secret plaintext di Git; <code>.env.enc</code> terenkripsi (SOPS+age).</li>
+<li>Rollback by digest diuji, atau retensi image dicatat sebagai temuan.</li>
+<li><code>docs/deployment.md</code> punya kriteria rollback objektif.</li>
+</ol>
+<h2 id="satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat<a class="headerlink" href="#satu-kalimat-yang-harus-lo-ingat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Deployment yang bisa diandalkan itu soal kepercayaan: lo tahu persis versi apa yang jalan (digest), gimana dia berhenti (graceful), dan gimana balik kalau rusak (rollback by digest) — bukan sekadar "udah dijalankan perintahnya".</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-06-deployment/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

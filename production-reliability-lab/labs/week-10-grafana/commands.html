@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 10 · Grafana dan Alerting</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-10-grafana/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-10-grafana-dan-alerting">Perintah — Week 10 · Grafana dan Alerting</a><ul>
+<li><a href="#persiapan">Persiapan</a><ul>
+<li><a href="#1-cek-stack-jalan">1. Cek stack jalan</a></li>
+<li><a href="#2-cek-data-source-target">2. Cek data source &amp; target</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-dashboard-reduse">Hari 2 (dashboard RED/USE)</a><ul>
+<li><a href="#3-red-request-rate-per-route">3. RED — request rate per route</a></li>
+<li><a href="#4-red-error-ratio-global">4. RED — error ratio global</a></li>
+<li><a href="#5-red-p95-latency">5. RED — p95 latency</a></li>
+<li><a href="#6-red-in-flight-saturasi">6. RED — in-flight (saturasi)</a></li>
+<li><a href="#7-use-cpu-container">7. USE — CPU container</a></li>
+<li><a href="#8-use-memory-vs-limit">8. USE — memory vs limit</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-alert">Hari 3 (eksperimen alert)</a><ul>
+<li><a href="#9-matiin-api-uji-apidown-page">9. Matiin API → uji APIDown (page)</a></li>
+<li><a href="#10-cek-alert-firing-di-prometheus">10. Cek alert firing di Prometheus</a></li>
+<li><a href="#11-hidupkan-lagi-ukur-recovery">11. Hidupkan lagi &amp; ukur recovery</a></li>
+<li><a href="#12-naikkan-error-rate-uji-burn-rate-alert">12. Naikkan error rate → uji burn-rate alert</a></li>
+<li><a href="#13-cek-alert-latency-recording-rule">13. Cek alert latency (recording rule)</a></li>
+<li><a href="#14-bikin-lambat-uji-highlatencyp95">14. Bikin lambat → uji HighLatencyP95</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-provisioning-alloy">Hari 4 (provisioning &amp; Alloy)</a><ul>
+<li><a href="#15-verifikasi-provisioning-as-code-no-drift">15. Verifikasi provisioning as code (no drift)</a></li>
+<li><a href="#16-verifikasi-pipeline-log-lewat-alloy-bukan-promtail">16. Verifikasi pipeline log lewat Alloy (bukan Promtail)</a></li>
+<li><a href="#17-cek-log-masuk-loki-lewat-alloy">17. Cek log masuk Loki lewat Alloy</a></li>
+</ul>
+</li>
+<li><a href="#cara-buktikan-acceptance-minggu-10">Cara buktikan acceptance minggu 10</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-10-grafana-dan-alerting">Perintah — Week 10 · Grafana dan Alerting<a class="headerlink" href="#perintah-week-10-grafana-dan-alerting" title="Permanent link">&para;</a></h1>
+<p>Format: perintah → output → interpretasi.
+Fokus: RED/USE dashboard, alert gejala, provisioning as code, Alloy.</p>
+<h2 id="persiapan">Persiapan<a class="headerlink" href="#persiapan" title="Permanent link">&para;</a></h2>
+<h3 id="1-cek-stack-jalan">1. Cek stack jalan<a class="headerlink" href="#1-cek-stack-jalan" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose ps
+</code></pre>
+<pre><code>NAME                IMAGE                    STATUS
+sre-lab-api-1       sre-lab-api              Up
+sre-lab-prometheus-1 prom/prometheus:3.13.1  Up
+sre-lab-grafana-1   grafana/grafana:12.0     Up
+sre-lab-alloy-1     grafana/alloy:latest     Up
+</code></pre>
+<p>Interpretasi: <code>grafana</code> &amp; <code>alloy</code> harus Up. Alloy = pipeline log (bukan Promtail).</p>
+<h3 id="2-cek-data-source-target">2. Cek data source &amp; target<a class="headerlink" href="#2-cek-data-source-target" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS http://localhost:9090/api/v1/targets | jq '.data.activeTargets[]|{job,health}'
+</code></pre>
+<pre><code>{&quot;job&quot;:&quot;api&quot;,&quot;health&quot;:&quot;up&quot;}
+{&quot;job&quot;:&quot;prometheus&quot;,&quot;health&quot;:&quot;up&quot;}
+</code></pre>
+<p>Interpretasi: job <code>api</code> up → Grafana bisa tarik metrik.</p>
+<h2 id="hari-2-dashboard-reduse">Hari 2 (dashboard RED/USE)<a class="headerlink" href="#hari-2-dashboard-reduse" title="Permanent link">&para;</a></h2>
+<h3 id="3-red-request-rate-per-route">3. RED — request rate per route<a class="headerlink" href="#3-red-request-rate-per-route" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">sum by (route)(rate(http_server_requests_total[5m]))
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;} 12.4
+</code></pre>
+<p>Interpretasi: 12,4 req/detik. Panel time series di Grafana.</p>
+<h3 id="4-red-error-ratio-global">4. RED — error ratio global<a class="headerlink" href="#4-red-error-ratio-global" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">sum(rate(http_server_requests_total{status=~&quot;5..&quot;}[5m]))
+/ sum(rate(http_server_requests_total[5m])) * 100
+</code></pre>
+<pre><code>{} 0.6
+</code></pre>
+<p>Interpretasi: 0,6% error. Panel + threshold merah di 1% (misal).</p>
+<h3 id="5-red-p95-latency">5. RED — p95 latency<a class="headerlink" href="#5-red-p95-latency" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">histogram_quantile(0.95, sum by (le,route)(rate(http_server_request_duration_seconds_bucket[5m])))
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;} 0.18
+</code></pre>
+<p>Interpretasi: p95 180ms. Di bawah SLO 300ms.</p>
+<h3 id="6-red-in-flight-saturasi">6. RED — in-flight (saturasi)<a class="headerlink" href="#6-red-in-flight-saturasi" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">http_server_requests_in_flight
+</code></pre>
+<pre><code>{} 3
+</code></pre>
+<p>Interpretasi: gauge request aktif. Panel stat/gauge.</p>
+<h3 id="7-use-cpu-container">7. USE — CPU container<a class="headerlink" href="#7-use-cpu-container" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">rate(container_cpu_usage_seconds_total[5m])
+</code></pre>
+<pre><code>{container=&quot;api&quot;} 0.05
+</code></pre>
+<p>Interpretasi: 5% core terpakai. Butuh cAdvisor (job di-prometheus.yml komentar).</p>
+<h3 id="8-use-memory-vs-limit">8. USE — memory vs limit<a class="headerlink" href="#8-use-memory-vs-limit" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">container_memory_usage_bytes / on(container) container_spec_memory_limit_bytes
+</code></pre>
+<pre><code>{container=&quot;api&quot;} 0.42
+</code></pre>
+<p>Interpretasi: 42% limit memori terpakai.</p>
+<h2 id="hari-3-eksperimen-alert">Hari 3 (eksperimen alert)<a class="headerlink" href="#hari-3-eksperimen-alert" title="Permanent link">&para;</a></h2>
+<h3 id="9-matiin-api-uji-apidown-page">9. Matiin API → uji APIDown (page)<a class="headerlink" href="#9-matiin-api-uji-apidown-page" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose stop api
+curl -fsS &quot;http://localhost:9090/api/v1/query?query=up{job=%22api%22}&quot;
+</code></pre>
+<pre><code>{} 0
+</code></pre>
+<p>Interpretasi: <code>up==0</code>. Setelah <code>for: 1m</code> + scrape, <code>APIDown</code> firing (page).
+Waktu ke firing ≈ 15s×beberapa + 60s.</p>
+<h3 id="10-cek-alert-firing-di-prometheus">10. Cek alert firing di Prometheus<a class="headerlink" href="#10-cek-alert-firing-di-prometheus" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS http://localhost:9090/api/v1/alerts | jq '.data.alerts[]|{alert,state}'
+</code></pre>
+<pre><code>{&quot;alert&quot;:&quot;APIDown&quot;,&quot;state&quot;:&quot;firing&quot;}
+</code></pre>
+<p>Interpretasi: alert aktif. Di lab nyata ini diteruskan ke Alertmanager/page.</p>
+<h3 id="11-hidupkan-lagi-ukur-recovery">11. Hidupkan lagi &amp; ukur recovery<a class="headerlink" href="#11-hidupkan-lagi-ukur-recovery" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose start api
+curl -fsS &quot;http://localhost:9090/api/v1/query?query=up{job=%22api%22}&quot;
+</code></pre>
+<pre><code>{} 1
+</code></pre>
+<p>Interpretasi: <code>up==1</code>, <code>APIDown</code> kembali <code>inactive</code>.</p>
+<h3 id="12-naikkan-error-rate-uji-burn-rate-alert">12. Naikkan error rate → uji burn-rate alert<a class="headerlink" href="#12-naikkan-error-rate-uji-burn-rate-alert" title="Permanent link">&para;</a></h3>
+<pre><code>for i in $(seq 1 50); do curl -sS -o /dev/null -X POST -d 'bad' http://localhost/orders; done
+curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_errors_per_request:ratio_rate5m&quot;
+</code></pre>
+<pre><code>{} 0.021
+</code></pre>
+<p>Interpretasi: 2,1% &gt; 0,005 → <code>SlowErrorBudgetBurn</code> (ticket) bisa firing.</p>
+<h3 id="13-cek-alert-latency-recording-rule">13. Cek alert latency (recording rule)<a class="headerlink" href="#13-cek-alert-latency-recording-rule" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_latency_p95:histogram_quantile5m&quot;
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;} 0.18
+</code></pre>
+<p>Interpretasi: di bawah 0,3 → <code>HighLatencyP95</code> belum firing. Bikin lambat dulu.</p>
+<h3 id="14-bikin-lambat-uji-highlatencyp95">14. Bikin lambat → uji HighLatencyP95<a class="headerlink" href="#14-bikin-lambat-uji-highlatencyp95" title="Permanent link">&para;</a></h3>
+<pre><code>for i in $(seq 1 10); do curl -sS &quot;http://localhost/slow?ms=2000&quot; &amp; done
+sleep 30
+curl -fsS &quot;http://localhost:9090/api/v1/query?query=job:slo_latency_p95:histogram_quantile5m&quot;
+</code></pre>
+<pre><code>{route=&quot;/slow&quot;} 1.0
+</code></pre>
+<p>Interpretasi: p95 <code>/slow</code> = 1s &gt; 0,3 → setelah <code>for: 10m</code> bakal firing (ticket).</p>
+<h2 id="hari-4-provisioning-alloy">Hari 4 (provisioning &amp; Alloy)<a class="headerlink" href="#hari-4-provisioning-alloy" title="Permanent link">&para;</a></h2>
+<h3 id="15-verifikasi-provisioning-as-code-no-drift">15. Verifikasi provisioning as code (no drift)<a class="headerlink" href="#15-verifikasi-provisioning-as-code-no-drift" title="Permanent link">&para;</a></h3>
+<pre><code>grep -n &quot;allowUiUpdates&quot; observability/grafana/provisioning/dashboards/default.yaml
+</code></pre>
+<pre><code>    allowUiUpdates: false
+</code></pre>
+<p>Interpretasi: dashboard di-Git, UI nggak bisa ubah permanen. Cegah drift.</p>
+<h3 id="16-verifikasi-pipeline-log-lewat-alloy-bukan-promtail">16. Verifikasi pipeline log lewat Alloy (bukan Promtail)<a class="headerlink" href="#16-verifikasi-pipeline-log-lewat-alloy-bukan-promtail" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose ps | grep -E &quot;alloy|promtail&quot;
+</code></pre>
+<pre><code>sre-lab-alloy-1   grafana/alloy:latest   Up
+</code></pre>
+<p>Interpretasi: cuma Alloy yang jalan. Promtail nggak ada (EOL 2 Mar 2026).</p>
+<h3 id="17-cek-log-masuk-loki-lewat-alloy">17. Cek log masuk Loki lewat Alloy<a class="headerlink" href="#17-cek-log-masuk-loki-lewat-alloy" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | level=&quot;info&quot; | limit 5
+</code></pre>
+<pre><code>2026-... level=info msg=request_done route=/orders status=200
+</code></pre>
+<p>Interpretasi: Alloy parse JSON, <code>level</code> jadi label. Log terstruktur bisa difilter.</p>
+<h2 id="cara-buktikan-acceptance-minggu-10">Cara buktikan acceptance minggu 10<a class="headerlink" href="#cara-buktikan-acceptance-minggu-10" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Dashboard RED+USE live → perintah 3–8.</li>
+<li>APIDown firing &lt; 2 menit → perintah 9–11.</li>
+<li>Error/latency alert teruji → perintah 12, 14.</li>
+<li>Pipeline Alloy, bukan Promtail → perintah 16, 17.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-10-grafana/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

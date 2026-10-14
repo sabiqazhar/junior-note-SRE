@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 11 · Logs dan Distributed Tracing</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-11-observability/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-11-logs-dan-distributed-tracing">Perintah — Week 11 · Logs dan Distributed Tracing</a><ul>
+<li><a href="#persiapan">Persiapan</a><ul>
+<li><a href="#1-cek-stack-observability-jalan">1. Cek stack observability jalan</a></li>
+<li><a href="#2-cek-app-log-keluar-sebagai-json">2. Cek app log keluar sebagai JSON</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-structured-log-trace">Hari 2 (structured log &amp; trace)</a><ul>
+<li><a href="#3-logql-lihat-5-log-terstruktur">3. LogQL: lihat 5 log terstruktur</a></li>
+<li><a href="#4-logql-filter-error-saja">4. LogQL: filter error saja</a></li>
+<li><a href="#5-logql-hitung-log-per-route">5. LogQL: hitung log per route</a></li>
+<li><a href="#6-verifikasi-alloy-terima-log-bukan-promtail">6. Verifikasi Alloy terima log (bukan Promtail)</a></li>
+<li><a href="#7-cek-trace-masuk-tempo">7. Cek trace masuk Tempo</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-telusuri-request-lambat">Hari 3 (telusuri request lambat)</a><ul>
+<li><a href="#8-ambil-trace_id-dari-log">8. Ambil trace_id dari log</a></li>
+<li><a href="#9-cari-semua-log-untuk-1-request-by-trace_id">9. Cari semua log untuk 1 request by trace_id</a></li>
+<li><a href="#10-buka-trace-di-tempo-by-trace_id">10. Buka trace di Tempo by trace_id</a></li>
+<li><a href="#11-verifikasi-context-diteruskan-cegah-trace-putus">11. Verifikasi context diteruskan (cegah trace putus)</a></li>
+<li><a href="#12-verifikasi-tail-sampling-di-alloy">12. Verifikasi tail sampling di Alloy</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-verifikasi-pipeline">Hari 4 (verifikasi pipeline)</a><ul>
+<li><a href="#13-cek-receiver-otlp-alloy-aktif">13. Cek receiver OTLP Alloy aktif</a></li>
+<li><a href="#14-cek-loki-nerima-label-level">14. Cek Loki nerima (label level)</a></li>
+<li><a href="#15-cek-tempo-writable-dari-alloy">15. Cek Tempo writable dari Alloy</a></li>
+<li><a href="#16-pastikan-promtail-tidak-ada">16. Pastikan Promtail TIDAK ada</a></li>
+<li><a href="#17-logql-cari-request-lambat-500ms-by-duration">17. LogQL: cari request lambat (&gt;500ms) by duration</a></li>
+</ul>
+</li>
+<li><a href="#cara-buktikan-acceptance-minggu-11">Cara buktikan acceptance minggu 11</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-11-logs-dan-distributed-tracing">Perintah — Week 11 · Logs dan Distributed Tracing<a class="headerlink" href="#perintah-week-11-logs-dan-distributed-tracing" title="Permanent link">&para;</a></h1>
+<p>Format: perintah → output → interpretasi.
+Fokus: structured log (slog), LogQL, Alloy→Loki, OTel→Tempo, tail sampling.</p>
+<h2 id="persiapan">Persiapan<a class="headerlink" href="#persiapan" title="Permanent link">&para;</a></h2>
+<h3 id="1-cek-stack-observability-jalan">1. Cek stack observability jalan<a class="headerlink" href="#1-cek-stack-observability-jalan" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose ps
+</code></pre>
+<pre><code>NAME             IMAGE                  STATUS
+sre-lab-api-1    sre-lab-api            Up
+sre-lab-loki-1   grafana/loki:latest    Up
+sre-lab-tempo-1  grafana/tempo:latest   Up
+sre-lab-alloy-1  grafana/alloy:latest   Up
+</code></pre>
+<p>Interpretasi: <code>loki</code>, <code>tempo</code>, <code>alloy</code> Up. Alloy = pipeline (bukan Promtail).</p>
+<h3 id="2-cek-app-log-keluar-sebagai-json">2. Cek app log keluar sebagai JSON<a class="headerlink" href="#2-cek-app-log-keluar-sebagai-json" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose logs api --since 1m | head -2
+</code></pre>
+<pre><code>{&quot;time&quot;:&quot;...&quot;,&quot;level&quot;:&quot;info&quot;,&quot;msg&quot;:&quot;request_done&quot;,&quot;route&quot;:&quot;/orders&quot;,&quot;status&quot;:200,&quot;duration_ms&quot;:12,&quot;trace_id&quot;:&quot;4b2c1a...&quot;}
+</code></pre>
+<p>Interpretasi: <code>slog</code> JSON handler jalan. Ada <code>trace_id</code> → bisa dikorelasikan.</p>
+<h2 id="hari-2-structured-log-trace">Hari 2 (structured log &amp; trace)<a class="headerlink" href="#hari-2-structured-log-trace" title="Permanent link">&para;</a></h2>
+<h3 id="3-logql-lihat-5-log-terstruktur">3. LogQL: lihat 5 log terstruktur<a class="headerlink" href="#3-logql-lihat-5-log-terstruktur" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | limit 5
+</code></pre>
+<pre><code>{level=&quot;info&quot;, route=&quot;/orders&quot;, status=&quot;200&quot;, duration_ms=&quot;12&quot;, trace_id=&quot;4b2c...&quot;}
+</code></pre>
+<p>Interpretasi: Alloy parse JSON, field bisa difilter. Level jadi label.</p>
+<h3 id="4-logql-filter-error-saja">4. LogQL: filter error saja<a class="headerlink" href="#4-logql-filter-error-saja" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | level=&quot;error&quot;
+</code></pre>
+<pre><code>{&quot;level&quot;:&quot;error&quot;,&quot;msg&quot;:&quot;query orders gagal&quot;,&quot;err&quot;:&quot;...&quot;}
+</code></pre>
+<p>Interpretasi: cuma log error. Berguna pas insiden.</p>
+<h3 id="5-logql-hitung-log-per-route">5. LogQL: hitung log per route<a class="headerlink" href="#5-logql-hitung-log-per-route" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | count by (route) ()
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;} 1842
+{route=&quot;/slow&quot;}   37
+</code></pre>
+<p>Interpretasi: volume log per route, tanpa bikin metrik tambahan.</p>
+<h3 id="6-verifikasi-alloy-terima-log-bukan-promtail">6. Verifikasi Alloy terima log (bukan Promtail)<a class="headerlink" href="#6-verifikasi-alloy-terima-log-bukan-promtail" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose logs alloy --since 1m | grep -i &quot;loki.write\|docker&quot;
+</code></pre>
+<pre><code>level=info msg=&quot;sent batch&quot; ...
+</code></pre>
+<p>Interpretasi: Alloy forward ke Loki. Promtail nggak ada di stack.</p>
+<h3 id="7-cek-trace-masuk-tempo">7. Cek trace masuk Tempo<a class="headerlink" href="#7-cek-trace-masuk-tempo" title="Permanent link">&para;</a></h3>
+<pre><code>curl -sS http://localhost/orders &gt;/dev/null
+</code></pre>
+<p>Lalu di Grafana Explore → Tempo → cari trace terbaru.
+Interpretasi: trace ada dgn span <code>sre-api</code> + child span DB.</p>
+<h2 id="hari-3-telusuri-request-lambat">Hari 3 (telusuri request lambat)<a class="headerlink" href="#hari-3-telusuri-request-lambat" title="Permanent link">&para;</a></h2>
+<h3 id="8-ambil-trace_id-dari-log">8. Ambil trace_id dari log<a class="headerlink" href="#8-ambil-trace_id-dari-log" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | route=&quot;/orders&quot; | limit 1
+</code></pre>
+<pre><code>{&quot;trace_id&quot;:&quot;4b2c1a9f...&quot;,&quot;route&quot;:&quot;/orders&quot;,&quot;duration_ms&quot;:1200}
+</code></pre>
+<p>Interpretasi: request ini 1,2s. Ambil <code>trace_id</code> buat langkah berikutnya.</p>
+<h3 id="9-cari-semua-log-untuk-1-request-by-trace_id">9. Cari semua log untuk 1 request by trace_id<a class="headerlink" href="#9-cari-semua-log-untuk-1-request-by-trace_id" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | trace_id=&quot;4b2c1a9f...&quot;
+</code></pre>
+<pre><code>{&quot;msg&quot;:&quot;request_done&quot;,&quot;route&quot;:&quot;/orders&quot;,&quot;duration_ms&quot;:1200}
+{&quot;msg&quot;:&quot;query orders gagal&quot;...}  (kalau error)
+</code></pre>
+<p>Interpretasi: seluruh log request itu kekumpul. Inilah korelasi.</p>
+<h3 id="10-buka-trace-di-tempo-by-trace_id">10. Buka trace di Tempo by trace_id<a class="headerlink" href="#10-buka-trace-di-tempo-by-trace_id" title="Permanent link">&para;</a></h3>
+<pre><code># Grafana Explore -&gt; Tempo -&gt; Search -&gt; trace_id=4b2c1a9f...
+</code></pre>
+<pre><code>Span sre-api (HTTP)        1200ms
+  └─ Span db.query         1100ms   &lt;-- 90% waktu di sini
+</code></pre>
+<p>Interpretasi: "oh, ternyata" — 90% waktu habis di span database, bukan app.</p>
+<h3 id="11-verifikasi-context-diteruskan-cegah-trace-putus">11. Verifikasi context diteruskan (cegah trace putus)<a class="headerlink" href="#11-verifikasi-context-diteruskan-cegah-trace-putus" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">grep -n &quot;QueryRowContext\|QueryRow(&quot; app/main.go
+</code></pre>
+<pre><code>194: rows, err := db.QueryContext(r.Context(), `SELECT ...`)
+</code></pre>
+<p>Interpretasi: pakai <code>QueryContext</code> → span DB nyambung ke span HTTP. Benar.</p>
+<h3 id="12-verifikasi-tail-sampling-di-alloy">12. Verifikasi tail sampling di Alloy<a class="headerlink" href="#12-verifikasi-tail-sampling-di-alloy" title="Permanent link">&para;</a></h3>
+<pre><code>grep -n &quot;status_code\|latency\|probabilistic&quot; observability/otel/config.alloy
+</code></pre>
+<pre><code>policy { status_code { status_codes = [&quot;ERROR&quot;] } }
+policy { latency { threshold_ms = 500 } }
+policy { probabilistic { sampling_percentage = 1 } }
+</code></pre>
+<p>Interpretasi: error+lambat 100% disimpan, baseline cuma 1%. Nggak buang trace penting.</p>
+<h2 id="hari-4-verifikasi-pipeline">Hari 4 (verifikasi pipeline)<a class="headerlink" href="#hari-4-verifikasi-pipeline" title="Permanent link">&para;</a></h2>
+<h3 id="13-cek-receiver-otlp-alloy-aktif">13. Cek receiver OTLP Alloy aktif<a class="headerlink" href="#13-cek-receiver-otlp-alloy-aktif" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose logs alloy --since 1m | grep -i &quot;otlp\|4317&quot;
+</code></pre>
+<pre><code>level=info msg=&quot;OTLP receiver started&quot; endpoint=0.0.0.0:4317
+</code></pre>
+<p>Interpretasi: app bisa ekspor trace lewat OTLP gRPC ke Alloy.</p>
+<h3 id="14-cek-loki-nerima-label-level">14. Cek Loki nerima (label level)<a class="headerlink" href="#14-cek-loki-nerima-label-level" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | count by (level) ()
+</code></pre>
+<pre><code>{level=&quot;info&quot;} 1900
+{level=&quot;error&quot;} 11
+</code></pre>
+<p>Interpretasi: <code>level</code> jadi label (sesuai <code>stage.labels</code> di Alloy). <code>trace_id</code>
+tetap field, bukan label (kardinalitas aman).</p>
+<h3 id="15-cek-tempo-writable-dari-alloy">15. Cek Tempo writable dari Alloy<a class="headerlink" href="#15-cek-tempo-writable-dari-alloy" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose logs alloy --since 2m | grep -i &quot;tempo\|export&quot;
+</code></pre>
+<pre><code>level=info msg=&quot;exported spans&quot; exporter=otlp/tempo count=12
+</code></pre>
+<p>Interpretasi: 12 span diekspor ke Tempo. Pipeline trace jalan end-to-end.</p>
+<h3 id="16-pastikan-promtail-tidak-ada">16. Pastikan Promtail TIDAK ada<a class="headerlink" href="#16-pastikan-promtail-tidak-ada" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose ps | grep -i promtail || echo &quot;promtail: tidak ada&quot;
+</code></pre>
+<pre><code>promtail: tidak ada
+</code></pre>
+<p>Interpretasi: sesuai kebijakan (Promtail EOL 2 Mar 2026), pakai Alloy.</p>
+<h3 id="17-logql-cari-request-lambat-500ms-by-duration">17. LogQL: cari request lambat (&gt;500ms) by duration<a class="headerlink" href="#17-logql-cari-request-lambat-500ms-by-duration" title="Permanent link">&para;</a></h3>
+<pre><code class="language-logql">{job=&quot;api&quot;} | json | duration_ms &gt;= 500
+</code></pre>
+<pre><code>{&quot;route&quot;:&quot;/slow&quot;,&quot;duration_ms&quot;:&quot;2000&quot;}
+</code></pre>
+<p>Interpretasi: temukan request lambat langsung dari log terstruktur.</p>
+<h2 id="cara-buktikan-acceptance-minggu-11">Cara buktikan acceptance minggu 11<a class="headerlink" href="#cara-buktikan-acceptance-minggu-11" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Log JSON &amp; filter by trace_id → perintah 3, 9.</li>
+<li>Trace span app+DB nyambung → perintah 7, 10, 11.</li>
+<li>Pipeline Alloy (bukan Promtail) → perintah 6, 16.</li>
+<li>Tail sampling benar → perintah 12.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-11-observability/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

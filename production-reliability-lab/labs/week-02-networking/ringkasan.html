@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 02 · Networking untuk backend engineer</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-02-networking/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-02-networking-untuk-backend-engineer">Ringkasan — Minggu 02 · Networking untuk backend engineer</a><ul>
+<li><a href="#inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat</a></li>
+<li><a href="#peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)</a></li>
+<li><a href="#perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output</a></li>
+<li><a href="#failure-matrix-decision-tree">Failure matrix / decision tree</a></li>
+<li><a href="#jebakan-umum">Jebakan umum</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-02-networking-untuk-backend-engineer">Ringkasan — Minggu 02 · Networking untuk backend engineer<a class="headerlink" href="#ringkasan-minggu-02-networking-untuk-backend-engineer" title="Permanent link">&para;</a></h1>
+<h2 id="inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat<a class="headerlink" href="#inti-minggu-ini-dalam-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Satu HTTP request itu perjalanan berfase: <strong>DNS → TCP → TLS → HTTP → transfer body</strong>, dan tiap fase punya angka sendiri.</li>
+<li><code>curl -w</code> bisa cetak semua fase itu, jadi lo bisa nunjuk persis di fase mana request lemot — bukan nebak.</li>
+<li>Tiga kegagalan klasik punya "sidik jari" beda: <strong>exit 6</strong> (DNS), <strong>exit 7</strong> (refused/port), <strong>exit 28</strong> (timeout/firewall).</li>
+<li><code>dig</code> nggak selalu sama dengan apa yang dipakai aplikasi — <code>getent hosts</code> dan resolver internal Docker lebih jujur.</li>
+<li>OpenSSL 3.5 LTS (rilis 8 Apr 2025, support sampai 2030) adalah versi yang lo temuin di distro baru; TLS 1.3 + SNI wajib lo pahami buat debug sertifikat.</li>
+</ol>
+<h2 id="peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)<a class="headerlink" href="#peta-konsep-daftar-bertingkat" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Request flow</li>
+<li>DNS (nama → IP)<ul>
+<li>resolver publik: <code>dig</code></li>
+<li>resolver lokal/aplikasi: <code>getent hosts</code>, <code>systemd-resolved</code>, stub <code>127.0.0.53</code></li>
+<li>DNS internal Docker Compose: <code>api</code> ↔ <code>redis</code></li>
+</ul>
+</li>
+<li>TCP handshake (SYN/SYN-ACK/ACK)<ul>
+<li>listen socket: <code>ss -lntp</code></li>
+<li>refused vs timeout</li>
+</ul>
+</li>
+<li>TLS handshake<ul>
+<li>versi (TLS 1.3), cipher, SNI</li>
+<li><code>openssl s_client -servername</code></li>
+</ul>
+</li>
+<li>HTTP (1.1 / 2 / 3)<ul>
+<li>HTTP/3 = QUIC di UDP/443 (RFC 9114, ~21% traffic 2025)</li>
+</ul>
+</li>
+<li>Transfer body</li>
+<li>Latency phases (<code>curl -w</code>)</li>
+<li><code>time_namelookup</code> (DNS)</li>
+<li><code>time_connect</code> (TCP)</li>
+<li><code>time_appconnect</code> (TLS)</li>
+<li><code>time_starttransfer</code> / TTFB (server mikir + header)</li>
+<li><code>time_total</code> (transfer body)</li>
+<li>Failure signature</li>
+<li>exit 6 = DNS failure</li>
+<li>exit 7 = connection refused</li>
+<li>exit 28 = timeout (DROP / overload)</li>
+<li>exit 0 + 5xx = aplikasi respond tapi jelek</li>
+<li>Firewall</li>
+<li>REJECT → refused</li>
+<li>DROP → timeout</li>
+</ul>
+<h2 id="perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output<a class="headerlink" href="#perintah-kunci-yang-harus-lo-lihat-di-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah</th>
+<th>Output kunci</th>
+<th>Interpretasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ip addr</code></td>
+<td><code>inet 192.168.x.x</code> per interface</td>
+<td>Alamat IP &amp; interface aktif</td>
+</tr>
+<tr>
+<td><code>ip route</code></td>
+<td><code>default via 192.168.x.1</code></td>
+<td>Ke mana traffic dilempar</td>
+</tr>
+<tr>
+<td><code>ss -lntp</code></td>
+<td><code>LISTEN ... :8080 users:(("sre-api",pid=9001))</code></td>
+<td>Port listen + pemilik proses</td>
+</tr>
+<tr>
+<td><code>dig example.com +trace</code></td>
+<td>baris <code>A</code> dari root→TLD→authoritative</td>
+<td>Jalur resolusi DNS lengkap</td>
+</tr>
+<tr>
+<td><code>dig +short example.com</code></td>
+<td><code>93.184.216.34</code></td>
+<td>Jawaban DNS mentah</td>
+</tr>
+<tr>
+<td><code>getent hosts redis</code></td>
+<td><code>172.20.0.3 redis</code></td>
+<td>Resolusi ala aplikasi (Docker)</td>
+</tr>
+<tr>
+<td><code>curl -w 'dns=%{time_namelookup} ...' https://...</code></td>
+<td><code>dns=0.04 tcp=0.06 tls=0.09 ttfb=0.25 total=0.26</code></td>
+<td>Fase latency per request</td>
+</tr>
+<tr>
+<td><code>curl --connect-timeout 3 http://localhost:9999</code></td>
+<td><code>curl: (7) Connection refused</code></td>
+<td>Port nggak listen</td>
+</tr>
+<tr>
+<td><code>openssl s_client -connect host:443 -servername host -tls1_3 -alpn h2 -brief</code></td>
+<td><code>Verify return code: 0 (ok)</code> + <code>TLSv1.3</code></td>
+<td>Versi TLS &amp; ALPN (h2) yang dipakai</td>
+</tr>
+<tr>
+<td><code>curl -sS -o /dev/null -w '%{http_code} %{exitcode}\n' URL</code></td>
+<td><code>200 0</code> / <code>000 7</code> / <code>000 28</code></td>
+<td>Kode HTTP + exit code curl</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix-decision-tree">Failure matrix / decision tree<a class="headerlink" href="#failure-matrix-decision-tree" title="Permanent link">&para;</a></h2>
+<pre><code>Request gagal
+├─ curl exit 6   → DNS. Cek: dig, getent hosts, /etc/resolv.conf, resolver internal Docker
+├─ curl exit 7   → Nggak ada yang listen. Cek: ss -lntp, proses hidup?, port bener?
+├─ curl exit 28  → Timeout. Cek: firewall/SecurityGroup (DROP?), routing, service overload
+└─ exit 0 tapi 5xx → Aplikasi. Cek: log aplikasi, dependency health, trace
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Error</th>
+<th>exit code</th>
+<th>Cara deteksi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DNS gagal</td>
+<td><code>Could not resolve host</code></td>
+<td>6</td>
+<td><code>dig</code>, <code>getent hosts</code></td>
+</tr>
+<tr>
+<td>Port nggak listen</td>
+<td><code>Connection refused</code></td>
+<td>7</td>
+<td><code>ss -lntp</code></td>
+</tr>
+<tr>
+<td>Firewall drop / routing</td>
+<td>hang lalu <code>Timeout</code></td>
+<td>28</td>
+<td><code>mtr</code>, <code>tcpdump</code>, cek SG</td>
+</tr>
+<tr>
+<td>Aplikasi error</td>
+<td>HTTP 500</td>
+<td>0</td>
+<td>log aplikasi</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan-umum">Jebakan umum<a class="headerlink" href="#jebakan-umum" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>TTFB itu bukan waktu jaringan</strong> — udah termasuk server mikir. <code>total - starttransfer</code> baru waktu kirim body.</li>
+<li><strong>Hasil <code>dig</code> belum tentu yang dipakai aplikasi.</strong> Ada cache + <code>systemd-resolved</code> (stub <code>127.0.0.53</code>). Pakai <code>getent hosts</code>.</li>
+<li><strong>Ping diblok ≠ service mati.</strong> ICMP ≠ TCP.</li>
+<li><strong><code>openssl s_client</code> tanpa <code>-servername</code></strong> bisa dapet sertifikat salah (SNI).</li>
+<li><strong>DNS Docker itu internal.</strong> <code>api</code> resolve <code>redis</code>, laptop lo nggak.</li>
+<li><strong>Lupa cek <code>$?</code></strong> setelah curl — exit code itu informasi, bukan gangguan.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Bisa jelasin beda <strong>DNS failure, TCP failure, HTTP error, timeout</strong> — dan mereproduksi keempatnya.</li>
+<li>Bisa nemuin port yang listen <strong>dan</strong> proses pemiliknya (<code>ss -lntp</code>).</li>
+<li>Bisa ukur dan jelasin 5 fase latency satu request.</li>
+<li>Bisa buktiin versi TLS &amp; protokol (h2/h3) dengan <code>openssl s_client</code>.</li>
+</ol>
+<h2 id="satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat<a class="headerlink" href="#satu-kalimat-yang-harus-lo-ingat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Sebelum nyalahin server, pecah request jadi DNS→TCP→TLS→TTFB→total; angkanya bakal nunjukin di fase mana masalahnya sebenarnya.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-02-networking/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

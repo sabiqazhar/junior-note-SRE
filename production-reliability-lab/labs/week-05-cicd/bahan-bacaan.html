@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 05 · CI/CD dan release management — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-05-cicd/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-05-cicd-dan-release-management-bahan-bacaan">Minggu 05 · CI/CD dan release management — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-ci-vs-cd">2.1 CI vs CD</a></li>
+<li><a href="#22-immutable-artifact">2.2 Immutable artifact</a></li>
+<li><a href="#23-versioning-traceability-sha-tag-digest">2.3 Versioning &amp; traceability: SHA tag + digest</a></li>
+<li><a href="#24-concurrency-group">2.4 Concurrency group</a></li>
+<li><a href="#25-permissions-eksplisit-least-privilege">2.5 permissions: eksplisit (least privilege)</a></li>
+<li><a href="#26-secrets-di-ci-dan-jebakan-pull_request_target">2.6 Secrets di CI — dan jebakan pull_request_target</a></li>
+<li><a href="#27-oidc-bukan-secret-statis">2.7 OIDC, bukan secret statis</a></li>
+<li><a href="#28-artifact-attestation-provenance">2.8 Artifact attestation &amp; provenance</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-05-cicd-dan-release-management-bahan-bacaan">Minggu 05 · CI/CD dan release management — Bahan Bacaan<a class="headerlink" href="#minggu-05-cicd-dan-release-management-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham konsepnya. Baru setelah itu kerjakan lab.md.</p>
+</blockquote>
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Bayangin lo mau rilis. Langkahnya ada 14: pull branch terbaru, jalanin test, build image, kasih tag, push ke registry, update compose, restart, cek health, cek log, hapus image lama, kasih tahu tim, update changelog... Sekarang bayangin lo ngerjain itu jam 17.50 hari Jumat, sambil mikirin weekend. Yang kelewat biasanya bukan langkah yang sulit — justru langkah yang kelihatannya sepele: lupa <code>go vet</code>, lupa tag, lupa cek health sebelum bilang "udah deploy". Otak manusia memang nggak didesain buat ngikutin 14 langkah berurutan dengan konsisten, apalagi kalau lagi buru-buru. Ini bukan soal ceroboh; ini soal desain sistem yang ngandelin ingatan manusia buat hal yang seharusnya jadi kebiasaan mesin.</p>
+<p>Analogi yang paling pas: <strong>checklist pilot</strong>. Pilot senior pun nggak terbang cuma pakai ingatan. Kenapa? Karena checklist mindahin beban "inget" dari otak ke kertas. CI/CD itu checklist yang <strong>jalan sendiri</strong> — bukan cuma ngingetin, tapi beneran ngejalanin langkahnya dan <strong>berhenti</strong> kalau ada yang salah. Bedanya dengan checklist kertas: pipeline nggak bisa dibujuk, nggak capek, dan nggak pernah bilang "ah ini mah udah pasti aman".</p>
+<p>Masalah kedua yang diselesaikan minggu ini: <strong>lo harus bisa jawab "persisnya apa yang jalan di produksi sekarang?"</strong> Kalau jawabannya <code>latest</code>, berarti lo nggak tahu. <code>latest</code> itu mutable — isinya bisa berubah kapan aja tanpa lo sadar. Kalau suatu saat produksi rusak dan lo mau balik ke versi kemarin, lo cuma bisa balik kalau lo tahu <em>persis</em> artefak mana yang kemarin jalan, dan artefak itu masih ada. Minggu ini lo bakal bikin supaya pertanyaan itu punya jawaban yang bisa dibuktikan: satu commit → satu image → satu digest → bisa diverifikasi asal-usulnya.</p>
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-ci-vs-cd">2.1 CI vs CD<a class="headerlink" href="#21-ci-vs-cd" title="Permanent link">&para;</a></h3>
+<p><strong>CI (Continuous Integration)</strong>: tiap perubahan kode digabung ke <code>main</code> sesering mungkin, dan tiap kali itu terjadi, mesin ngejalanin verifikasi otomatis (build, test, lint). Tujuannya: konflik dan bug ketemu <strong>dalam hitungan menit</strong>, bukan seminggu kemudian pas mau rilis.</p>
+<p><strong>CD</strong>: dua arti yang sering ketuker —
+- <em>Continuous Delivery</em>: artefak selalu dalam kondisi siap rilis; rilisnya tetap keputusan manusia (tekan tombol).
+- <em>Continuous Deployment</em>: tiap commit yang lolos pipeline langsung ke produksi tanpa persetujuan manual.</p>
+<p>Buat SRE, CI itu wajib dan murah. CD-nya terserah matangnya organisasi — tapi <strong>dua-duanya butuh pipeline yang bisa dipercaya</strong>. Pipeline yang kadang hijau padahal kodenya rusak ("flaky") lebih berbahaya daripada nggak ada pipeline, karena orang berhenti percaya dan mulai nge-skip.</p>
+<p>Contoh nyata: test yang pakai <code>time.Sleep(2 * time.Second)</code> buat nungguin Redis. Di laptop lulus, di runner yang lagi penuh gagal. Begitu orang mulai bilang "coba re-run", nilai CI-nya hilang.</p>
+<h3 id="22-immutable-artifact">2.2 Immutable artifact<a class="headerlink" href="#22-immutable-artifact" title="Permanent link">&para;</a></h3>
+<p>Satu build menghasilkan satu artefak yang <strong>nggak pernah diubah lagi</strong>. Kalau lo build ulang image di tiap environment (staging build sekali, produksi build sekali), lo sebenarnya nggak pernah nguji barang yang sama dengan yang jalan di produksi. Bisa aja staging dapet dependency versi A, produksi dapet versi B yang baru rilis jam itu juga.</p>
+<p>Aturannya: <strong>build sekali, promosikan artefak yang sama</strong> ke staging → produksi. Yang berubah antar environment cuma <strong>konfigurasi</strong>, bukan binernya.</p>
+<pre><code class="language-yaml"># Salah: build ulang per environment
+- run: docker build -t api:staging .   # staging
+- run: docker build -t api:prod .      # produksi -&gt; artefak beda!
+
+# Benar: build sekali, tag berbasis SHA, dipakai di semua environment
+- run: docker build -t ghcr.io/owner/repo/api:sha-${{ steps.sha.outputs.value }} .
+</code></pre>
+<h3 id="23-versioning-traceability-sha-tag-digest">2.3 Versioning &amp; traceability: SHA tag + digest<a class="headerlink" href="#23-versioning-traceability-sha-tag-digest" title="Permanent link">&para;</a></h3>
+<p>Dua level identitas image:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Bentuk</th>
+<th>Mutable?</th>
+<th>Dipakai buat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tag</td>
+<td><code>api:sha-abc123def456</code></td>
+<td>secara teknis bisa digeser, tapi kebiasaannya nggak</td>
+<td>identifikasi manusia</td>
+</tr>
+<tr>
+<td>Digest</td>
+<td><code>api@sha256:9f2c...</code></td>
+<td><strong>nggak pernah bisa</strong></td>
+<td>identitas kriptografis, untuk deploy &amp; rollback</td>
+</tr>
+</tbody>
+</table>
+<p>Kenapa harus commit SHA? Karena SHA nyambung ke kode persis. <code>v1.2.3</code> juga boleh (dan bagus buat rilis), tapi SHA yang ngejamin "image ini dari commit ini". Di repo ini, <code>ci.yml</code> udah pakai <code>git rev-parse --short=12 HEAD</code> buat bikin tag <code>sha-...</code>.</p>
+<p>Rollback yang benar: <strong>nunjuk digest versi sebelumnya</strong>, bukan <code>latest</code>, bukan "tag terakhir".</p>
+<pre><code class="language-bash">docker pull ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api@sha256:&lt;digest-versi-sebelumnya&gt;
+</code></pre>
+<h3 id="24-concurrency-group">2.4 Concurrency group<a class="headerlink" href="#24-concurrency-group" title="Permanent link">&para;</a></h3>
+<p>Dua push beruntun ke branch yang sama bisa bikin dua workflow jalan bersamaan. Akibatnya: dua deploy nabrak, artefak ketimpa, atau rollback yang lo jalanin malah ketimpa deploy baru yang masih panas.</p>
+<pre><code class="language-yaml">concurrency:
+  group: ci-${{ github.ref }}     # satu grup per branch/PR
+  cancel-in-progress: true        # run lama dibatalkan kalau ada yang baru
+</code></pre>
+<p>Hati-hati: buat workflow <strong>deploy ke produksi</strong>, <code>cancel-in-progress: true</code> bisa membatalkan deploy di tengah jalan. Kalau deploy lo nggak idempotent, lebih aman pakai <code>cancel-in-progress: false</code> supaya deploy antre, bukan dibunuh di tengah.</p>
+<h3 id="25-permissions-eksplisit-least-privilege">2.5 <code>permissions:</code> eksplisit (least privilege)<a class="headerlink" href="#25-permissions-eksplisit-least-privilege" title="Permanent link">&para;</a></h3>
+<p><code>GITHUB_TOKEN</code> itu token otomatis yang dikasih GitHub ke tiap workflow. Di repo lama, defaultnya bisa <code>write</code> ke banyak hal — artinya workflow lo secara gratis punya hak yang nggak lo butuhin. Kalau ada satu action di pipeline yang disusupi, hak itulah yang dipakai.</p>
+<p>Tulis eksplisit di level workflow (minimal) dan di level job (lebih ketat):</p>
+<pre><code class="language-yaml">permissions:          # level workflow: default paling ketat
+  contents: read
+
+jobs:
+  build-push:
+    permissions:      # job ini butuh lebih, kasih seperlunya
+      contents: read
+      packages: write   # push ke GHCR
+      id-token: write   # minta OIDC token
+      attestations: write
+</code></pre>
+<p>Aturan praktis: mulai dari <code>contents: read</code>, tambahin yang lain satu-satu <strong>dengan alasan</strong>.</p>
+<h3 id="26-secrets-di-ci-dan-jebakan-pull_request_target">2.6 Secrets di CI — dan jebakan <code>pull_request_target</code><a class="headerlink" href="#26-secrets-di-ci-dan-jebakan-pull_request_target" title="Permanent link">&para;</a></h3>
+<p>Secret di GitHub Actions itu <strong>terenkripsi saat disimpan</strong> dan <strong>di-mask di log</strong> (keluar sebagai <code>***</code>). Tapi masking itu cuma kosmetik: kalau lo sendiri yang nyetak <code>echo ${{ secrets.TOKEN }} | base64</code>, hasilnya nggak ke-mask.</p>
+<p>Bahaya terbesar di CI bukan secret bocor satu-satu, tapi <strong>workflow yang jalan dengan akses penuh sambil mengeksekusi kode dari orang asing</strong>. Contoh klasik:</p>
+<pre><code class="language-yaml"># JANGAN: jalanin kode dari fork dengan token yang punya hak write
+on: pull_request_target
+steps:
+  - uses: actions/checkout@v5
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}   # &lt;- RCE
+</code></pre>
+<p><code>pull_request_target</code> jalan dalam konteks repo tujuan (punya akses ke secret dan <code>GITHUB_TOKEN</code> berhak write), tapi <code>ref</code> di atas ngambil kode dari PR si pengirim. Kombinasi ini = siapa aja bisa buka PR yang "curi" secret repo lo. Pakai <code>pull_request</code> biasa (tanpa akses secret) atau pisahkan: workflow yang butuh secret jalan terpisah setelah kode direview.</p>
+<h3 id="27-oidc-bukan-secret-statis">2.7 OIDC, bukan secret statis<a class="headerlink" href="#27-oidc-bukan-secret-statis" title="Permanent link">&para;</a></h3>
+<p>Cara lama: bikin AWS access key, taruh di secret, key itu umurnya 5 tahun dan nggak pernah dirotasi. Kalau bocor, lo nggak tahu (dan penyerangnya senang).</p>
+<p>Cara sekarang: GitHub ngasih <strong>OIDC token</strong> berumur pendek (JWT) ke workflow. Cloud provider-nya dikonfigurasi buat <strong>percaya</strong> pada token dari repo + branch tertentu. Workflow "login" tanpa menyimpan kredensial permanen.</p>
+<pre><code class="language-yaml">permissions:
+  id-token: write      # WAJIB kalau mau minta OIDC token
+steps:
+  - uses: aws-actions/configure-aws-credentials@v4
+    with:
+      role-to-assume: arn:aws:iam::123456789012:role/gha-deploy
+      aws-region: ap-southeast-1
+# Nggak ada AWS_ACCESS_KEY_ID di repo. Token-nya habis dalam hitungan menit.
+</code></pre>
+<p>Intinya: <strong>nggak ada lagi kredensial jangka panjang yang bisa dicuri</strong>, dan aksesnya bisa dibatasi sampai level "cuma repo ini, cuma branch main".</p>
+<h3 id="28-artifact-attestation-provenance">2.8 Artifact attestation &amp; provenance<a class="headerlink" href="#28-artifact-attestation-provenance" title="Permanent link">&para;</a></h3>
+<p>Attestation itu <strong>pernyataan yang ditandatangani</strong> tentang sebuah artefak: "image dengan digest ini dibangun dari commit ini, oleh workflow ini, di repo ini, pada jam sekian". Ditandatangani pakai identitas workflow (Sigstore/Fulcio), jadi nggak bisa dipalsukan tanpa akses ke repo.</p>
+<pre><code class="language-yaml">- uses: actions/attest@v4
+  with:
+    subject-name: ghcr.io/${{ github.repository }}/sre-api
+    subject-digest: ${{ steps.build.outputs.digest }}
+    push-to-registry: true
+</code></pre>
+<p>Verifikasinya (ini yang paling sering kelupaan):</p>
+<pre><code class="language-bash">gh attestation verify oci://ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-abc123def456 \
+  -R &lt;owner&gt;/&lt;repo&gt; --signer-workflow &lt;owner&gt;/&lt;repo&gt;/.github/workflows/ci.yml
+</code></pre>
+<p>Attestation <strong>tanpa</strong> verifikasi = teater keamanan. Yang bikin berguna justru langkah verifikasinya — dan verifikasi ini bisa dijalankan <strong>sebelum deploy</strong> produksi, jadi image yang nggak jelas asal-usulnya ditolak.</p>
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Dari <code>git push</code> sampai image terverifikasi, ini yang sebenarnya terjadi:</p>
+<ol>
+<li><strong>Push ke <code>main</code></strong> → GitHub bikin event <code>push</code> dan nyocokin ke <code>on:</code> di tiap workflow. Yang cocok: <code>ci.yml</code>.</li>
+<li><strong>Concurrency check</strong> → GitHub ngitung <code>group: ci-${{ github.ref }}</code>. Kalau grup ini lagi jalan dan <code>cancel-in-progress: true</code>, run lama dibatalkan.</li>
+<li><strong>Job di-schedule</strong> → <code>lint-test</code> dan <code>integration</code> jalan paralel (nggak ada <code>needs</code>). <code>integration</code> minta service container Postgres 18 dan Redis; runner nunggu healthcheck-nya (<code>pg_isready</code>, <code>redis-cli ping</code>) sebelum step pertama jalan.</li>
+<li><strong>Token dibuat</strong> → tiap job dapet <code>GITHUB_TOKEN</code> dengan scope sesuai blok <code>permissions</code>. Job <code>lint-test</code> cuma dapet <code>contents: read</code>.</li>
+<li><strong>Test &amp; lint</strong> → <code>go vet</code>, <code>go test -race</code>. Kalau exit code ≠ 0, job gagal, dan karena <code>build-push</code> punya <code>needs: [lint-test, integration]</code>, job build <strong>nggak pernah jalan</strong>. Ini yang bikin "test gagal = rilis ditolak".</li>
+<li><strong>Build (hanya kalau push ke main)</strong> → <code>if: github.event_name == 'push' &amp;&amp; github.ref == 'refs/heads/main'</code>. Buildx nyusun image dari <code>docker/Dockerfile</code>, <code>cache-from: type=gha</code> narik layer cache.</li>
+<li><strong>Push ke GHCR</strong> → <code>docker/login-action</code> pakai <code>GITHUB_TOKEN</code> (butuh <code>packages: write</code>), lalu image di-push dengan tag <code>sha-&lt;12 char&gt;</code>. Registry ngasih balik <strong>digest</strong> (<code>sha256:...</code>) di output step.</li>
+<li><strong>Attestation</strong> → <code>actions/attest@v4</code> minta OIDC token (<code>id-token: write</code>), minta sertifikat singkat dari Sigstore/Fulcio atas nama workflow, tanda tangani metadata build (repo, SHA, workflow path), lalu unggah ke registry + ke GitHub (butuh <code>attestations: write</code>).</li>
+<li><strong>Verifikasi (di luar pipeline)</strong> → siapa pun (termasuk pipeline deploy) jalanin <code>gh attestation verify</code>, yang narik attestation, ngecek tanda tangan ke transparency log, lalu nyocokin digest image dengan yang diklaim.</li>
+</ol>
+<p>Yang penting dicatat: <strong>urutan 5 sebelum 6 adalah inti dari CI</strong>. Kalau lo bisa bikin build jalan meski test gagal, lo nggak punya CI — lo cuma punya cron job yang rajin.</p>
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti dengan bahasa sederhana</th>
+<th>Contoh konkret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Pipeline</strong></td>
+<td>Rangkaian langkah otomatis yang jalan tiap ada perubahan kode</td>
+<td><code>ci.yml</code>: lint → test → build → push → attest</td>
+</tr>
+<tr>
+<td><strong>Runner</strong></td>
+<td>Mesin (VM) yang menjalankan job</td>
+<td><code>runs-on: ubuntu-latest</code></td>
+</tr>
+<tr>
+<td><strong>Job</strong></td>
+<td>Sekumpulan step yang jalan di satu runner</td>
+<td><code>lint-test</code>, <code>integration</code>, <code>build-push</code></td>
+</tr>
+<tr>
+<td><strong>Step</strong></td>
+<td>Satu perintah atau satu action di dalam job</td>
+<td><code>- run: go vet ./...</code></td>
+</tr>
+<tr>
+<td><strong>Artifact</strong></td>
+<td>Hasil build yang bisa dipakai ulang</td>
+<td>image <code>ghcr.io/.../sre-api:sha-abc123def456</code></td>
+</tr>
+<tr>
+<td><strong>Immutable</strong></td>
+<td>Nggak bisa diubah setelah dibuat; kalau mau beda, bikin yang baru</td>
+<td>digest <code>sha256:...</code></td>
+</tr>
+<tr>
+<td><strong>Digest</strong></td>
+<td>Sidik jari kriptografis isi image</td>
+<td><code>sha256:9f2c1a...</code></td>
+</tr>
+<tr>
+<td><strong>Mutable tag</strong></td>
+<td>Nama yang isinya bisa diganti kapan aja</td>
+<td><code>:latest</code>, <code>:stable</code></td>
+</tr>
+<tr>
+<td><strong>Concurrency group</strong></td>
+<td>Penanda supaya dua run nggak nabrak di hal yang sama</td>
+<td><code>group: ci-${{ github.ref }}</code></td>
+</tr>
+<tr>
+<td><strong>OIDC</strong></td>
+<td>Cara "login" pakai token identitas berumur pendek, tanpa kredensial permanen</td>
+<td><code>id-token: write</code> + IAM role</td>
+</tr>
+<tr>
+<td><strong>Attestation</strong></td>
+<td>Surat pernyataan yang ditandatangani: "artefak ini dibuat oleh siapa, dari kode apa"</td>
+<td><code>actions/attest@v4</code> + <code>gh attestation verify</code></td>
+</tr>
+<tr>
+<td><strong>Provenance</strong></td>
+<td>Riwayat asal-usul artefak (bagian dari attestation)</td>
+<td>commit SHA, workflow, waktu build</td>
+</tr>
+<tr>
+<td><strong>Secret masking</strong></td>
+<td>Secret ditampilkan sebagai <code>***</code> di log</td>
+<td><code>${{ secrets.X }}</code></td>
+</tr>
+<tr>
+<td><strong>Flaky test</strong></td>
+<td>Test yang kadang lulus kadang gagal tanpa perubahan kode</td>
+<td>test bergantung <code>sleep</code> atau waktu nyata</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber (link)</th>
+<th>Bagian mana yang dibaca &amp; apa yang dicari</th>
+<th>Estimasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax">Workflow syntax for GitHub Actions</a></td>
+<td>Bagian <code>permissions</code>, <code>concurrency</code>, <code>jobs.&lt;job_id&gt;.needs</code>, <code>jobs.&lt;job_id&gt;.if</code>. Cari: nilai yang diterima <code>permissions</code> dan gimana <code>concurrency</code> nge-grup run.</td>
+<td>30 menit</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://docs.github.com/en/actions/tutorials/authenticate-with-github_token">Use GITHUB_TOKEN for authentication in workflows</a></td>
+<td>Cara kerja token otomatis + contoh <code>permissions</code> paling ketat. Cari: kenapa harus least privilege.</td>
+<td>15 menit</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://docs.github.com/en/actions/concepts/security/artifact-attestations">Artifact attestations</a></td>
+<td>Apa yang diklaim attestation, dan dua jenisnya (provenance vs SBOM). Cari: bedanya "attest" sama "sign".</td>
+<td>20 menit</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://cli.github.com/manual/gh_attestation_verify"><code>gh attestation verify</code> — GitHub CLI manual</a></td>
+<td>Semua flag: <code>--signer-workflow</code>, <code>--deny-self-hosted-runners</code>, <code>-R</code>. Cari: gimana verifikasi gagal itu kelihatannya.</td>
+<td>15 menit</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://docs.github.com/en/actions/reference/security/secure-use">About security hardening with GitHub Actions</a></td>
+<td>Bahaya script injection via <code>${{ }}</code> dan <code>pull_request_target</code>. Cari: contoh RCE dari fork PR.</td>
+<td>25 menit</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://github.com/gitleaks/gitleaks">gitleaks</a></td>
+<td>Cara jalanin <code>gitleaks detect</code> dan <code>gitleaks protect</code>. Cari: beda deteksi di history vs di staging area.</td>
+<td>15 menit</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa beda Continuous Delivery dan Continuous Deployment? Yang mana yang wajib dulu dikuasai?</li>
+<li>Kenapa build ulang image di tiap environment itu masalah, meski kodenya sama?</li>
+<li>Kalau produksi rusak dan lo mau rollback, identitas apa yang harus lo pakai — tag <code>latest</code>, tag SHA, atau digest? Kenapa?</li>
+<li>Apa efek <code>cancel-in-progress: true</code> pada workflow deploy produksi yang nggak idempotent?</li>
+<li>Kenapa <code>pull_request_target</code> + checkout <code>head.sha</code> itu celah RCE, sementara <code>pull_request</code> biasa nggak?</li>
+<li>Apa yang dibuktikan oleh attestation, dan kenapa attestation tanpa verifikasi dianggap nggak ada gunanya?</li>
+<li>Sebutin dua cara secret bisa bocor di CI meski GitHub udah nge-mask secret di log.</li>
+</ol>
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataannya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"CI hijau berarti kodenya benar."</td>
+<td>CI hijau cuma berarti <strong>pemeriksaan yang lo tulis</strong> lulus. Kalau nggak ada test buat fitur itu, CI-nya tetep hijau.</td>
+</tr>
+<tr>
+<td>"Tag <code>:latest</code> praktis, tinggal pull."</td>
+<td><code>latest</code> mutable dan nggak bisa dipakai buat rollback yang bisa dipertanggungjawabkan. Lo nggak tahu persis apa yang jalan.</td>
+</tr>
+<tr>
+<td>"Secret di GitHub Actions udah aman, kan di-mask di log."</td>
+<td>Masking cuma ngeganti tampilan. Kalau lo nyetak hasil <code>base64</code>/<code>env</code> ke log, isinya keluar.</td>
+</tr>
+<tr>
+<td>"Attestation = image-nya aman dari vulnerability."</td>
+<td>Attestation nyambungin artefak ke <strong>asal-usul</strong> (siapa/build darimana), bukan nyatakan bebas CVE. Tetep butuh scan (Trivy).</td>
+</tr>
+<tr>
+<td>"Gratis nambahin <code>permissions: write-all</code> biar nggak error."</td>
+<td>Itu ngasih hak penuh ke tiap action di pipeline, termasuk action pihak ketiga. Mulai dari <code>read</code>, tambahin seperlunya.</td>
+</tr>
+<tr>
+<td>"Pipeline yang lamaan dikit nggak apa-apa, yang penting hijau."</td>
+<td>Pipeline &gt; 10–15 menit bikin orang malas nunggu dan mulai merge tanpa lihat hasil. Kecepatan pipeline itu fitur keselamatan.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-05-cicd/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

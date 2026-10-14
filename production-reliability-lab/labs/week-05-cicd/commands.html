@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 05</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-05-cicd/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-05">Perintah — Week 05</a><ul>
+<li><a href="#hari-2-kondisi-normal">Hari 2 (kondisi normal)</a><ul>
+<li><a href="#1-siapkan-branch-lab-push">1. Siapkan branch lab &amp; push</a></li>
+<li><a href="#2-buka-pr-dan-pantau-run">2. Buka PR dan pantau run</a></li>
+<li><a href="#3-build-image-lokal-pakai-tag-sha">3. Build image lokal pakai tag SHA</a></li>
+<li><a href="#4-lihat-digest-image">4. Lihat digest image</a></li>
+<li><a href="#5-merge-ke-main-supaya-job-build-jalan">5. Merge ke main supaya job build jalan</a></li>
+<li><a href="#6-verifikasi-attestation">6. Verifikasi attestation</a></li>
+<li><a href="#7-tarik-image-by-digest-simulasi-rollback">7. Tarik image by digest (simulasi rollback)</a></li>
+<li><a href="#8-simpan-evidence-run">8. Simpan evidence run</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)</a><ul>
+<li><a href="#9-sengaja-gagalkan-test">9. Sengaja gagalkan test</a></li>
+<li><a href="#10-lihat-log-kegagalan">10. Lihat log kegagalan</a></li>
+<li><a href="#11-uji-concurrency-dua-push-beruntun">11. Uji concurrency: dua push beruntun</a></li>
+<li><a href="#12-deteksi-secret-di-file-palsu">12. Deteksi secret di file palsu</a></li>
+<li><a href="#13-deteksi-secret-di-history-repo">13. Deteksi secret di history repo</a></li>
+<li><a href="#14-permissions-terlalu-ketat-harus-gagal">14. Permissions terlalu ketat (harus gagal)</a></li>
+<li><a href="#15-rollback-sungguhan-pakai-digest-lama">15. Rollback sungguhan pakai digest lama</a></li>
+<li><a href="#16-pemulihan-eksperimen-bersihkan-branch">16. Pemulihan eksperimen (bersihkan branch)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-05">Perintah — Week 05<a class="headerlink" href="#perintah-week-05" title="Permanent link">&para;</a></h1>
+<p>Format: perintah → output → interpretasi. Ganti <code>&lt;owner&gt;/&lt;repo&gt;</code> dengan repo lo sendiri.</p>
+<h2 id="hari-2-kondisi-normal">Hari 2 (kondisi normal)<a class="headerlink" href="#hari-2-kondisi-normal" title="Permanent link">&para;</a></h2>
+<h3 id="1-siapkan-branch-lab-push">1. Siapkan branch lab &amp; push<a class="headerlink" href="#1-siapkan-branch-lab-push" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git switch -c lab/week-05-pipeline
+git commit --allow-empty -m &quot;week 05: uji pipeline&quot; &amp;&amp; git push -u origin lab/week-05-pipeline
+</code></pre>
+<ul>
+<li><strong>Output:</strong> <code>branch 'lab/week-05-pipeline' set up to track 'origin/lab/week-05-pipeline'</code> lalu hash commit.</li>
+<li><strong>Interpretasi:</strong> Branch baru terdaftar di remote, jadi PR bisa dibuat. Commit kosong cukup buat memicu workflow tanpa ubah kode.</li>
+</ul>
+<h3 id="2-buka-pr-dan-pantau-run">2. Buka PR dan pantau run<a class="headerlink" href="#2-buka-pr-dan-pantau-run" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh pr create --fill
+gh run watch
+</code></pre>
+<ul>
+<li><strong>Output:</strong> tabel run dengan kolom STATUS/CONCLUSION; job <code>lint-test</code> &amp; <code>integration</code> = success, <code>build-push</code> = skipped.</li>
+<li><strong>Interpretasi:</strong> Karena event-nya <code>pull_request</code>, job <code>build-push</code> (yang pakai <code>if: push &amp;&amp; ref==main</code>) dilewati. Ini perilaku yang benar.</li>
+</ul>
+<h3 id="3-build-image-lokal-pakai-tag-sha">3. Build image lokal pakai tag SHA<a class="headerlink" href="#3-build-image-lokal-pakai-tag-sha" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">SHORT=$(git rev-parse --short=12 HEAD)
+docker buildx build -t sre-api:sha-$SHORT -f docker/Dockerfile --load .
+</code></pre>
+<ul>
+<li><strong>Output:</strong> <code>=&gt; exporting to image</code> ... <code>naming to docker.io/library/sre-api:sha-abc123def456</code>.</li>
+<li><strong>Interpretasi:</strong> <code>--load</code> wajib kalau mau pakai image lokal setelah buildx; tanpa itu image cuma ada di cache buildx.</li>
+</ul>
+<h3 id="4-lihat-digest-image">4. Lihat digest image<a class="headerlink" href="#4-lihat-digest-image" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker images --digests sre-api
+</code></pre>
+<ul>
+<li><strong>Output:</strong> kolom DIGEST berisi <code>sha256:9f2c1a...</code>.</li>
+<li><strong>Interpretasi:</strong> Digest ini sidik jari immutable image. Tag <code>sha-...</code> cuma label manusia; digest yang jadi identitas sejati buat rollback.</li>
+</ul>
+<h3 id="5-merge-ke-main-supaya-job-build-jalan">5. Merge ke main supaya job build jalan<a class="headerlink" href="#5-merge-ke-main-supaya-job-build-jalan" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh pr merge --squash --delete-branch
+gh run watch --workflow ci.yml
+</code></pre>
+<ul>
+<li><strong>Output:</strong> run baru; <code>build-push</code> = success; <code>Successfully pushed ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-abc123def456</code>.</li>
+<li><strong>Interpretasi:</strong> Event <code>push</code> ke <code>main</code> mengaktifkan job build + push ke GHCR. Inilah satu-satunya jalur yang menghasilkan image di registry.</li>
+</ul>
+<h3 id="6-verifikasi-attestation">6. Verifikasi attestation<a class="headerlink" href="#6-verifikasi-attestation" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh attestation verify oci://ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-$SHORT \
+  -R &lt;owner&gt;/&lt;repo&gt; \
+  --signer-workflow &lt;owner&gt;/&lt;repo&gt;/.github/workflows/ci.yml
+</code></pre>
+<ul>
+<li><strong>Output:</strong> <code>Loaded digest sha256:...</code> + <code>Verification succeeded</code>.</li>
+<li><strong>Interpretasi:</strong> Image ini benar-benar dibangun oleh workflow yang lo sebut. Tanpa baris ini, attestation cuma klaim yang belum dibuktikan.</li>
+</ul>
+<h3 id="7-tarik-image-by-digest-simulasi-rollback">7. Tarik image by digest (simulasi rollback)<a class="headerlink" href="#7-tarik-image-by-digest-simulasi-rollback" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' sre-api:sha-$SHORT | cut -d@ -f2)
+docker pull ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api@$DIGEST
+</code></pre>
+<ul>
+<li><strong>Output:</strong> <code>Status: Downloaded newer image for ...@sha256:...</code>.</li>
+<li><strong>Interpretasi:</strong> Menarik by digest = menarik artefak persis, bukan "versi terbaru yang kebetulan ada". Ini inti rollback yang bisa dipertanggungjawabkan.</li>
+</ul>
+<h3 id="8-simpan-evidence-run">8. Simpan evidence run<a class="headerlink" href="#8-simpan-evidence-run" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh run list --workflow ci.yml --limit 5 &gt; evidence/05-run-list.txt
+</code></pre>
+<ul>
+<li><strong>Output:</strong> file berisi daftar run (status, conclusion, durasi).</li>
+<li><strong>Interpretasi:</strong> Bukti repo bisa direproduksi oleh reviewer tanpa akses ke akun lo.</li>
+</ul>
+<h2 id="hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)<a class="headerlink" href="#hari-3-eksperimen-kegagalan" title="Permanent link">&para;</a></h2>
+<h3 id="9-sengaja-gagalkan-test">9. Sengaja gagalkan test<a class="headerlink" href="#9-sengaja-gagalkan-test" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git switch -c lab/week-05-test-gagal
+printf 'func TestSengajaGagal(t *testing.T){ t.Fatal(&quot;sengaja&quot;) }\n' &gt; app/fail_test.go
+git add app/fail_test.go &amp;&amp; git commit -m &quot;week 05: test sengaja gagal&quot; &amp;&amp; git push -u origin lab/week-05-test-gagal
+gh pr create --fill &amp;&amp; gh run watch
+</code></pre>
+<ul>
+<li><strong>Output:</strong> job <code>lint-test</code> = failure (merah); <code>build-push</code> = skipped.</li>
+<li><strong>Interpretasi:</strong> Bukti acceptance #3: test merah → release ditolak, job build nggak pernah jalan karena <code>needs: [lint-test, integration]</code>.</li>
+</ul>
+<h3 id="10-lihat-log-kegagalan">10. Lihat log kegagalan<a class="headerlink" href="#10-lihat-log-kegagalan" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh run view --log-failed
+</code></pre>
+<ul>
+<li><strong>Output:</strong> baris <code>--- FAIL: TestSengajaGagal</code> dan <code>t.Fatal("sengaja")</code>.</li>
+<li><strong>Interpretasi:</strong> Log merah ini bukti lo. Simpan ke <code>evidence/</code> kalau perlu.</li>
+</ul>
+<h3 id="11-uji-concurrency-dua-push-beruntun">11. Uji concurrency: dua push beruntun<a class="headerlink" href="#11-uji-concurrency-dua-push-beruntun" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git commit --allow-empty -m &quot;week 05: push A&quot; &amp;&amp; git push origin main
+git commit --allow-empty -m &quot;week 05: push B&quot; &amp;&amp; git push origin main
+gh run list --workflow ci.yml --limit 3
+</code></pre>
+<ul>
+<li><strong>Output:</strong> salah satu run berstatus <code>cancelled</code>.</li>
+<li><strong>Interpretasi:</strong> <code>concurrency.group: ci-${{ github.ref }}</code> + <code>cancel-in-progress: true</code> membatalkan run lama supaya nggak nabrak.</li>
+</ul>
+<h3 id="12-deteksi-secret-di-file-palsu">12. Deteksi secret di file palsu<a class="headerlink" href="#12-deteksi-secret-di-file-palsu" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">printf 'AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\n' &gt; /tmp/fake.env
+gitleaks detect --no-git -s /tmp/fake.env -v
+</code></pre>
+<ul>
+<li><strong>Output:</strong> <code>Finding: AWS Access Key ID</code> dengan lokasi file.</li>
+<li><strong>Interpretasi:</strong> Detektor jalan. Di lab ini kita pakai file palsu supaya nggak ada kredensial nyata yang ke-commit.</li>
+</ul>
+<h3 id="13-deteksi-secret-di-history-repo">13. Deteksi secret di history repo<a class="headerlink" href="#13-deteksi-secret-di-history-repo" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gitleaks detect --log-opts=--all -v
+</code></pre>
+<ul>
+<li><strong>Output:</strong> <code>no leaks found</code> (untuk repo lab ini).</li>
+<li><strong>Interpretasi:</strong> History bersih. Kalau ketemu, itu temuan serius: rotasi dulu, jangan commit temuannya mentah.</li>
+</ul>
+<h3 id="14-permissions-terlalu-ketat-harus-gagal">14. Permissions terlalu ketat (harus gagal)<a class="headerlink" href="#14-permissions-terlalu-ketat-harus-gagal" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git switch -c lab/week-05-permissions
+# hapus baris `packages: write` dari job build-push, commit, push
+gh run watch
+</code></pre>
+<ul>
+<li><strong>Output:</strong> step push GHCR gagal: <code>resource not accessible by integration</code> / <code>denied: permission</code>.</li>
+<li><strong>Interpretasi:</strong> Bukti <code>permissions:</code> beneran berlaku. Ini yang bikin least-privilege bukan cuma tulisan.</li>
+</ul>
+<h3 id="15-rollback-sungguhan-pakai-digest-lama">15. Rollback sungguhan pakai digest lama<a class="headerlink" href="#15-rollback-sungguhan-pakai-digest-lama" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">OLD=$(git rev-parse --short=12 HEAD~2)
+docker pull ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-$OLD 2&gt;/dev/null || echo &quot;tag lama nggak ada&quot;
+docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-$OLD 2&gt;/dev/null
+</code></pre>
+<ul>
+<li><strong>Output:</strong> digest image 2 commit lalu, atau pesan "tag lama nggak ada".</li>
+<li><strong>Interpretasi:</strong> Kalau tag-nya nggak ada, itu sendiri temuan: retensi image belum diatur. Rollback cuma mungkin kalau artefak lama masih ada di registry.</li>
+</ul>
+<h3 id="16-pemulihan-eksperimen-bersihkan-branch">16. Pemulihan eksperimen (bersihkan branch)<a class="headerlink" href="#16-pemulihan-eksperimen-bersihkan-branch" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">rm app/fail_test.go &amp;&amp; git add -A &amp;&amp; git commit -m &quot;week 05: hapus test gagal&quot; &amp;&amp; git push
+git checkout .github/workflows/ci.yml &amp;&amp; git commit -am &quot;week 05: kembalikan permissions&quot; &amp;&amp; git push
+git switch main &amp;&amp; git branch -D lab/week-05-permissions lab/week-05-test-gagal
+</code></pre>
+<ul>
+<li><strong>Output:</strong> <code>Deleted branch lab/week-05-permissions</code>.</li>
+<li><strong>Interpretasi:</strong> Repo kembali ke kondisi sehat. Nggak ada branch eksperimen yang dibiarin tergeletak.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-05-cicd/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

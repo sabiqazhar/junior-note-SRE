@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 16 · Load Test, Chaos &amp; Incident Simulation</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-16-final-capstone/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-16-load-test-chaos-incident-simulation">Perintah — Week 16 · Load Test, Chaos &amp; Incident Simulation</a><ul>
+<li><a href="#hari-2-kondisi-normal">Hari 2 (kondisi normal)</a></li>
+<li><a href="#hari-3-eksperimen-kegagalan-chaos">Hari 3 (eksperimen kegagalan / chaos)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-16-load-test-chaos-incident-simulation">Perintah — Week 16 · Load Test, Chaos &amp; Incident Simulation<a class="headerlink" href="#perintah-week-16-load-test-chaos-incident-simulation" title="Permanent link">&para;</a></h1>
+<p>Format: perintah → output → interpretasi.</p>
+<h2 id="hari-2-kondisi-normal">Hari 2 (kondisi normal)<a class="headerlink" href="#hari-2-kondisi-normal" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 1. Cek versi k6 (sekarang v2.x — PIN di CI)
+$ k6 version
+# output: k6 v2.0.x (... )
+# interpretasi: catat versi, jangan biarkan CI pakai latest.
+
+# 2. Baseline load test
+$ k6 run loadtest/loadtest.js
+# output: ✓ p(95)&lt;300  ✓ p(99)&lt;800  ✓ http_req_failed&lt;0.01
+# interpretasi: di 50 VU, threshold lolos = kapasitas cukup.
+
+# 3. Simpan hasil JSON (full summary)
+$ k6 run --summary-mode=full --out json=loadtest/results.json loadtest/loadtest.js
+# output: hasil metrics ke results.json
+# interpretasi: buat dibandingkan per tahap beban.
+
+# 4. Naik beban (edit stages ke 200 VU dulu)
+$ k6 run loadtest/loadtest.js
+# output: p(95)=820ms ✗ (threshold failed)
+# interpretasi: di 200 VU sistem SATURASI — p95 meledak.
+
+# 5. Hitung concurrency via Little's Law
+$ python3 -c &quot;print(500*0.2)&quot;   # λ=500, W=0.2
+# output: 100.0
+# interpretasi: butuh ~100 request in-flight buat 500 req/detik @200ms.
+
+# 6. Threshold gagal = CI gagal
+$ k6 run --env EXPECT=p95_100 loadtest/loadtest.js; echo $?
+# output: ✗ thresholds failed / exit 99
+# interpretasi: CI harus berhenti (non-zero exit) saat SLO jebol.
+</code></pre>
+<h2 id="hari-3-eksperimen-kegagalan-chaos">Hari 3 (eksperimen kegagalan / chaos)<a class="headerlink" href="#hari-3-eksperimen-kegagalan-chaos" title="Permanent link">&para;</a></h2>
+<pre><code class="language-bash"># 7. Siapkan proxy latency (toxiproxy)
+$ toxiproxy-cli create redis -l 0.0.0.0:26379 -u redis:6379
+# output: Created proxy redis
+# interpretasi: proxy di depan Redis buat inject gangguan.
+
+# 8. Inject latency 200ms
+$ toxiproxy-cli add redis --listen 0.0.0.0:26379 --upstream redis:6379 --latency 200
+# output: Added toxic latency to redis
+# interpretasi: tiap request Redis lambat 200ms.
+
+# 9. Jalankan k6 selama chaos
+$ k6 run loadtest/loadtest.js
+# output: p(95)=540ms ✗ / error 3%
+# interpretasi: latency &amp; error naik — hipotesis &quot;tetap &lt;500ms&quot; GAGAL.
+
+# 10. Chaos Mesh: kill 1 pod api
+$ kubectl apply -f - &lt;&lt;'EOF'
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata: { name: kill-api }
+spec: { action: pod-kill, mode: one, selector: { labelSelectors: { app: sre-api } } }
+EOF
+# output: podchaos.chaos-mesh.org/kill-api created
+# interpretasi: sengaja rusak 1 replica, lihat self-healing.
+
+# 11. Amati pemulihan
+$ kubectl get pods -w
+# output: pod lama hilang, pod baru Running 3/3 dalam ~10s
+# interpretasi: ReplicaSet ganti otomatis (self-healing terbukti).
+
+# 12. Cek metric Prometheus (contoh p99)
+$ kubectl port-forward svc/prometheus 9090 &amp;
+$ curl -s 'http://localhost:9090/api/v1/query?query=histogram_quantile(0.99,rate(http_request_duration_seconds_bucket[5m]))'
+# output: {value:[...,0.81]}  (p99 = 0.81s)
+# interpretasi: p99 terbaca dari Prometheus, bukan tebakan.
+
+# 13. Diagnosis log
+$ kubectl logs deploy/sre-api --tail=50 | grep -i redis
+# output: ... timeout connecting redis
+# interpretasi: akar masalah = latency Redis (sesuai hipotesis).
+
+# 14. ABORT: hentikan chaos &amp; pulihkan
+$ kubectl delete podchaos kill-api
+$ toxiproxy-cli delete redis
+# output: deleted
+# interpretasi: eksperimen dihentikan, proxy dibersihkan.
+
+# 15. Ulangi setelah perbaikan (contoh: circuit breaker / cache turbo)
+$ k6 run loadtest/loadtest.js
+# output: p(95)=290ms ✓
+# interpretasi: perbaikan turunkan p95 di bawah 300ms (before/after terukur).
+
+# 16. CLEANUP wajib
+$ kubectl delete -f kubernetes/
+$ kind delete cluster --name sre
+# output: deleted / Deleted cluster sre
+# interpretasi: lab bersih, nggak ada chaos nyangkut di produksi.
+</code></pre>
+<div class="foot"><span>production-reliability-lab/labs/week-16-final-capstone/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

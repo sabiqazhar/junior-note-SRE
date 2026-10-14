@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 05 · CI/CD dan release management</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-05-cicd/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-05-cicd-dan-release-management">Ringkasan — Minggu 05 · CI/CD dan release management</a><ul>
+<li><a href="#inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat</a></li>
+<li><a href="#peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)</a></li>
+<li><a href="#perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output</a></li>
+<li><a href="#failure-matrix-decision-tree">Failure matrix / decision tree</a></li>
+<li><a href="#jebakan-umum">Jebakan umum</a></li>
+<li><a href="#acceptance-criteria-salin-dari-readme-boleh-ditambah">Acceptance criteria (salin dari README, boleh ditambah)</a></li>
+<li><a href="#satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-05-cicd-dan-release-management">Ringkasan — Minggu 05 · CI/CD dan release management<a class="headerlink" href="#ringkasan-minggu-05-cicd-dan-release-management" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman untuk dibaca ulang sebelum ujian/wawancara. Bukan pengganti bahan-bacaan.md.</p>
+</blockquote>
+<h2 id="inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat<a class="headerlink" href="#inti-minggu-ini-dalam-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Deployment manual itu insiden yang nunggu waktu: manusia nggak andal ngikutin 14 langkah berurutan, jadi pindahkan langkah itu ke mesin.</li>
+<li>Build <strong>sekali</strong>, hasilkan satu artefak immutable, lalu promosikan artefak yang sama ke semua environment — yang beda cuma konfigurasinya.</li>
+<li>Identitas image yang bisa dipertanggungjawabkan itu digest (<code>sha256:...</code>), bukan <code>:latest</code>; rollback = nunjuk digest versi sebelumnya.</li>
+<li>Pipeline harus bisa <strong>menolak</strong>: kalau test gagal, job build nggak boleh jalan (<code>needs:</code> + exit code ≠ 0).</li>
+<li>Keamanan supply chain minggu ini: <code>permissions:</code> eksplisit, OIDC bukan kredensial permanen, attestation <strong>plus verifikasinya</strong>.</li>
+</ol>
+<h2 id="peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)<a class="headerlink" href="#peta-konsep-daftar-bertingkat" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>CI/CD</strong></li>
+<li>CI: build + test + lint otomatis tiap perubahan</li>
+<li>CD: <em>Delivery</em> (siap rilis, tombol manual) vs <em>Deployment</em> (otomatis ke produksi)</li>
+<li>Pipeline yang bisa dipercaya → nggak flaky, cukup cepat (&lt;10 menit), bisa menolak</li>
+<li><strong>Artefak</strong></li>
+<li>Immutable: dibuat sekali, nggak diubah</li>
+<li>Identitas: tag SHA (manusia) → digest <code>sha256:</code> (mesin)</li>
+<li>Promotion: build di CI → dipakai di staging → dipakai di produksi</li>
+<li>Rollback: pull digest versi sebelumnya</li>
+<li><strong>Kontrol alur workflow</strong></li>
+<li><code>on:</code> (push / pull_request)</li>
+<li><code>concurrency.group</code> + <code>cancel-in-progress</code></li>
+<li><code>needs:</code> (urutan &amp; penolakan)</li>
+<li><code>if:</code> (mis. cuma jalan di <code>refs/heads/main</code>)</li>
+<li><strong>Keamanan pipeline</strong></li>
+<li><code>permissions:</code> minimal (<code>contents: read</code> sebagai dasar)</li>
+<li>Secret: encrypted at rest, di-mask di log, tapi gampang bocor kalau di-echo</li>
+<li><code>pull_request_target</code> + checkout PR head = RCE</li>
+<li>OIDC (<code>id-token: write</code>) → token pendek, tanpa kredensial permanen</li>
+<li><strong>Supply chain</strong></li>
+<li>Attestation (provenance): siapa build, dari commit apa, workflow mana</li>
+<li>Verifikasi: <code>gh attestation verify --signer-workflow ...</code></li>
+<li>Pelengkap: image scan (Trivy), secret scan (gitleaks)</li>
+<li><strong>Evidence wajib</strong></li>
+<li>Log run hijau (PR) dan run merah (test sengaja digagalkan)</li>
+<li>Daftar tag + digest di GHCR</li>
+<li>Output <code>gitleaks detect</code> bersih</li>
+</ul>
+<h2 id="perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output<a class="headerlink" href="#perintah-kunci-yang-harus-lo-lihat-di-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah</th>
+<th>Yang dicari di output</th>
+<th>Artinya kalau beda</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gh run list --workflow ci.yml --limit 5</code></td>
+<td>Kolom <code>status</code> = <code>completed</code>, <code>conclusion</code> = <code>success</code></td>
+<td><code>failure</code> = ada step gagal; <code>cancelled</code> = kena concurrency group</td>
+</tr>
+<tr>
+<td><code>gh run view &lt;run-id&gt; --log-failed</code></td>
+<td>Baris error + nama step yang gagal</td>
+<td>Kalau kosong padahal merah, kemungkinan job di-cancel</td>
+</tr>
+<tr>
+<td><code>gh run watch &lt;run-id&gt;</code></td>
+<td>Durasi tiap job</td>
+<td>Job &gt; 10 menit = calon masalah adopsi</td>
+</tr>
+<tr>
+<td><code>git rev-parse --short=12 HEAD</code></td>
+<td>12 karakter hex, mis. <code>abc123def456</code></td>
+<td>Beda dengan SHA di UI = lo di branch/detached HEAD lain</td>
+</tr>
+<tr>
+<td><code>docker buildx build -t sre-api:sha-$(git rev-parse --short=12 HEAD) -f docker/Dockerfile .</code></td>
+<td><code>=&gt; exporting to image</code>, <code>naming to ...</code></td>
+<td><code>failed to solve</code> = Dockerfile/konteks salah</td>
+</tr>
+<tr>
+<td><code>docker images --digests sre-api</code></td>
+<td>Kolom <code>DIGEST</code> berisi <code>sha256:...</code></td>
+<td><code>none</code> = image dibuat lokal tanpa push ke registry</td>
+</tr>
+<tr>
+<td><code>gh attestation verify oci://ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-&lt;sha&gt; -R &lt;owner&gt;/&lt;repo&gt;</code></td>
+<td><code>Loaded digest sha256:...</code> + <code>Verification succeeded</code></td>
+<td><code>no attestations found</code> = step attest belum jalan/nggak di-push</td>
+</tr>
+<tr>
+<td><code>gitleaks detect --no-git -v</code></td>
+<td><code>no leaks found</code> (exit 0)</td>
+<td>Ada <code>Finding:</code> = secret nyangkut di working tree</td>
+</tr>
+<tr>
+<td><code>gitleaks detect --log-opts=--all -v</code></td>
+<td>Sama, tapi scan seluruh history</td>
+<td>Ketemu di history = secret pernah di-commit, harus dirotasi</td>
+</tr>
+<tr>
+<td><code>gh api repos/&lt;owner&gt;/&lt;repo&gt;/actions/permissions</code></td>
+<td><code>default_workflow_permissions</code> (biasanya <code>read</code> atau <code>write</code>)</td>
+<td><code>write</code> = repo lo ngasih hak berlebih ke semua workflow</td>
+</tr>
+<tr>
+<td><code>gh api /repos/&lt;owner&gt;/&lt;repo&gt;/packages/container/sre-api/versions</code></td>
+<td>Daftar versi + <code>name</code> (digest) + tag</td>
+<td>Nggak ada tag SHA = workflow build nggak jalan di commit itu</td>
+</tr>
+<tr>
+<td><code>docker pull ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api@sha256:&lt;digest&gt;</code></td>
+<td><code>Status: Downloaded newer image</code> / <code>Image is up to date</code></td>
+<td><code>manifest unknown</code> = digest salah atau image udah dihapus</td>
+</tr>
+<tr>
+<td><code>docker run --rm sre-api:sha-&lt;sha&gt; -healthcheck</code></td>
+<td>Exit 0</td>
+<td>Exit 1 = binary jalan tapi <code>/healthz</code> nggak jawab (nggak ada server hidup)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="failure-matrix-decision-tree">Failure matrix / decision tree<a class="headerlink" href="#failure-matrix-decision-tree" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Kemungkinan penyebab</th>
+<th>Cara buktikan</th>
+<th>Mitigasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Job <code>integration</code> gagal di <code>go test</code></td>
+<td>Service container belum sehat / DSN salah</td>
+<td>Lihat log step; cek <code>pg_isready</code> healthcheck</td>
+<td>Tambah <code>health-cmd</code> + <code>health-retries</code>, pakai env <code>DATABASE_URL</code> yang sama dengan compose</td>
+</tr>
+<tr>
+<td>Build jalan meski test merah</td>
+<td><code>needs:</code> nggak diisi, atau jobnya beda workflow</td>
+<td>Cek <code>gh run view --log-failed</code> dan bagian <code>needs:</code></td>
+<td>Tambah <code>needs: [lint-test, integration]</code></td>
+</tr>
+<tr>
+<td>Dua deploy nabrak</td>
+<td>Nggak ada <code>concurrency</code></td>
+<td>Dua run aktif di <code>gh run list</code></td>
+<td>Tambah <code>concurrency.group</code> per ref</td>
+</tr>
+<tr>
+<td><code>resource not accessible by integration</code></td>
+<td><code>permissions:</code> kurang</td>
+<td>Bandingkan hak yang dibutuhkan action (<code>packages: write</code> buat GHCR push)</td>
+<td>Tambah permission <strong>spesifik</strong> di level job, jangan <code>write-all</code></td>
+</tr>
+<tr>
+<td><code>no attestations found</code></td>
+<td>Step attest nggak jalan, atau <code>subject-digest</code> kosong</td>
+<td>Cek output step build (<code>digest</code>) dan step attest</td>
+<td>Pastikan <code>id: build</code> ada dan <code>attestations: write</code> + <code>id-token: write</code> diset</td>
+</tr>
+<tr>
+<td>Attestasi ada tapi verifikasi gagal</td>
+<td><code>--signer-workflow</code> beda path/branch, atau image dari runner self-hosted</td>
+<td><code>gh attestation verify ... --signer-workflow &lt;path&gt;</code></td>
+<td>Cocokin path workflow; tambah <code>--deny-self-hosted-runners</code> kalau kebijakan lo gitu</td>
+</tr>
+<tr>
+<td>Secret muncul di log</td>
+<td>Di-echo/<code>env</code>/<code>base64</code> di step</td>
+<td><code>gh run view --log</code> lalu grep nama variabel</td>
+<td>Jangan nyetak secret; pakai <code>::add-mask::</code> untuk nilai turunan</td>
+</tr>
+<tr>
+<td><code>latest</code> di produksi nggak sesuai ekspektasi</td>
+<td>Tag mutable ketimpa build baru</td>
+<td><code>docker inspect</code> bandingkan digest</td>
+<td>Pakai digest di compose/manifest</td>
+</tr>
+<tr>
+<td>Test lulus di lokal, gagal di CI (acak)</td>
+<td>Flaky: waktu, urutan, network</td>
+<td>Re-run 3× tanpa ubah kode</td>
+<td>Hilangkan <code>sleep</code>, pakai retry/healthcheck dan <code>-count=1</code></td>
+</tr>
+<tr>
+<td>Cache bikin hasil beda antar versi Go</td>
+<td>Go build cache bentrok sama matrix</td>
+<td>Matiin <code>cache: true</code>, jalanin ulang</td>
+<td>Pisah <code>cache-dependency-path</code> + key per versi</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jebakan-umum">Jebakan umum<a class="headerlink" href="#jebakan-umum" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>:latest</code> musuh rollback.</strong> Mutable, dan lo nggak pernah tahu persis apa yang jalan.</li>
+<li><strong><code>pull_request_target</code> + checkout PR head</strong> = celah RCE. Jangan.</li>
+<li><strong>Lupa <code>permissions:</code></strong> di repo lama → workflow dapet akses <code>write</code> gratis.</li>
+<li><strong>Attestation tanpa verifikasi</strong> = teater keamanan. Sertakan <code>gh attestation verify</code>.</li>
+<li><strong>Cache Go bentrok sama matrix build</strong> → build sukses di satu versi Go, gagal di versi lain secara acak.</li>
+<li><strong>Test flaky</strong> bikin orang mulai re-run tanpa baca; itu awal mula pipeline kehilangan fungsi.</li>
+<li><strong>Naruh secret di argumen <code>run:</code></strong> (<code>run: ./deploy.sh ${{ secrets.TOKEN }}</code>) → keliatan di <code>ps</code> dan log; pakai <code>env:</code>.</li>
+<li><strong>Nge-pin action ke <code>@main</code></strong> → action bisa berubah tanpa lo tahu; pin ke tag versi atau SHA commit.</li>
+</ul>
+<h2 id="acceptance-criteria-salin-dari-readme-boleh-ditambah">Acceptance criteria (salin dari README, boleh ditambah)<a class="headerlink" href="#acceptance-criteria-salin-dari-readme-boleh-ditambah" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Test + lint jalan otomatis tiap PR dan selesai <strong>&lt; 10 menit</strong>.</li>
+<li>Setiap commit punya image dengan tag berbasis SHA yang bisa dilacak (+ digest tercatat).</li>
+<li>Test sengaja digagalkan → pipeline menolak release (bukti: log run merah, job build nggak jalan).</li>
+<li>Tidak ada secret tercetak di log/artefak; <code>permissions:</code> ditulis eksplisit.</li>
+<li><em>(tambahan)</em> <code>gh attestation verify</code> lulus untuk minimal satu image, dan perintahnya tercatat di <code>commands.md</code>.</li>
+<li><em>(tambahan)</em> Prosedur rollback tertulis dengan perintah yang nunjuk digest, bukan tag.</li>
+</ol>
+<h2 id="satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat<a class="headerlink" href="#satu-kalimat-yang-harus-lo-ingat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Kalau lo nggak bisa sebutin <strong>digest</strong> image yang lagi jalan di produksi, lo belum punya release management — lo cuma punya kebiasaan deploy.</p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-05-cicd/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

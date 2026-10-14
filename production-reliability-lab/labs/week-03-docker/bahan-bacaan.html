@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 03 · Docker production fundamentals — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-03-docker/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-03-docker-production-fundamentals-bahan-bacaan">Minggu 03 · Docker production fundamentals — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-image-layer-multi-stage-build">2.1 Image layer &amp; multi-stage build</a></li>
+<li><a href="#22-container-lifecycle-restart-policy">2.2 Container lifecycle &amp; restart policy</a></li>
+<li><a href="#23-bridge-network-dns-internal-compose">2.3 Bridge network &amp; DNS internal Compose</a></li>
+<li><a href="#24-volume-persistensi">2.4 Volume &amp; persistensi</a></li>
+<li><a href="#25-healthcheck-depends_on-condition">2.5 Healthcheck &amp; depends_on condition</a></li>
+<li><a href="#26-cgroups-v2-resource-limit">2.6 cgroups v2 &amp; resource limit</a></li>
+<li><a href="#27-controlled-degradation-inti-minggu-ini">2.7 Controlled degradation (inti minggu ini)</a></li>
+<li><a href="#28-docker-compose-vs-swarm">2.8 docker compose vs Swarm</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar-dari-up-sampai-container-mati">3. Mekanisme di balik layar: dari up sampai container mati</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-03-docker-production-fundamentals-bahan-bacaan">Minggu 03 · Docker production fundamentals — Bahan Bacaan<a class="headerlink" href="#minggu-03-docker-production-fundamentals-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham konsepnya. Baru setelah itu kerjakan lab.md.</p>
+</blockquote>
+<hr />
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Lo udah jago bikin Dockerfile dan <code>docker run</code>. Tapi di produksi, beda tipis antara "jalan di laptop" dan "jalan dengan aman". Contoh nyata: lo deploy API, besok pagi user lapor "server sering restart sendiri". Lo buka dashboard, lihat container <code>restarting (1)</code> terus. Kenapa? Karena lo nggak kasih <strong>healthcheck</strong>, nggak kasih <strong>resource limit</strong>, dan aplikasi lo <strong>hang</strong> (bukan balas 503) pas Redis mati.</p>
+<p>Minggu ini ngajarin operasi container yang terkontrol: lifecycle, resource, network, dan—paling penting—<strong>degradasi terkendali</strong>. Artinya: kalau dependency mati, aplikasi lo harus gagal <em>cepat dan jelas</em>, bukan nggantung sampai timeout 60 detik. Itu yang membedakan "lab" dan "calon insiden".</p>
+<p>Fakta versi 2025–2026 yang wajib lo tahu: <code>docker-compose</code> (v1, Python) <strong>sudah dihapus</strong> — sekarang <code>docker compose</code> (v2, Go). PostgreSQL <strong>18 GA 25 Sep 2025</strong> (default <code>data_checksum ON</code>, ada AIO <code>io_method</code>, <code>md5</code> deprecated). Redis pakai <code>7-alpine</code>. Semua itu yang lo pakai di lab.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-image-layer-multi-stage-build">2.1 Image layer &amp; multi-stage build<a class="headerlink" href="#21-image-layer-multi-stage-build" title="Permanent link">&para;</a></h3>
+<p>Image Docker itu tumpukan layer yang read-only. Tiap <code>RUN</code>, <code>COPY</code>, <code>ADD</code> bikin layer baru. Cache layer ini yang bikin build cepat — tapi juga jebakan: <code>COPY . .</code> di awal bikin cache hancur tiap lo ubah kode.</p>
+<p><strong>Multi-stage build</strong> = pakai image besar buat compile, salin cuma binary ke image kecil (distroless/alpine). Hasilnya image ringan, attack surface kecil, start cepat.</p>
+<h3 id="22-container-lifecycle-restart-policy">2.2 Container lifecycle &amp; restart policy<a class="headerlink" href="#22-container-lifecycle-restart-policy" title="Permanent link">&para;</a></h3>
+<p>Siklus: <code>created → running → paused/stopped → removed</code>. <code>restart: unless-stopped</code> bikin container hidup lagi kalau host reboot atau proses mati — tapi HATI-HATI: ini nggak sama dengan "sehat". Container bisa restart terus (<code>restarting</code>) kalau aplikasinya panic saat start.</p>
+<h3 id="23-bridge-network-dns-internal-compose">2.3 Bridge network &amp; DNS internal Compose<a class="headerlink" href="#23-bridge-network-dns-internal-compose" title="Permanent link">&para;</a></h3>
+<p>Tiap <code>docker compose</code> bikin bridge network sendiri, plus <strong>DNS internal</strong>: service bisa panggil service lain pakai nama service (<code>api</code> → <code>redis</code>). Tapi ini cuma di dalam jaringan itu. Laptop lo nggak bisa resolve <code>redis</code>. Makanya <code>postgres</code> &amp; <code>redis</code> <strong>nggak usah punya <code>ports:</code></strong> — mereka cuma reachable dari jaringan internal.</p>
+<h3 id="24-volume-persistensi">2.4 Volume &amp; persistensi<a class="headerlink" href="#24-volume-persistensi" title="Permanent link">&para;</a></h3>
+<p>Data di dalam container itu ilang kalau container dihapus. <code>volume</code> (atau bind mount) nyimpen di host. Trap terbesar: <code>docker compose down -v</code> = volume ikut dihapus = <strong>data hilang</strong>. <code>down</code> tanpa <code>-v</code> aman.</p>
+<h3 id="25-healthcheck-depends_on-condition">2.5 Healthcheck &amp; depends_on condition<a class="headerlink" href="#25-healthcheck-depends_on-condition" title="Permanent link">&para;</a></h3>
+<p>Dua mekanisme beda yang sering disamain:
+- <strong><code>healthcheck</code></strong> → "apakah <em>proses ini</em> sehat?" (mis. <code>pg_isready</code>, <code>redis-cli ping</code>).
+- <strong><code>depends_on: condition: service_healthy</code></strong> → "jangan start aku sebelum dependency-nya <em>siap</em>".</p>
+<p><code>depends_on</code> bentuk pendek (<code>depends_on: [redis]</code>) itu jebakan: dia cuma nunggu container <strong>start</strong>, bukan <strong>siap</strong>. Postgres butuh beberapa detik buat init — API bisa kena connection error kalau start bareng.</p>
+<h3 id="26-cgroups-v2-resource-limit">2.6 cgroups v2 &amp; resource limit<a class="headerlink" href="#26-cgroups-v2-resource-limit" title="Permanent link">&para;</a></h3>
+<p>Container itu cuma proses di bawah cgroup. <code>deploy.resources.limits</code> (di Compose non-Swarm) ngasih batas CPU/memori/pids. Tanpa ini, satu container bisa makan semua RAM host → host yang kena OOM, bukan container. Di minggu 1 lo udah lihat <code>memory.events</code>; di sini lo yang pasang batasnya.</p>
+<h3 id="27-controlled-degradation-inti-minggu-ini">2.7 Controlled degradation (inti minggu ini)<a class="headerlink" href="#27-controlled-degradation-inti-minggu-ini" title="Permanent link">&para;</a></h3>
+<p>Ini yang paling penting. Saat Redis mati, API lo harus:
+- <strong>fail fast</strong> → balas 503 dalam milidetik, atau
+- <strong>degrade</strong> → lanjut tanpa cache, atau
+- <strong>jangan hang</strong> → jangan nunggu Redis sampai <code>proxy_read_timeout</code> habis.</p>
+<p>Kalau API lo <em>hang</em> pas Redis mati, berarti ada bug nyata di error handling. Temuin itu minggu ini, perbaiki minggu 6.</p>
+<h3 id="28-docker-compose-vs-swarm">2.8 <code>docker compose</code> vs Swarm<a class="headerlink" href="#28-docker-compose-vs-swarm" title="Permanent link">&para;</a></h3>
+<p><code>deploy.replicas</code> &amp; <code>update_config</code> itu fitur <strong>Swarm</strong>. Di Compose biasa mereka <strong>diabaikan</strong>. Yang tetap jalan di Compose non-Swarm: <code>deploy.resources.limits</code>. Jangan kaget kalau <code>replicas: 3</code> nggak nambah container.</p>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar-dari-up-sampai-container-mati">3. Mekanisme di balik layar: dari <code>up</code> sampai container mati<a class="headerlink" href="#3-mekanisme-di-balik-layar-dari-up-sampai-container-mati" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>docker compose up -d --build --wait</code></strong> → Compose baca <code>compose.yaml</code>, build image, buat network &amp; volume, start container, lalu <code>--wait</code> nunggu <strong>healthcheck OK</strong>.</li>
+<li><strong>Network dibikin</strong> → bridge + DNS internal. <code>api</code> bisa resolve <code>redis</code> jadi IP internal.</li>
+<li><strong>depends_on dievaluasi</strong> → <code>api</code> nggak start sampai <code>postgres</code> &amp; <code>redis</code> <code>service_healthy</code>.</li>
+<li><strong>Healthcheck jalan</strong> → Compose ngecek tiap <code>interval</code>. Status masuk ke <code>docker compose ps</code> kolom Health.</li>
+<li><strong>Aplikasi jalan</strong> → <code>sre-api</code> coba connect Postgres/Redis. Kalau sehat, oke.</li>
+<li><strong>Redis mati (eksperimen)</strong> → <code>docker compose stop redis</code>. API yang nggak punya timeout di client bakal <strong>hang</strong> di tiap request yang butuh Redis.</li>
+<li><strong>OOM (eksperimen)</strong> → <code>docker run --memory=64m</code>. cgroup kena batas → kernel nembak proses → container exit, lalu <code>restart: unless-stopped</code> nyalain lagi → loop <code>restarting</code>.</li>
+<li><strong>Bukti</strong> → <code>docker inspect</code> (state, exit code), <code>docker events</code>, <code>docker stats</code>, <code>docker compose logs</code>.</li>
+</ol>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti dengan bahasa sederhana</th>
+<th>Contoh konkret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Image layer</strong></td>
+<td>Lapisan read-only penyusun image</td>
+<td><code>COPY . .</code> bikin layer baru</td>
+</tr>
+<tr>
+<td><strong>Multi-stage build</strong></td>
+<td>Build di image besar, salin binary ke image kecil</td>
+<td><code>FROM golang:1.23 AS build</code> → <code>FROM gcr.io/distroless/static</code></td>
+</tr>
+<tr>
+<td><strong>Bridge network</strong></td>
+<td>Jaringan privat antar container</td>
+<td><code>docker compose</code> bikin 1 bridge per stack</td>
+</tr>
+<tr>
+<td><strong>DNS internal</strong></td>
+<td>Nama service = hostname di dalam network</td>
+<td><code>api</code> resolve <code>redis</code> → <code>172.20.0.3</code></td>
+</tr>
+<tr>
+<td><strong>Volume</strong></td>
+<td>Penyimpanan persistent di host</td>
+<td><code>pgdata:/var/lib/postgresql/data</code></td>
+</tr>
+<tr>
+<td><strong>Healthcheck</strong></td>
+<td>Tes "apakah aku sehat?"</td>
+<td><code>pg_isready -U app</code></td>
+</tr>
+<tr>
+<td><strong>depends_on (condition)</strong></td>
+<td>"jangan start sebelum dia sehat"</td>
+<td><code>condition: service_healthy</code></td>
+</tr>
+<tr>
+<td><strong>Resource limit</strong></td>
+<td>Batas CPU/RAM/pids lewat cgroup</td>
+<td><code>deploy.resources.limits.memory: 256M</code></td>
+</tr>
+<tr>
+<td><strong>Controlled degradation</strong></td>
+<td>Gagal cepat &amp; jelas, bukan hang</td>
+<td>Redis mati → API balas 503</td>
+</tr>
+<tr>
+<td><strong>restart policy</strong></td>
+<td>Aturan hidup-mati container</td>
+<td><code>unless-stopped</code></td>
+</tr>
+<tr>
+<td><strong>Swarm vs Compose</strong></td>
+<td>Orchestrator vs tool lokal</td>
+<td><code>replicas</code> cuma jalan di Swarm</td>
+</tr>
+<tr>
+<td><strong>Postgres 18</strong></td>
+<td>PG GA 25 Sep 2025, checksum ON</td>
+<td><code>initdb</code> default <code>data_checksum ON</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber (link)</th>
+<th>Bagian yang dibaca &amp; apa yang dicari</th>
+<th>Estimasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://docs.docker.com/get-started/">Docker Get Started</a></td>
+<td>Pahami image vs container vs registry secara umum. Lo udah mahir, jadi cukup skim bagian "Container" &amp; "Image".</td>
+<td>20 menit</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://docs.docker.com/reference/compose-file/services/">Compose file reference — services</a></td>
+<td>Fokus <code>depends_on</code> (condition), <code>healthcheck</code>, <code>deploy.resources.limits</code>, <code>restart</code>. Ini sumber otoritatif buat compose.yaml lo.</td>
+<td>40 menit</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://docs.docker.com/reference/dockerfile/">Dockerfile reference</a></td>
+<td>Fokus <code>FROM</code> (multi-stage), <code>COPY</code>, <code>USER</code>, <code>HEALTHCHECK</code>, <code>ENTRYPOINT</code> vs <code>CMD</code>.</td>
+<td>30 menit</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://docs.docker.com/compose/how-tos/startup-order/">Control startup order in Compose</a></td>
+<td>Cara bikin service nunggu dependency siap pakai <code>condition: service_healthy</code>. Langsung dipakai di lab.</td>
+<td>15 menit</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://docs.docker.com/reference/cli/docker/run/#memory">Docker SDK/CLI — resource limits</a></td>
+<td>Cek flag <code>--memory</code>, <code>--cpus</code>, <code>--pids-limit</code> buat eksperimen OOM di Hari 3.</td>
+<td>15 menit</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://www.postgresql.org/about/news/postgresql-18-released-2965/">PostgreSQL 18 release notes</a></td>
+<td>Konfirmasi fitur PG 18: <code>data_checksum</code> default ON, AIO <code>io_method</code>, <code>md5</code> deprecated.</td>
+<td>15 menit</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa bedanya <code>depends_on</code> bentuk pendek dan <code>condition: service_healthy</code>? Kenapa yang pendek itu jebakan?</li>
+<li>Apa bedanya <code>healthcheck</code> dan <code>depends_on</code>? Mana yang ngecek "dependency sehat"?</li>
+<li>Tanpa <code>USER</code> di Dockerfile, container jalan sebagai siapa? Kenapa itu bahaya?</li>
+<li><code>docker compose down</code> vs <code>docker compose down -v</code> — mana yang bikin data hilang?</li>
+<li>Lo pasang <code>deploy.resources.limits.memory: 256M</code>, tapi container tetep bikin host OOM. Kenapa bisa? (petunjuk: cgroup vs host)</li>
+<li>Redis mati dan API lo malah <em>hang</em> (bukan 503). Itu gejala apa, dan harusnya gimana?</li>
+<li><code>replicas: 3</code> di compose.yaml lo nggak nambah container. Kenapa?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataannya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"<code>docker-compose</code> masih bisa dipakai."</td>
+<td>v1 (Python) sudah dihapus. Pakai <code>docker compose</code> (v2). Tutorial lama dengan strip <code>-</code> usang.</td>
+</tr>
+<tr>
+<td>"<code>depends_on</code> nunggu service siap."</td>
+<td>Bentuk pendek cuma nunggu <em>start</em>. Pakai <code>condition: service_healthy</code> buat nunggu <em>siap</em>.</td>
+</tr>
+<tr>
+<td>"Healthcheck <code>test: ["CMD","true"]</code> cukup."</td>
+<td>Itu selalu sehat walau aplikasi mati. Tes yang beneran ngecek kesiapan.</td>
+</tr>
+<tr>
+<td>"Image <code>:latest</code> + cache = aman."</td>
+<td><code>:latest</code> bikin rollback mustahil. Pin versi/tag SHA.</td>
+</tr>
+<tr>
+<td>"Tanpa limit memori cuma container yang kena batas."</td>
+<td>Tanpa batas, container makan RAM host → <strong>host</strong> yang OOM, semua container mati.</td>
+</tr>
+<tr>
+<td>"<code>replicas</code> di compose = scaling."</td>
+<td>Itu fitur Swarm. Di Compose biasa diabaikan; yang jalan cuma <code>deploy.resources.limits</code>.</td>
+</tr>
+<tr>
+<td>"Redis mati = API error."</td>
+<td>Salah kelola, API malah <strong>hang</strong> nunggu Redis. Itu bug, bukan fitur.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-03-docker/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

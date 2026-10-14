@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 03 · Docker production fundamentals</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-03-docker/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-03-docker-production-fundamentals">Perintah — Week 03 · Docker production fundamentals</a><ul>
+<li><a href="#hari-2-kondisi-normal">Hari 2 (kondisi normal)</a></li>
+<li><a href="#hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-03-docker-production-fundamentals">Perintah — Week 03 · Docker production fundamentals<a class="headerlink" href="#perintah-week-03-docker-production-fundamentals" title="Permanent link">&para;</a></h1>
+<p>Format: <code>perintah</code> → output yang diharap → interpretasi. Output disanitasi. Jalankan di Ubuntu 22.04/24.04 + Docker Compose v2. Ganti <code>&lt;c&gt;</code> dengan nama/ID container asli (<code>docker compose ps</code>).</p>
+<hr />
+<h2 id="hari-2-kondisi-normal">Hari 2 (kondisi normal)<a class="headerlink" href="#hari-2-kondisi-normal" title="Permanent link">&para;</a></h2>
+<p><strong>1. Versi Compose (v2, bukan v1)</strong></p>
+<pre><code class="language-bash">docker compose version
+</code></pre>
+<p>→ <code>Docker Compose version v2.29.1</code>
+→ Ada spasi = v2 (Go). <code>docker-compose</code> (strip) sudah dihapus.</p>
+<p><strong>2. Validasi config sebelum jalan</strong></p>
+<pre><code class="language-bash">docker compose config
+</code></pre>
+<p>→ YAML tervalidasi, service <code>api/postgres/redis</code> muncul, nggak ada error.
+→ Mencegah typo YAML bikin stack gagal start.</p>
+<p><strong>3. Start dari bersih + tunggu healthcheck</strong></p>
+<pre><code class="language-bash">docker compose up -d --build --wait
+</code></pre>
+<p>→ <code>Container api ... Started</code> + <code>Running 3/3</code>.
+→ <code>--wait</code> nunggu sampai SEMUA healthcheck OK, bukan cuma container up.</p>
+<p><strong>4. Status + health tiap service</strong></p>
+<pre><code class="language-bash">docker compose ps --format 'table {{.Name}}\t{{.Status}}\t{{.Health}}'
+</code></pre>
+<p>→ <code>lab-api-1 Up 2m healthy</code> / <code>lab-postgres-1 Up 2m healthy</code> / <code>lab-redis-1 Up 2m healthy</code>
+→ Kolom Health = hasil healthcheck.</p>
+<p><strong>5. Log aplikasi real-time</strong></p>
+<pre><code class="language-bash">docker compose logs -f api
+</code></pre>
+<p>→ baris startup Go, koneksi ke PG/Redis sukses.
+→ <code>Ctrl-C</code> untuk berhenti follow.</p>
+<p><strong>6. Pemakaian resource nyata</strong></p>
+<pre><code class="language-bash">docker stats --no-stream
+</code></pre>
+<p>→ <code>NAME CPU% MEM USAGE / LIMIT PIDS</code>
+→ Limit terlihat di kolom MEM USAGE / LIMIT (mis. <code>45MiB / 256MiB</code>).</p>
+<p><strong>7. Inspect network &amp; DNS internal</strong></p>
+<pre><code class="language-bash">docker network ls
+docker compose exec api getent hosts redis
+</code></pre>
+<p>→ bridge stack ada; <code>api</code> resolve <code>redis</code> → <code>172.20.0.3 redis</code>.
+→ Bukti DNS internal Compose jalan.</p>
+<p><strong>8. Hanya port proxy yang terekspos</strong></p>
+<pre><code class="language-bash">ss -lntp | grep -E '5432|6379|8080'
+</code></pre>
+<p>→ cuma <code>:8080</code> (atau <code>:80</code> nginx) yang listen di host; <code>5432</code>/<code>6379</code> nggak ada.
+→ PG/Redis aman di jaringan internal.</p>
+<p><strong>9. Inspect state container</strong></p>
+<pre><code class="language-bash">docker inspect &lt;c&gt; --format '{{json .State}}'
+</code></pre>
+<p>→ <code>{"Status":"running","ExitCode":0,"Health":{"Status":"healthy"}}</code>
+→ State + exit code + health dalam satu JSON.</p>
+<hr />
+<h2 id="hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)<a class="headerlink" href="#hari-3-eksperimen-kegagalan" title="Permanent link">&para;</a></h2>
+<p><strong>10. OOM karena batas memori cgroup</strong></p>
+<pre><code class="language-bash">docker run --rm --name oom-test --memory=64m --cpus=.5 --pids-limit=100 postgres:18
+docker events --since 10m | grep -i oom
+</code></pre>
+<p>→ container exit OOM; event <code>oom</code> muncul.
+→ cgroup kena batas, bukan host. <code>docker run --rm</code> bersih otomatis.</p>
+<p><strong>11. Matiin Redis → lihat reaksi API</strong></p>
+<pre><code class="language-bash">docker compose stop redis
+docker compose logs -f api
+docker compose ps
+</code></pre>
+<p>→ lihat API <strong>hang</strong> (request nunggu Redis) — ini bug yang dicari.
+→ <strong>Kembali normal:</strong> <code>docker compose start redis &amp;&amp; docker compose ps</code> (tunggu healthy).</p>
+<p><strong>12. Uji degradasi lewat curl (Redis mati)</strong></p>
+<pre><code class="language-bash">curl -sS -m 2 -o /dev/null -w 'code=%{http_code} time=%{time_total}\n' http://localhost:8080/health
+</code></pre>
+<p>→ <code>code=503 time=0.002</code> = fail fast (bagus) / <code>time=2.0</code> hang = bug.
+→ Bukti controlled degradation.</p>
+<p><strong>13. Container restart loop</strong></p>
+<pre><code class="language-bash">docker compose restart api
+docker compose ps --format 'table {{.Name}}\t{{.Status}}'
+</code></pre>
+<p>→ kalau app panic: <code>Restarting</code>; kalau sehat: <code>Up</code>.
+→ <strong>Kembali normal:</strong> <code>docker compose up -d</code> setelah perbaiki env.</p>
+<p><strong>14. Cari kenapa restart terus</strong></p>
+<pre><code class="language-bash">docker inspect &lt;c&gt; --format '{{json .State}}' | jq
+docker events --since 10m
+</code></pre>
+<p>→ <code>ExitCode</code> &amp; <code>Error</code> ketemu; event <code>die</code>/<code>oom</code> muncul.
+→ Jq opsional; bisa <code>python3 -m json.tool</code>.</p>
+<p><strong>15. Healthcheck beneran vs <code>true</code></strong></p>
+<pre><code class="language-bash">docker compose exec postgres pg_isready -U app
+docker compose exec redis redis-cli ping
+</code></pre>
+<p>→ <code>pg_isready</code> → <code>/var/run/postgresql:5432 - accepting connections</code>; <code>redis-cli ping</code> → <code>PONG</code>.
+→ Ini tes healthcheck asli, bukan <code>true</code>.</p>
+<p><strong>16. Volume tidak hilang (beda down vs down -v)</strong></p>
+<pre><code class="language-bash">docker compose down          # data pgdata tetap
+docker volume ls | grep pgdata
+</code></pre>
+<p>→ volume <code>pgdata</code> masih ada setelah <code>down</code>.
+→ <code>down -v</code> (JANGAN di lab) yang bikin data hilang.</p>
+<p><strong>17. Versi image sesuai jadwal</strong></p>
+<pre><code class="language-bash">docker compose images
+</code></pre>
+<p>→ <code>postgres 18</code>, <code>redis 7-alpine</code>, <code>nginx 1.29-alpine</code>.
+→ Konfirmasi versi 2025–2026 dipakai.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-03-docker/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

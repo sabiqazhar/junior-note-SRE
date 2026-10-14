@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Week 12 · SLI, SLO, error budget, dan incident response</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-12-slo/README.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#week-12-sli-slo-error-budget-dan-incident-response">Week 12 · SLI, SLO, error budget, dan incident response</a><ul>
+<li><a href="#tujuan-minggu-ini">Tujuan minggu ini</a></li>
+<li><a href="#konsep-kunci-yang-harus-lo-kuasai">Konsep kunci yang harus lo kuasai</a></li>
+<li><a href="#yang-dikerjakan-hari-14">Yang dikerjakan (Hari 1–4)</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#struktur-folder">Struktur folder</a></li>
+<li><a href="#aturan-bukti">Aturan bukti</a></li>
+<li><a href="#referensi">Referensi</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="week-12-sli-slo-error-budget-dan-incident-response">Week 12 · SLI, SLO, error budget, dan incident response<a class="headerlink" href="#week-12-sli-slo-error-budget-dan-incident-response" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Status: <code>TODO</code> → <code>IN_PROGRESS</code> → <code>DONE</code>
+Commit terakhir lab ini: <code>-</code></p>
+</blockquote>
+<h2 id="tujuan-minggu-ini">Tujuan minggu ini<a class="headerlink" href="#tujuan-minggu-ini" title="Permanent link">&para;</a></h2>
+<p>Pahami dan kuasai sli, slo, error budget, dan incident response sampai bisa menjelaskannya dengan bukti, bukan tebakan.</p>
+<h2 id="konsep-kunci-yang-harus-lo-kuasai">Konsep kunci yang harus lo kuasai<a class="headerlink" href="#konsep-kunci-yang-harus-lo-kuasai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>SLI vs SLO vs SLA</li>
+<li>Error budget &amp; policy</li>
+<li>Multiwindow multi-burn-rate</li>
+<li>Incident lifecycle &amp; severity</li>
+<li>Blameless postmortem</li>
+</ul>
+<h2 id="yang-dikerjakan-hari-14">Yang dikerjakan (Hari 1–4)<a class="headerlink" href="#yang-dikerjakan-hari-14" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <strong>Hari 1 · Teori (2 jam)</strong> — baca referensi, tulis catatan konsep di <code>notes.md</code> dengan bahasa lo sendiri.</li>
+<li>[ ] <strong>Hari 2 · Praktik (2 jam)</strong> — implementasi lab, uji kondisi normal, simpan output di <code>evidence/</code>.</li>
+<li>[ ] <strong>Hari 3 · Eksperimen (2 jam)</strong> — sengaja rusak, ukur, troubleshoot, catat apa yang lo pelajari.</li>
+<li>[ ] <strong>Hari 4 · Review (2 jam)</strong> — acceptance test, README, runbook, commit.</li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<ol>
+<li>SLI bisa dihitung dari metrics yang sudah dikumpulkan (sumber data + window jelas).</li>
+<li>SLO punya periode evaluasi dan aturan eksklusi request tidak valid.</li>
+<li>Alert burn rate terpasang dan diuji dengan <code>promtool test rules</code>.</li>
+<li>Satu postmortem blameless lengkap: impact, timeline, root cause, 5-whys, action item ber-owner.</li>
+</ol>
+<h2 id="struktur-folder">Struktur folder<a class="headerlink" href="#struktur-folder" title="Permanent link">&para;</a></h2>
+<pre><code>labs/week-12-slo/
+├── README.md        &lt;- file ini
+├── notes.md         &lt;- catatan konsep Hari 1
+├── commands.md      &lt;- semua perintah yang dijalankan + output yang disanitasi
+├── runbooks/        &lt;- cara memperbaiki kegagalan (Hari 4)
+└── evidence/        &lt;- bukti: screenshot, log, hasil pengukuran
+</code></pre>
+<h2 id="aturan-bukti">Aturan bukti<a class="headerlink" href="#aturan-bukti" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Setiap acceptance criteria di atas harus punya <strong>bukti yang bisa direproduksi</strong> (perintah + output).</li>
+<li>Output yang mengandung IP internal, token, password, atau data pribadi <strong>wajib disanitasi</strong> sebelum di-commit.</li>
+<li>Jangan tandai minggu ini selesai hanya karena tutorialnya sudah ditonton.</li>
+</ol>
+<h2 id="referensi">Referensi<a class="headerlink" href="#referensi" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Google SRE Workbook — Implementing SLOs: https://sre.google/workbook/implementing-slos/</li>
+<li>Google SRE Workbook — Alerting on SLOs (multiwindow burn-rate): https://sre.google/workbook/alerting-on-slos/</li>
+<li>Google SRE Book — Embracing risk (error budgets): https://sre.google/sre-book/embracing-risk/</li>
+<li>Prometheus — Recording rules: https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/</li>
+<li>Prometheus — promtool check/test rules: https://prometheus.io/docs/prometheus/latest/command-line/promtool/</li>
+<li>Grafana — On-call &amp; incident response: https://grafana.com/docs/oncall/latest/</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-12-slo/README.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

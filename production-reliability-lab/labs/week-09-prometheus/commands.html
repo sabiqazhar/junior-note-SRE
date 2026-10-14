@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perintah — Week 09 · Metrics dengan Prometheus</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-09-prometheus/commands.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#perintah-week-09-metrics-dengan-prometheus">Perintah — Week 09 · Metrics dengan Prometheus</a><ul>
+<li><a href="#cek-kondisi-stack-persiapan">Cek kondisi stack (persiapan)</a><ul>
+<li><a href="#1-pastikan-stack-jalan">1. Pastikan stack jalan</a></li>
+<li><a href="#2-cek-target-scrape-dari-sisi-prometheus">2. Cek target scrape dari sisi Prometheus</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-kondisi-normal">Hari 2 (kondisi normal)</a><ul>
+<li><a href="#3-lihat-raw-metrics-dari-aplikasi">3. Lihat raw metrics dari aplikasi</a></li>
+<li><a href="#4-request-rate-per-route-reqdetik">4. Request rate per route (req/detik)</a></li>
+<li><a href="#5-error-ratio-per-route-01">5. Error ratio per route (0..1)</a></li>
+<li><a href="#6-request-in-flight-saturasi-murah">6. Request in-flight (saturasi murah)</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)</a><ul>
+<li><a href="#7-kirim-100-request-normal">7. Kirim 100 request normal</a></li>
+<li><a href="#8-kirim-20-request-error-post-body-rusak">8. Kirim 20 request error (POST body rusak)</a></li>
+<li><a href="#9-error-ratio-global-5-menit">9. Error ratio global (5 menit)</a></li>
+<li><a href="#10-p95-latency-agregasi-bucket-dulu-baru-quantile">10. p95 latency — agregasi bucket DULU, baru quantile</a></li>
+<li><a href="#11-cek-bucket-mana-yang-naik-distribusi">11. Cek bucket mana yang naik (distribusi)</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-review-kardinalitas">Hari 4 (review &amp; kardinalitas)</a><ul>
+<li><a href="#12-error-ratio-global-via-recording-rule-sudah-didefinisikan-minggu-12">12. Error ratio global via recording rule (sudah didefinisikan minggu 12)</a></li>
+<li><a href="#13-cek-kardinalitas-10-metrik-paling-gemuk">13. Cek kardinalitas: 10 metrik paling gemuk</a></li>
+<li><a href="#14-cek-kardinalitas-per-label-combo-route-bukan-path">14. Cek kardinalitas per label combo (route, bukan path)</a></li>
+<li><a href="#15-native-histogram-aktif-prometheus-38">15. Native histogram aktif? (Prometheus 3.8+)</a></li>
+<li><a href="#16-cek-range-selector-minimal-4-scrape-interval">16. Cek range selector minimal 4× scrape interval</a></li>
+<li><a href="#17-log-prometheus-kalau-target-down">17. Log Prometheus kalau target down</a></li>
+</ul>
+</li>
+<li><a href="#cara-buktikan-acceptance-minggu-9">Cara buktikan acceptance minggu 9</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="perintah-week-09-metrics-dengan-prometheus">Perintah — Week 09 · Metrics dengan Prometheus<a class="headerlink" href="#perintah-week-09-metrics-dengan-prometheus" title="Permanent link">&para;</a></h1>
+<p>Format: perintah → output → interpretasi.
+Semua query di bawah pakai nama metrik yang ada di <code>app/main.go</code>:
+<code>http_server_requests_total</code>, <code>http_server_request_duration_seconds_bucket</code>,
+<code>http_server_requests_in_flight</code>, dan <code>up</code>.</p>
+<h2 id="cek-kondisi-stack-persiapan">Cek kondisi stack (persiapan)<a class="headerlink" href="#cek-kondisi-stack-persiapan" title="Permanent link">&para;</a></h2>
+<h3 id="1-pastikan-stack-jalan">1. Pastikan stack jalan<a class="headerlink" href="#1-pastikan-stack-jalan" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose ps
+</code></pre>
+<pre><code>NAME                IMAGE                          STATUS        PORTS
+sre-lab-api-1       sre-lab-api                    Up 2 hours    0.0.0.0:8080-&gt;8080/tcp
+sre-lab-prometheus-1 prom/prometheus:3.13.1        Up 2 hours    0.0.0.0:9090-&gt;9090/tcp
+sre-lab-postgres-1  postgres:16                    Up 2 hours    5432/tcp
+</code></pre>
+<p>Interpretasi: <code>api</code> dan <code>prometheus</code> berstatus <code>Up</code>. Kalau salah satu <code>Exit</code>,
+scrape akan gagal dan target di <code>/targets</code> muncul DOWN.</p>
+<h3 id="2-cek-target-scrape-dari-sisi-prometheus">2. Cek target scrape dari sisi Prometheus<a class="headerlink" href="#2-cek-target-scrape-dari-sisi-prometheus" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job, health, lastError}'
+</code></pre>
+<pre><code>{&quot;job&quot;:&quot;api&quot;,&quot;health&quot;:&quot;up&quot;,&quot;lastError&quot;:&quot;&quot;}
+{&quot;job&quot;:&quot;prometheus&quot;,&quot;health&quot;:&quot;up&quot;,&quot;lastError&quot;:&quot;&quot;}
+</code></pre>
+<p>Interpretasi: kedua job <code>up</code>. Kalau <code>health</code> = <code>down</code>, cek <code>lastError</code>
+(biasanya DNS container, port salah, atau app belum register <code>/metrics</code>).</p>
+<h2 id="hari-2-kondisi-normal">Hari 2 (kondisi normal)<a class="headerlink" href="#hari-2-kondisi-normal" title="Permanent link">&para;</a></h2>
+<h3 id="3-lihat-raw-metrics-dari-aplikasi">3. Lihat raw metrics dari aplikasi<a class="headerlink" href="#3-lihat-raw-metrics-dari-aplikasi" title="Permanent link">&para;</a></h3>
+<pre><code>curl -fsS http://localhost:8080/metrics | grep http_server_requests_total
+</code></pre>
+<pre><code>http_server_requests_total{method=&quot;GET&quot;,route=&quot;/orders&quot;,status=&quot;200&quot;} 1842
+http_server_requests_total{method=&quot;GET&quot;,route=&quot;/orders&quot;,status=&quot;500&quot;} 11
+</code></pre>
+<p>Interpretasi: counter naik tiap request. <code>status="500"</code> mencatat error.
+Nilai mentah counter nggak boleh dipakai langsung — pakai <code>rate()</code>.</p>
+<h3 id="4-request-rate-per-route-reqdetik">4. Request rate per route (req/detik)<a class="headerlink" href="#4-request-rate-per-route-reqdetik" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">sum by (route) (rate(http_server_requests_total[5m]))
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;}   12.4
+{route=&quot;/slow&quot;}     0.2
+</code></pre>
+<p>Interpretasi: <code>/orders</code> dilayani ~12,4 req/detik rata-rata 5 menit terakhir.
+<code>rate()</code> otomatis ngurusin reset pas aplikasi restart.</p>
+<h3 id="5-error-ratio-per-route-01">5. Error ratio per route (0..1)<a class="headerlink" href="#5-error-ratio-per-route-01" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">sum by (route) (
+  rate(http_server_requests_total{status=~&quot;5..&quot;}[5m])
+) / sum by (route) (rate(http_server_requests_total[5m]))
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;}   0.006
+</code></pre>
+<p>Interpretasi: 0,6% request ke <code>/orders</code> gagal 5xx. Di bawah SLO 0,5%?
+Belum — tapi ini cuma satu route. Agregasi global lihat perintah 12.</p>
+<h3 id="6-request-in-flight-saturasi-murah">6. Request in-flight (saturasi murah)<a class="headerlink" href="#6-request-in-flight-saturasi-murah" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">http_server_requests_in_flight
+</code></pre>
+<pre><code>{}   3
+</code></pre>
+<p>Interpretasi: 3 request sedang diproses. Naik terus padahal rate datar =
+request nggak selesai (dependency melambat). Gejala awal sebelum latency rusak.</p>
+<h2 id="hari-3-eksperimen-kegagalan">Hari 3 (eksperimen kegagalan)<a class="headerlink" href="#hari-3-eksperimen-kegagalan" title="Permanent link">&para;</a></h2>
+<h3 id="7-kirim-100-request-normal">7. Kirim 100 request normal<a class="headerlink" href="#7-kirim-100-request-normal" title="Permanent link">&para;</a></h3>
+<pre><code>for i in $(seq 1 100); do curl -sS -o /dev/null http://localhost/orders; done
+echo &quot;kirim 100 ok&quot;
+</code></pre>
+<pre><code>kirim 100 ok
+</code></pre>
+<p>Interpretasi: baseline counter naik ~100 di <code>status="200"</code>.</p>
+<h3 id="8-kirim-20-request-error-post-body-rusak">8. Kirim 20 request error (POST body rusak)<a class="headerlink" href="#8-kirim-20-request-error-post-body-rusak" title="Permanent link">&para;</a></h3>
+<pre><code>for i in $(seq 1 20); do curl -sS -o /dev/null -X POST -d 'bad' http://localhost/orders; done
+curl -sS http://localhost:8080/metrics | grep 'http_server_requests_total{.*status=&quot;500&quot;'
+</code></pre>
+<pre><code>http_server_requests_total{method=&quot;POST&quot;,route=&quot;/orders&quot;,status=&quot;500&quot;} 20
+</code></pre>
+<p>Interpretasi: tepat 20 request gagal tercatat. Bukti instrumentasi jalan.</p>
+<h3 id="9-error-ratio-global-5-menit">9. Error ratio global (5 menit)<a class="headerlink" href="#9-error-ratio-global-5-menit" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">sum(rate(http_server_requests_total{status=~&quot;5..&quot;}[5m]))
+/ sum(rate(http_server_requests_total[5m]))
+</code></pre>
+<pre><code>{}   0.013
+</code></pre>
+<p>Interpretasi: ~1,3% error secara keseluruhan setelah eksperimen. Di atas
+budget 0,5% → kalau ini 30 hari, alert burn rate minggu 12 bakal nyala.</p>
+<h3 id="10-p95-latency-agregasi-bucket-dulu-baru-quantile">10. p95 latency — agregasi bucket DULU, baru quantile<a class="headerlink" href="#10-p95-latency-agregasi-bucket-dulu-baru-quantile" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">histogram_quantile(0.95,
+  sum by (le, route) (rate(http_server_request_duration_seconds_bucket[5m]))
+)
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;}   0.18
+{route=&quot;/slow&quot;}     1.0
+</code></pre>
+<p>Interpretasi: p95 <code>/orders</code> = 180ms, <code>/slow</code> = 1s (karena endpoint sengaja
+lambat). Jangan rata-rata hasil quantile antar instance — selalu jumlahkan
+<code>_bucket</code> dulu.</p>
+<h3 id="11-cek-bucket-mana-yang-naik-distribusi">11. Cek bucket mana yang naik (distribusi)<a class="headerlink" href="#11-cek-bucket-mana-yang-naik-distribusi" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">sum by (le) (increase(http_server_request_duration_seconds_bucket[5m]))
+</code></pre>
+<pre><code>{le=&quot;0.1&quot;}   520
+{le=&quot;0.25&quot;}  610
+{le=&quot;0.5&quot;}   640
+{le=&quot;+Inf&quot;}  642
+</code></pre>
+<p>Interpretasi: hampir semua request &lt;0,5s, 642 total. Beda kecil antar ember
+terakhir = distribusi menumpuk di bawah 0,5s.</p>
+<h2 id="hari-4-review-kardinalitas">Hari 4 (review &amp; kardinalitas)<a class="headerlink" href="#hari-4-review-kardinalitas" title="Permanent link">&para;</a></h2>
+<h3 id="12-error-ratio-global-via-recording-rule-sudah-didefinisikan-minggu-12">12. Error ratio global via recording rule (sudah didefinisikan minggu 12)<a class="headerlink" href="#12-error-ratio-global-via-recording-rule-sudah-didefinisikan-minggu-12" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">job:slo_errors_per_request:ratio_rate5m
+</code></pre>
+<pre><code>{}   0.013
+</code></pre>
+<p>Interpretasi: nama yang sama dengan rule di <code>rules/slo.yml</code>. Dipakai alert
+burn rate. Di sini 0,013 jauh di atas <code>(14.4 * 0.005)</code> = 0,072? Tidak — belum
+page, tapi di atas 0,005 → ticket SlowErrorBudgetBurn bakal nyala.</p>
+<h3 id="13-cek-kardinalitas-10-metrik-paling-gemuk">13. Cek kardinalitas: 10 metrik paling gemuk<a class="headerlink" href="#13-cek-kardinalitas-10-metrik-paling-gemuk" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">topk(10, count by (__name__)({__name__=~&quot;.+&quot;}))
+</code></pre>
+<pre><code>http_server_requests_total                             42
+http_server_request_duration_seconds_bucket            120
+</code></pre>
+<p>Interpretasi: jumlah seri rendah &amp; wajar. Kalau ada <code>user_id</code>/<code>request_id</code>
+di sini, itu red flag kardinalitas.</p>
+<h3 id="14-cek-kardinalitas-per-label-combo-route-bukan-path">14. Cek kardinalitas per label combo (route, bukan path)<a class="headerlink" href="#14-cek-kardinalitas-per-label-combo-route-bukan-path" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">count by (route) (http_server_requests_total)
+</code></pre>
+<pre><code>{route=&quot;/orders&quot;}   2
+{route=&quot;/slow&quot;}     2
+</code></pre>
+<p>Interpretasi: cuma 2 seri per route (status 200/500). Kardinalitas rendah &amp;
+aman karena pakai <code>r.Pattern</code>, bukan <code>r.URL.Path</code> mentah.</p>
+<h3 id="15-native-histogram-aktif-prometheus-38">15. Native histogram aktif? (Prometheus 3.8+)<a class="headerlink" href="#15-native-histogram-aktif-prometheus-38" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">count({__name__=~&quot;.+_bucket&quot;, le=&quot;0.5&quot;})
+</code></pre>
+<pre><code>120
+</code></pre>
+<p>Interpretasi: bucket klasik masih ada. Kalau mau native histogram, butuh
+<code>scrape_native_histograms: true</code> di <code>prometheus.yml</code> (sudah disetel di lab ini)
+plus metrik diekspos sebagai native histogram. Cek:</p>
+<pre><code>curl -fsS http://localhost:9090/api/v1/query?query=count%28native_histogram%29
+</code></pre>
+<h3 id="16-cek-range-selector-minimal-4-scrape-interval">16. Cek range selector minimal 4× scrape interval<a class="headerlink" href="#16-cek-range-selector-minimal-4-scrape-interval" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql">rate(http_server_requests_total[30s])   # CUMA 2 sampel (15s x 2) -&gt; rewel
+rate(http_server_requests_total[5m])    # 20 sampel -&gt; stabil
+</code></pre>
+<p>Interpretasi: pakai <code>[5m]</code> untuk grafik, <code>[1h]</code>–<code>[6h]</code> untuk SLO.</p>
+<h3 id="17-log-prometheus-kalau-target-down">17. Log Prometheus kalau target down<a class="headerlink" href="#17-log-prometheus-kalau-target-down" title="Permanent link">&para;</a></h3>
+<pre><code>docker compose logs prometheus --since 5m | grep -i &quot;scrape&quot;
+</code></pre>
+<pre><code>ts=... level=warn msg=&quot;Error on ingesting samples&quot; ... connection refused
+</code></pre>
+<p>Interpretasi: kalau lihat <code>connection refused</code>, app belum jalan atau port
+salah di <code>prometheus.yml</code>.</p>
+<h2 id="cara-buktikan-acceptance-minggu-9">Cara buktikan acceptance minggu 9<a class="headerlink" href="#cara-buktikan-acceptance-minggu-9" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Target UP (<code>/targets</code>) → perintah 2.</li>
+<li>Metrics naik sesuai traffic/error → perintah 3, 7, 8.</li>
+<li>rate / error ratio / p95 masuk akal → perintah 4, 5, 10.</li>
+<li>Tanpa label berkardinalitas tinggi → perintah 13, 14.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-09-prometheus/commands.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

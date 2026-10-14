@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 09 · Metrics dengan Prometheus — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-09-prometheus/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-09-metrics-dengan-prometheus-bahan-bacaan">Minggu 09 · Metrics dengan Prometheus — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-counter-odometer-mobil">2.1 Counter — odometer mobil</a></li>
+<li><a href="#22-gauge-speedometer">2.2 Gauge — speedometer</a></li>
+<li><a href="#23-histogram-klasik-ember-ukuran">2.3 Histogram klasik — ember ukuran</a></li>
+<li><a href="#24-summary-kuantil-dihitung-di-aplikasi">2.4 Summary — kuantil dihitung di aplikasi</a></li>
+<li><a href="#25-scrape-interval-dan-staleness">2.5 Scrape, interval, dan staleness</a></li>
+<li><a href="#26-label-dan-kardinalitas-pembunuh-nomor-satu">2.6 Label dan kardinalitas — pembunuh nomor satu</a></li>
+<li><a href="#27-promql-yang-lo-pakai-tiap-hari">2.7 PromQL yang lo pakai tiap hari</a></li>
+<li><a href="#28-native-histogram-di-prometheus-3x">2.8 Native histogram di Prometheus 3.x</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-09-metrics-dengan-prometheus-bahan-bacaan">Minggu 09 · Metrics dengan Prometheus — Bahan Bacaan<a class="headerlink" href="#minggu-09-metrics-dengan-prometheus-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham konsepnya. Baru setelah itu kerjakan lab.md.</p>
+</blockquote>
+<hr />
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Pernah nggak lo dapet chat, "halaman order lelet banget dari tadi", lalu lo buka server, cek CPU, cek memory, lihat log, dan… nggak nemu apa-apa? Atau sebaliknya: dashboard lo hijau semua, tapi user tetap ngeluh. Dua-duanya punya akar yang sama: <strong>lo nggak punya angka yang jujur tentang apa yang dialami user</strong>. Yang lo punya cuma perasaan dan potongan log yang kebetulan lewat.</p>
+<p>Minggu ini lo berhenti nebak. Prometheus itu pada dasarnya cuma <strong>database deret waktu (time series)</strong> yang diisi dengan cara ditarik (pull) dari aplikasi lo tiap beberapa detik. Tiap angka yang lo simpan punya nama dan separuh kartu identitas — namanya <strong>label</strong>. Dari angka-angka itu lo bisa jawab tiga pertanyaan yang jadi fondasi semua kerjaan SRE setelah ini: <strong>seberapa banyak traffic masuk</strong>, <strong>berapa persen yang gagal</strong>, dan <strong>seberapa lama user nunggu</strong>. Tiga angka ini nanti jadi SLI minggu 12, jadi panel dashboard minggu 10, dan jadi bahan buat nentuin severity pas insiden.</p>
+<p>Masalah kedua yang minggu ini mulai lo beresin: <strong>alert bunyi terus tapi nggak ada yang ngapa-ngapain</strong>. Salah satu penyebabnya teknis, bukan kultural: metriknya salah. Counter dibaca mentah-mentah (angka yang cuma naik bikin grafik "selalu naik" dan nggak pernah bisa dibandingkan), persentil dihitung dari histogram yang ember-nya kelewat lebar, atau satu label <code>user_id</code> bikin Prometheus nyimpen jutaan deret waktu sampai disk penuh. Jadi sebelum lo bisa bikin alert yang waras, lo harus paham dulu <strong>tipe metrik, cara bacanya, dan batas kardinalitas</strong>.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-counter-odometer-mobil">2.1 Counter — odometer mobil<a class="headerlink" href="#21-counter-odometer-mobil" title="Permanent link">&para;</a></h3>
+<p>Counter cuma bisa <strong>naik</strong>, dan cuma boleh balik ke nol kalau prosesnya restart. Analoginya odometer mobil: angkanya nambah terus, dan nggak pernah berkurang walau lo mundur.</p>
+<p>Contoh di <code>app/main.go</code>:</p>
+<pre><code>http_server_requests_total{method=&quot;GET&quot;,route=&quot;/orders&quot;,status=&quot;200&quot;} 1284
+http_server_requests_total{method=&quot;GET&quot;,route=&quot;/orders&quot;,status=&quot;500&quot;} 17
+</code></pre>
+<p>Nilai mentah counter <strong>nggak pernah lo pakai langsung</strong>. Yang lo mau itu <em>kecepatannya</em>:</p>
+<pre><code class="language-promql">sum by (route) (rate(http_server_requests_total[5m]))
+</code></pre>
+<p><code>rate()</code> ngitung "berapa kenaikan per detik" selama 5 menit terakhir, dan <strong>otomatis ngurusin reset</strong> (restart aplikasi). Ini penting: kadang counter turun bukan karena error, tapi karena pod/container baru mulai dari nol.</p>
+<p>Aturan praktis: <strong>range selector minimal 4× scrape interval.</strong> Dengan <code>scrape_interval: 15s</code>, jangan pakai <code>[30s]</code> — cuma dapet 2 sampel, hasilnya rewel dan gampang nol. Pakai <code>[5m]</code> (20 sampel) buat grafik, <code>[1h]</code>–<code>[6h]</code> buat aturan SLO minggu 12.</p>
+<h3 id="22-gauge-speedometer">2.2 Gauge — speedometer<a class="headerlink" href="#22-gauge-speedometer" title="Permanent link">&para;</a></h3>
+<p>Gauge bisa <strong>naik dan turun</strong>. dipakai buat "keadaan saat ini": koneksi DB aktif, memori terpakai, request yang sedang dilayani.</p>
+<pre><code class="language-promql">http_server_requests_in_flight
+</code></pre>
+<p>Gauge langsung dipakai, nggak perlu <code>rate()</code>. Kalau mau lihat rata-rata atau puncaknya dalam periode tertentu, baru pakai <code>avg_over_time()</code> / <code>max_over_time()</code>.</p>
+<p><code>http_server_requests_in_flight</code> di lab ini adalah sinyal <strong>saturasi</strong> yang paling murah: kalau angkanya naik terus sementara request rate datar, berarti request nggak selesai-selesai — biasanya dependency (Postgres/Redis) melambat. Ini gejala awal yang sering muncul <em>sebelum</em> latency rusak.</p>
+<h3 id="23-histogram-klasik-ember-ukuran">2.3 Histogram klasik — ember ukuran<a class="headerlink" href="#23-histogram-klasik-ember-ukuran" title="Permanent link">&para;</a></h3>
+<p>Histogram nyatet <strong>distribusi</strong> nilai, bukan satu nilai. Bayangin deretan ember berukuran: <code>&lt;5ms</code>, <code>&lt;10ms</code>, <code>&lt;25ms</code>, <code>&lt;50ms</code>, <code>&lt;100ms</code>, <code>&lt;250ms</code>, <code>&lt;500ms</code>, <code>&lt;1s</code>, <code>&lt;2.5s</code>, <code>&lt;5s</code>, <code>&lt;+Inf</code>. Tiap request yang selesai, lo masukin ke <strong>semua ember yang batasnya lebih besar dari durasinya</strong>. Jadi bucket itu <strong>kumulatif</strong>.</p>
+<p>Di <code>/metrics</code>, satu histogram beranak jadi tiga:</p>
+<pre><code>http_server_request_duration_seconds_bucket{method=&quot;GET&quot;,route=&quot;/orders&quot;,le=&quot;0.1&quot;} 1200
+http_server_request_duration_seconds_bucket{method=&quot;GET&quot;,route=&quot;/orders&quot;,le=&quot;+Inf&quot;} 1284
+http_server_request_duration_seconds_sum{...} 42.7
+http_server_request_duration_seconds_count{...} 1284
+</code></pre>
+<p>Dua hal yang sering bikin junior salah:</p>
+<ol>
+<li><strong><code>le</code> itu label, bukan pilihan.</strong> Karena <code>le</code> jumlahnya 11 per kombinasi label lain, histogram itu <em>mahal</em>. Satu histogram dengan 3 label nilai 10 = 30 deret waktu; dengan 11 bucket = 330 deret.</li>
+<li><strong>Persentil wajib dihitung dari agregasi bucket, bukan dari hasil quantile per instance.</strong></li>
+</ol>
+<pre><code class="language-promql"># BENAR: jumlahkan bucket DULU, baru hitung quantile
+histogram_quantile(0.95,
+  sum by (le, route) (rate(http_server_request_duration_seconds_bucket[5m]))
+)
+
+# SALAH: quantile per instance lalu dirata-ratakan — hasilnya nggak bermakna
+avg(histogram_quantile(0.95, rate(http_server_request_duration_seconds_bucket[5m])))
+</code></pre>
+<p><code>histogram_quantile()</code> itu <strong>aproksimasi</strong>. Dia menganggap nilai di dalam satu bucket tersebar <strong>seragam (linear interpolation)</strong>. Jadi kalau bucket lo jarang (misal cuma <code>0.1</code> dan <code>5</code>), p95 lo bisa jauh dari kenyataan. Makanya bucket di lab ini dibikin rapat di area yang penting (5ms–100ms). Dan kalau quantile lo jatuh di bucket <code>+Inf</code>, hasilnya nggak ada artinya — berarti bucket terbesarmu kelewat kecil.</p>
+<p>Rata-rata latency (sering lebih jujur buat kapasitas) dihitung dari <code>_sum</code>/<code>_count</code>:</p>
+<pre><code class="language-promql">sum by (route) (rate(http_server_request_duration_seconds_sum[5m]))
+  / sum by (route) (rate(http_server_request_duration_seconds_count[5m]))
+</code></pre>
+<h3 id="24-summary-kuantil-dihitung-di-aplikasi">2.4 Summary — kuantil dihitung di aplikasi<a class="headerlink" href="#24-summary-kuantil-dihitung-di-aplikasi" title="Permanent link">&para;</a></h3>
+<p>Summary ngitung kuantil <strong>di proses aplikasi</strong>, lalu diekspos sebagai <code>&lt;nama&gt;{quantile="0.95"}</code>. Kedengarannya enak, tapi:</p>
+<ul>
+<li>Kuantilnya <strong>nggak bisa diagregasi</strong>. Rata-rata dari p95 lima instance bukan p95 gabungan — secara matematis nggak valid.</li>
+<li>Lo harus milih kuantil <strong>sebelum</strong> deploy. Butuh p99 padahal cuma definisiin p95? Deploy ulang.</li>
+<li>Biayanya dibayar di aplikasi (CPU + memori untuk sliding window).</li>
+</ul>
+<p>Kesimpulan praktis: <strong>di Prometheus, pakai histogram.</strong> Summary kepakai cuma kalau lo tahu betul bahwa lo nggak akan pernah perlu agregasi lintas instance.</p>
+<h3 id="25-scrape-interval-dan-staleness">2.5 Scrape, interval, dan staleness<a class="headerlink" href="#25-scrape-interval-dan-staleness" title="Permanent link">&para;</a></h3>
+<p>Prometheus itu <strong>pull</strong>: dia yang datang ke <code>/metrics</code> lo tiap <code>scrape_interval</code> (di lab: 15 detik). Konsekuensinya:</p>
+<ul>
+<li>Aplikasi lo nggak perlu tahu alamat Prometheus. Cukup buka endpoint <code>/metrics</code>.</li>
+<li>Kalau aplikasi mati, Prometheus cuma lihat target <strong>DOWN</strong> — dan metrik <code>up{job="api"}</code> jadi <code>0</code>. Ini alert paling murah dan paling penting (minggu 10 &amp; 12).</li>
+<li>Kalau sebuah deret waktu <strong>berhenti muncul</strong> (misal endpoint nggak pernah dipanggil lagi), Prometheus nandain <strong>stale</strong> setelah 5 menit dan <code>rate()</code> berhenti menghitungnya. Jadi "nggak ada data" itu beda dengan "nol".</li>
+</ul>
+<p>Kalau lo mau tahu apakah scrape-nya sehat, jangan lihat <code>up</code> doang:</p>
+<pre><code class="language-promql">scrape_duration_seconds{job=&quot;api&quot;}      # berapa lama satu kali scrape
+scrape_samples_scraped{job=&quot;api&quot;}       # berapa deret waktu yang ditarik per scrape
+</code></pre>
+<p>Kalau <code>scrape_duration_seconds</code> mendekati <code>scrape_interval</code>, lo sebentar lagi punya masalah.</p>
+<h3 id="26-label-dan-kardinalitas-pembunuh-nomor-satu">2.6 Label dan kardinalitas — pembunuh nomor satu<a class="headerlink" href="#26-label-dan-kardinalitas-pembunuh-nomor-satu" title="Permanent link">&para;</a></h3>
+<p>Satu kombinasi unik <code>nama_metrik + label</code> = <strong>satu deret waktu</strong>. Dokumentasi resmi Prometheus bilang begini: <em>"every unique combination of key-value label pairs represents a new time series, which can dramatically increase the amount of data stored. Do not use labels to store dimensions with high cardinality (many different label values), such as user IDs, email addresses, or other unbounded sets of values."</em></p>
+<p><strong>Label yang dilarang:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Dilarang</th>
+<th>Kenapa</th>
+<th>Ganti pakai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user_id</code>, <code>email</code>, <code>session_id</code></td>
+<td>tak terbatas, tiap user baru = deret baru</td>
+<td>jangan disimpan di metrik; simpan di log</td>
+</tr>
+<tr>
+<td><code>path</code> mentah (<code>/orders/8821</code>)</td>
+<td>tiap ID = deret baru</td>
+<td><code>route</code> = pola (<code>/orders/{id}</code>)</td>
+</tr>
+<tr>
+<td><code>request_id</code>, <code>trace_id</code></td>
+<td>sekali pakai</td>
+<td>field di log (minggu 11)</td>
+</tr>
+<tr>
+<td><code>error_message</code></td>
+<td>isinya bebas dan panjang</td>
+<td><code>error_type</code> / <code>status</code></td>
+</tr>
+<tr>
+<td>timestamp, IP klien</td>
+<td>nyaris unik tiap request</td>
+<td>tingkatkan agregasinya</td>
+</tr>
+</tbody>
+</table>
+<p>Di <code>app/main.go</code> ini udah dikerjain dengan benar: <code>route := r.Pattern</code> (pola dari ServeMux), dan kalau kosong jadi <code>"unmatched"</code> — <strong>bukan</strong> <code>r.URL.Path</code>. Itu satu baris kode yang nyelamatin Prometheus lo.</p>
+<p>Cara cek dari dalam Prometheus:</p>
+<pre><code class="language-promql">topk(10, count by (__name__) ({__name__=~&quot;.+&quot;}))        # 10 metrik paling &quot;gemuk&quot;
+count(count by (route, status) (http_server_requests_total))  # jumlah deret metrik ini
+</code></pre>
+<h3 id="27-promql-yang-lo-pakai-tiap-hari">2.7 PromQL yang lo pakai tiap hari<a class="headerlink" href="#27-promql-yang-lo-pakai-tiap-hari" title="Permanent link">&para;</a></h3>
+<pre><code class="language-promql"># 1. Request rate per route (requests/detik)
+sum by (route) (rate(http_server_requests_total[5m]))
+
+# 2. Error ratio 0..1 (ini calon SLI minggu 12)
+sum by (route) (rate(http_server_requests_total{status=~&quot;5..&quot;}[5m]))
+  / sum by (route) (rate(http_server_requests_total[5m]))
+
+# 3. p95 latency
+histogram_quantile(0.95,
+  sum by (le, route) (rate(http_server_request_duration_seconds_bucket[5m])))
+
+# 4. Saturasi
+http_server_requests_in_flight
+
+# 5. Target hidup?
+up{job=&quot;api&quot;}
+</code></pre>
+<p>Satu jebakan klasik: kalau traffic kecil, hasil pembagian nomor 2 bisa <code>NaN</code> atau melonjak gila-gilaan — karena pembaginya nol (nggak ada request) atau cuma beberapa request. Makanya minggu 12 lo bakal nambahin aturan khusus buat <strong>low-traffic service</strong>.</p>
+<h3 id="28-native-histogram-di-prometheus-3x">2.8 Native histogram di Prometheus 3.x<a class="headerlink" href="#28-native-histogram-di-prometheus-3x" title="Permanent link">&para;</a></h3>
+<p>Prometheus 3.0 rilis November 2024, dan jalur LTS yang dipakai lab ini adalah <strong>3.13.x</strong>. Native histogram — histogram yang disimpan sebagai satu sampel komposit, bukan puluhan deret float — <strong>stabil sejak 3.8.0</strong>, tapi <strong>nggak aktif default</strong>.</p>
+<p>Lo harus nyalakan sendiri per scrape job:</p>
+<pre><code class="language-yaml">scrape_configs:
+  - job_name: api
+    scrape_native_histograms: true     # WAJIB kalau mau native histogram
+    static_configs:
+      - targets: [&quot;api:8080&quot;]
+</code></pre>
+<p>Itu udah ada di <code>observability/prometheus/prometheus.yml</code> lab ini. Kenapa repot-repot? Karena native histogram:</p>
+<ul>
+<li>jauh lebih hemat (satu deret, bukan N bucket),</li>
+<li>resolusinya dinamis, jadi lo nggak perlu menebak bucket di awal,</li>
+<li><strong>selalu bisa diagregasi</strong>, walau resolusinya beda.</li>
+</ul>
+<p>Kalau lo baca metriknya lewat <code>curl</code> dan lihat ada <code># TYPE ... histogram</code> tapi nggak pernah muncul <code>_bucket</code>, cek dulu flag ini. Tanpa <code>scrape_native_histograms: true</code>, yang lo dapet ya histogram klasik biasa.</p>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Alur lengkap dari aplikasi sampai alert bunyi:</p>
+<ol>
+<li><strong>Instrumentasi (di aplikasi).</strong> <code>main.go</code> bikin tiga metrik: counter <code>http_server_requests_total</code>, histogram <code>http_server_request_duration_seconds</code>, gauge <code>http_server_requests_in_flight</code>. Tiap kali ada request, middleware <code>instrument()</code> naikin in-flight, catat waktu mulai, panggil handler, lalu <code>Observe()</code> durasinya dan <code>.Inc()</code> counter-nya. Semua ini <strong>di memori proses</strong> — nggak ada yang dikirim ke mana pun.</li>
+<li><strong>Expose.</strong> <code>mux.Handle("GET /metrics", promhttp.Handler())</code>. Saat endpoint ini dipanggil, <code>client_golang</code> <strong>merender</strong> isi registry jadi teks (format OpenMetrics/Protobuf). Jadi <code>/metrics</code> itu cuma <em>foto kondisi saat ini</em>, bukan file yang disimpan.</li>
+<li><strong>Service discovery + scrape.</strong> Tiap 15 detik, Prometheus baca <code>prometheus.yml</code>, cari target (<code>api:8080</code>), lalu HTTP GET ke <code>/metrics</code>. Hasilnya ditambahin label <code>job="api"</code> dan <code>instance</code>. Kalau gagal → <code>up = 0</code>.</li>
+<li><strong>Ingest ke TSDB.</strong> Sampel masuk ke <strong>head block</strong> (di memori, <code>/prometheus</code>), yang tiap 2 jam di-compact dan ditulis ke blok permanen di disk (retensi lab: 15 hari lewat <code>--storage.tsdb.retention.time=15d</code>). Deret waktu diindeks oleh nama metrik + label.</li>
+<li><strong>PromQL.</strong> Waktu lo ngetik query di UI, Prometheus: (a) cari deret yang cocok sama selector, (b) ambil sampel di rentang waktu yang lo minta, (c) jalanin fungsi (<code>rate</code>, <code>sum by</code>, <code>histogram_quantile</code>) per titik waktu. Hasilnya bisa <em>instant vector</em> (satu nilai per deret) atau <em>range vector</em> (seri waktu).</li>
+<li><strong>Rule evaluation.</strong> <code>evaluation_interval: 15s</code> bikin Prometheus ngejalanin rule file (<code>rules/*.yml</code>) secara periodik. Recording rule nulis hasilnya balik ke TSDB (biar query berat nggak dihitung ulang tiap kali dashboard dibuka). Alerting rule ngecek kondisi; kalau kondisi true terus selama <code>for:</code>, statusnya <code>pending</code> → <code>firing</code>.</li>
+<li><strong>Alertmanager / notifikasi.</strong> Prometheus nggak kirim notifikasi sendiri — dia lempar alert ke Alertmanager (atau, kalau lo pakai Grafana-managed alerting minggu 10, Grafana yang ngevaluasi).</li>
+</ol>
+<p>Yang penting lo sadari: <strong>antara "user ngerasain masalah" dan "alert bunyi" ada jeda</strong>. Minimal <code>scrape_interval</code>, lalu <code>evaluation_interval</code>, lalu <code>for:</code>. Minggu 10 lo bakal ngukur jeda ini dengan stopwatch.</p>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti dengan bahasa sederhana</th>
+<th>Contoh konkret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Time series</strong></td>
+<td>Satu angka yang dicatat berulang-ulang bersama waktu</td>
+<td><code>http_server_requests_total{route="/orders",status="200"}</code> nilainya 1284 lalu 1290</td>
+</tr>
+<tr>
+<td><strong>Label</strong></td>
+<td>"Kartu identitas" yang nempel di metrik buat memisahkan data</td>
+<td><code>method="GET"</code>, <code>route="/orders"</code>, <code>status="500"</code></td>
+</tr>
+<tr>
+<td><strong>Kardinalitas</strong></td>
+<td>Jumlah kombinasi label unik — makin banyak, makin berat</td>
+<td><code>status</code> (5 nilai) vs <code>user_id</code> (jutaan nilai)</td>
+</tr>
+<tr>
+<td><strong>Scrape</strong></td>
+<td>Prometheus "datang dan ambil" metrik dari aplikasi</td>
+<td>Tiap 15 detik GET <code>http://api:8080/metrics</code></td>
+</tr>
+<tr>
+<td><strong>Sample</strong></td>
+<td>Satu titik data: pasangan (timestamp, nilai)</td>
+<td><code>@1730000000 → 1284</code></td>
+</tr>
+<tr>
+<td><strong>Instant vector</strong></td>
+<td>Hasil query berupa satu nilai per deret, untuk satu waktu</td>
+<td><code>up{job="api"}</code> → <code>1</code></td>
+</tr>
+<tr>
+<td><strong>Range vector</strong></td>
+<td>Kumpulan sampel dalam rentang waktu; cuma bisa dipakai fungsi tertentu</td>
+<td><code>rate(http_server_requests_total[5m])</code></td>
+</tr>
+<tr>
+<td><strong>Bucket (<code>le</code>)</strong></td>
+<td>Ember "≤ batas ini ada berapa"</td>
+<td><code>le="0.1"</code> = berapa request yang ≤ 100 ms</td>
+</tr>
+<tr>
+<td><strong>Staleness</strong></td>
+<td>Deret yang berhenti di-update dianggap mati setelah 5 menit</td>
+<td>Endpoint nggak dipanggil lagi, <code>rate()</code> jadi kosong</td>
+</tr>
+<tr>
+<td><strong>Recording rule</strong></td>
+<td>Query berat yang hasilnya disimpan sebagai metrik baru</td>
+<td><code>job:slo_errors_per_request:ratio_rate5m</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber (link)</th>
+<th>Bagian mana yang dibaca &amp; apa yang dicari</th>
+<th>Estimasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://prometheus.io/docs/concepts/metric_types/">Prometheus — Metric types</a></td>
+<td>Seluruh halaman. Cari perbedaan counter/gauge/histogram/summary, dan suffix <code>_bucket</code>, <code>_sum</code>, <code>_count</code>, <code>{quantile="..."}</code>. Ini sumber keempat analogi di atas.</td>
+<td>25 mnt</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://prometheus.io/docs/practices/naming/">Prometheus — Metric and label naming</a></td>
+<td>Bagian <strong>Labels</strong>, terutama kotak <strong>CAUTION</strong> soal kardinalitas. Catat contoh label yang dilarang.</td>
+<td>15 mnt</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://prometheus.io/docs/practices/histograms/">Prometheus — Histograms and summaries</a></td>
+<td>Bagian "Apdex score", "Quantiles", dan "Errors of quantile estimation". Cari kenapa quantile itu aproksimasi dan kenapa bucket perlu rapat di area penting.</td>
+<td>30 mnt</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://prometheus.io/docs/prometheus/latest/querying/functions/">Prometheus — Query functions</a></td>
+<td>Cari entri <code>rate()</code>, <code>increase()</code>, <code>histogram_quantile()</code>, <code>topk()</code>. Perhatiin syarat <code>le</code> dan asumsi interpolasi linear. Jangan dihafal semua, cukup yang dipakai lab.</td>
+<td>30 mnt</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://prometheus.io/docs/specs/native_histograms/">Prometheus — Native histograms</a></td>
+<td>Cari cara mengaktifkan: <code>scrape_native_histograms: true</code>. Cek apakah default-nya aktif atau nggak.</td>
+<td>15 mnt</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/">Prometheus — Configuration</a></td>
+<td>Cari entri <code>scrape_native_histograms</code> di bagian <code>&lt;scrape_config&gt;</code>, plus <code>scrape_interval</code> dan <code>evaluation_interval</code> di <code>global</code>.</td>
+<td>20 mnt</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa beda counter dan gauge, dan apa fungsi PromQL yang wajib dipakai buat masing-masing?</li>
+<li>Kenapa <code>rate(http_server_requests_total[5m])</code> lebih berguna daripada nilai mentah counter-nya? Apa yang terjadi kalau aplikasi restart?</li>
+<li>Kenapa <code>histogram_quantile()</code> hasilnya cuma aproksimasi? Apa yang bikin aproksimasinya makin meleset?</li>
+<li>Kamu punya 2 instance API, masing-masing sudah menghitung p95 sendiri. Kenapa rata-rata dari dua angka itu bukan p95 gabungan? Apa yang harus dilakukan?</li>
+<li>Sebutkan 3 label yang dilarang di Prometheus dan apa penggantinya.</li>
+<li>Dengan <code>scrape_interval: 15s</code>, apa range selector terkecil yang masih waras dipakai, dan kenapa?</li>
+<li>Apa yang terjadi kalau lo nggak nyalain <code>scrape_native_histograms: true</code> di Prometheus 3.x? Apakah metriknya hilang?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>"histogram_quantile itu nilai persentil asli."</strong> → Salah. Dia interpolasi linear di dalam bucket, dengan asumsi nilai tersebar seragam. Makin lebar bucket, makin ngaco. Dia juga nggak bisa kasih tahu lo nilai di luar bucket terbesar.</li>
+<li><strong>"Bisa rata-ratakan quantile dari tiap instance buat dapet quantile global."</strong> → Salah, dan ini jebakan paling sering. Yang benar: <code>sum by (le, ...) (rate(..._bucket[5m]))</code> <strong>dulu</strong>, baru <code>histogram_quantile()</code>.</li>
+<li><strong>"Counter nilainya naik terus, berarti traffic naik terus."</strong> → Nilai mentah counter selalu naik selama proses hidup. Yang naik-turun itu <code>rate()</code>-nya.</li>
+<li><strong>"Nambahin satu label kan cuma nambahin satu kolom."</strong> → Enggak. Tiap <em>nilai</em> baru = deret waktu baru. Satu label <code>user_id</code> di 100 ribu user = 100 ribu deret waktu per metrik, dan kalau metriknya histogram ×11 bucket.</li>
+<li><strong>"Native histogram aktif otomatis di Prometheus 3.x."</strong> → Nggak. Stabil sejak 3.8.0 tapi harus <code>scrape_native_histograms: true</code> di scrape config.</li>
+<li><strong>"rate() dengan range pendek lebih responsif, jadi lebih bagus."</strong> → Range <code>[30s]</code> dengan interval 15s cuma dapet 2 sampel; sedikit saja scrape telat, hasilnya nol atau anjlok. Pakai minimal 4× interval.</li>
+<li><strong>"Kalau target DOWN, metriknya jadi 0."</strong> → Yang jadi 0 cuma <code>up</code>. Metrik lain <strong>hilang</strong> (stale), dan itu beda perlakuan di query: pembagian dengan pembagi kosong menghasilkan kosong, bukan nol.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-09-prometheus/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 05 · CI/CD dan release management</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-05-cicd/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-05-cicd-dan-release-management">Lab — Minggu 05 · CI/CD dan release management</a><ul>
+<li><a href="#persiapan-1015-menit">Persiapan (10–15 menit)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a><ul>
+<li><a href="#langkah-11-baca-bahan-bacaan-utuh">Langkah 1.1 — Baca bahan bacaan utuh</a></li>
+<li><a href="#langkah-12-bedah-ciyml-yang-sudah-ada">Langkah 1.2 — Bedah ci.yml yang sudah ada</a></li>
+<li><a href="#langkah-13-baca-sumber-primer-2-sumber-wajib">Langkah 1.3 — Baca sumber primer (2 sumber wajib)</a></li>
+<li><a href="#langkah-14-cek-postur-keamanan-repo-lo">Langkah 1.4 — Cek postur keamanan repo lo</a></li>
+<li><a href="#langkah-15-tulis-target-angka-pipeline">Langkah 1.5 — Tulis target angka pipeline</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a><ul>
+<li><a href="#langkah-21-jalankan-pipeline-dan-lihat-hasilnya">Langkah 2.1 — Jalankan pipeline dan lihat hasilnya</a></li>
+<li><a href="#langkah-22-build-image-lokal-dengan-tag-sha">Langkah 2.2 — Build image lokal dengan tag SHA</a></li>
+<li><a href="#langkah-23-merge-ke-main-supaya-job-build-jalan">Langkah 2.3 — Merge ke main supaya job build jalan</a></li>
+<li><a href="#langkah-24-verifikasi-attestation">Langkah 2.4 — Verifikasi attestation</a></li>
+<li><a href="#langkah-25-tarik-image-by-digest-jalan-rollback">Langkah 2.5 — Tarik image by digest (jalan rollback)</a></li>
+<li><a href="#langkah-26-simpan-evidence">Langkah 2.6 — Simpan evidence</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-kegagalan-2-jam">Hari 3 · Eksperimen kegagalan (2 jam)</a><ul>
+<li><a href="#langkah-31-gagalkan-test-buktikan-pipeline-menolak">Langkah 3.1 — Gagalkan test, buktikan pipeline menolak</a></li>
+<li><a href="#langkah-32-uji-concurrency-dua-push-beruntun">Langkah 3.2 — Uji concurrency: dua push beruntun</a></li>
+<li><a href="#langkah-33-uji-kebocoran-secret-di-history">Langkah 3.3 — Uji kebocoran secret di history</a></li>
+<li><a href="#langkah-34-uji-permissions-terlalu-ketat-harusnya-gagal-dan-itu-bagus">Langkah 3.4 — Uji permissions: terlalu ketat (harusnya gagal, dan itu bagus)</a></li>
+<li><a href="#langkah-35-rollback-sungguhan-pakai-digest">Langkah 3.5 — Rollback sungguhan pakai digest</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)</a><ul>
+<li><a href="#langkah-41-isi-docsrelease-processmd">Langkah 4.1 — Isi docs/release-process.md</a></li>
+<li><a href="#langkah-42-lengkapi-commandsmd">Langkah 4.2 — Lengkapi commands.md</a></li>
+<li><a href="#langkah-43-isi-runbook-kegagalan">Langkah 4.3 — Isi runbook kegagalan</a></li>
+<li><a href="#langkah-44-acceptance-test-ulang-dari-nol">Langkah 4.4 — Acceptance test ulang dari nol</a></li>
+<li><a href="#langkah-45-commit">Langkah 4.5 — Commit</a></li>
+</ul>
+</li>
+<li><a href="#daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"</a></li>
+<li><a href="#cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-05-cicd-dan-release-management">Lab — Minggu 05 · CI/CD dan release management<a class="headerlink" href="#lab-minggu-05-cicd-dan-release-management" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti BERURUTAN, jangan lompat. Setiap langkah formatnya: perintah → Yang harus terjadi → Kalau gagal.</p>
+</blockquote>
+<h2 id="persiapan-1015-menit">Persiapan (10–15 menit)<a class="headerlink" href="#persiapan-1015-menit" title="Permanent link">&para;</a></h2>
+<p>Ceklist environment:</p>
+<ul>
+<li>[ ] <code>git --version</code> → v2.30+</li>
+<li>[ ] Docker dengan Compose v2: <code>docker compose version</code> → <code>Docker Compose version v2.x</code> (kalau muncul perintah <code>docker-compose</code> dengan tanda hubung, berarti lo masih pakai v1 yang sudah dihapus — install plugin Compose v2).</li>
+<li>[ ] <code>go version</code> → 1.22+ (repo ini build dengan Go 1.25 di <code>docker/Dockerfile</code>).</li>
+<li>[ ] GitHub CLI: <code>gh --version</code> → 2.x, dan sudah login: <code>gh auth status</code>.</li>
+<li>[ ] Repo ini sudah ada remote GitHub: <code>git remote -v</code>.</li>
+<li>[ ] Punya akses bikin package: <code>gh api /user</code> → keluar username lo.</li>
+</ul>
+<p>Verifikasi sebelum mulai:</p>
+<pre><code class="language-bash">gh auth status
+docker compose -f docker/compose.yaml config &gt;/dev/null &amp;&amp; echo &quot;compose valid&quot;
+cd app &amp;&amp; go vet ./... &amp;&amp; echo &quot;vet ok&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> tiga perintah di atas keluar tanpa error.
+<strong>Kalau gagal:</strong> <code>gh auth login</code> dulu; kalau <code>go vet</code> error, berarti kode di repo udah rusak — catat di <code>notes.md</code>, jangan lanjut.</p>
+<blockquote>
+<p>Catatan: sepanjang lab ini, ganti <code>&lt;owner&gt;/&lt;repo&gt;</code> dengan repo lo sendiri, mis. <code>budi/production-reliability-lab</code>.</p>
+</blockquote>
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-11-baca-bahan-bacaan-utuh">Langkah 1.1 — Baca bahan bacaan utuh<a class="headerlink" href="#langkah-11-baca-bahan-bacaan-utuh" title="Permanent link">&para;</a></h3>
+<p>Buka <code>bahan-bacaan.md</code> di folder ini dan baca dari atas ke bawah tanpa buka tab lain.</p>
+<p><strong>Yang harus terjadi:</strong> lo bisa jawab 7 pertanyaan di bagian <em>Self-check</em> tanpa Google.
+<strong>Kalau gagal:</strong> ulangi bagian 2 (konsep inti) dan bagian 3 (mekanisme), jangan lanjut ke praktik.
+<strong>Catat di notes.md:</strong> 3 konsep yang paling nggak lo duga sebelumnya.</p>
+<h3 id="langkah-12-bedah-ciyml-yang-sudah-ada">Langkah 1.2 — Bedah <code>ci.yml</code> yang sudah ada<a class="headerlink" href="#langkah-12-bedah-ciyml-yang-sudah-ada" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">cat .github/workflows/ci.yml
+</code></pre>
+<p>Jawab tertulis di <code>notes.md</code>:</p>
+<ol>
+<li>Job apa aja yang ada, dan mana yang jalan paralel?</li>
+<li>Kenapa <code>build-push</code> punya <code>needs:</code> dan <code>if:</code>?</li>
+<li>Permission apa yang diminta tiap job, dan apa alasannya?</li>
+<li>Apa yang terjadi kalau <code>go test</code> exit code-nya 1?</li>
+</ol>
+<p><strong>Yang harus terjadi:</strong> jawaban nomor 4 = "job <code>build-push</code> tidak pernah jalan".
+<strong>Kalau gagal:</strong> baca lagi bagian 3 di <code>bahan-bacaan.md</code>.
+<strong>Catat di notes.md:</strong> keempat jawaban di atas.</p>
+<h3 id="langkah-13-baca-sumber-primer-2-sumber-wajib">Langkah 1.3 — Baca sumber primer (2 sumber wajib)<a class="headerlink" href="#langkah-13-baca-sumber-primer-2-sumber-wajib" title="Permanent link">&para;</a></h3>
+<p>Buka <a href="https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax">Workflow syntax</a> bagian <code>permissions</code> dan <code>concurrency</code>, lalu <a href="https://docs.github.com/en/actions/concepts/security/artifact-attestations">Artifact attestations</a>.</p>
+<p><strong>Yang harus terjadi:</strong> lo tahu beda <code>contents: read</code> vs <code>packages: write</code>, dan tahu attestation mengklaim apa.
+<strong>Kalau gagal:</strong> cari lagi di halaman yang sama, jangan pindah ke blog acak.
+<strong>Catat di notes.md:</strong> satu kalimat definisi attestation dengan bahasa lo sendiri.</p>
+<h3 id="langkah-14-cek-postur-keamanan-repo-lo">Langkah 1.4 — Cek postur keamanan repo lo<a class="headerlink" href="#langkah-14-cek-postur-keamanan-repo-lo" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh api repos/&lt;owner&gt;/&lt;repo&gt;/actions/permissions | grep -E &quot;default_workflow_permissions|can_approve&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> keluar <code>default_workflow_permissions</code> (nilainya <code>read</code> atau <code>write</code>).
+<strong>Kalau gagal:</strong> <code>gh: Not Found</code> berarti repo belum punya Actions aktif — aktifkan di <em>Settings → Actions → General</em>.
+<strong>Catat di notes.md:</strong> nilainya. Kalau <code>write</code>, ini temuan yang wajib lo tulis di laporan Hari 4.</p>
+<h3 id="langkah-15-tulis-target-angka-pipeline">Langkah 1.5 — Tulis target angka pipeline<a class="headerlink" href="#langkah-15-tulis-target-angka-pipeline" title="Permanent link">&para;</a></h3>
+<p>Isi di <code>notes.md</code>: berapa target durasi pipeline lo (maksimal 10 menit), dan langkah mana yang paling lama sekarang.</p>
+<p><strong>Yang harus terjadi:</strong> ada angka tertulis, bukan "yang penting jalan".
+<strong>Kalau gagal:</strong> ukur dulu durasi run terakhir pakai <code>gh run list</code>.
+<strong>Catat di notes.md:</strong> tabel kecil: job | durasi sekarang | target.</p>
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-21-jalankan-pipeline-dan-lihat-hasilnya">Langkah 2.1 — Jalankan pipeline dan lihat hasilnya<a class="headerlink" href="#langkah-21-jalankan-pipeline-dan-lihat-hasilnya" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git switch -c lab/week-05-pipeline
+git commit --allow-empty -m &quot;week 05: uji pipeline&quot; &amp;&amp; git push -u origin lab/week-05-pipeline
+gh pr create --fill
+gh run watch
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> workflow <code>ci</code> jalan; job <code>lint-test</code> dan <code>integration</code> hijau; job <code>build-push</code> <strong>skip</strong> (karena event-nya PR, bukan push ke main).
+<strong>Kalau gagal:</strong> <code>gh run view --log-failed</code>; kalau error-nya soal hak akses, cek <code>permissions:</code> di job terkait.
+<strong>Catat di notes.md:</strong> durasi tiap job.</p>
+<h3 id="langkah-22-build-image-lokal-dengan-tag-sha">Langkah 2.2 — Build image lokal dengan tag SHA<a class="headerlink" href="#langkah-22-build-image-lokal-dengan-tag-sha" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">SHORT=$(git rev-parse --short=12 HEAD)
+docker buildx build -t sre-api:sha-$SHORT -f docker/Dockerfile --load .
+docker images --digests sre-api
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> image muncul dengan digest <code>sha256:...</code>.
+<strong>Kalau gagal:</strong> <code>failed to solve</code> → cek konteks build (<code>.</code> = root repo, bukan folder <code>docker/</code>) dan path Dockerfile.
+<strong>Catat di notes.md:</strong> SHA + digest.</p>
+<h3 id="langkah-23-merge-ke-main-supaya-job-build-jalan">Langkah 2.3 — Merge ke main supaya job build jalan<a class="headerlink" href="#langkah-23-merge-ke-main-supaya-job-build-jalan" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh pr merge --squash --delete-branch
+gh run watch --workflow ci.yml
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> run baru jalan; <code>build-push</code> <strong>aktif</strong> dan selesai; image ter-push ke GHCR.
+<strong>Kalau gagal:</strong> lihat log step <code>build</code>; error paling umum = <code>packages: write</code> belum diset atau login GHCR gagal.
+<strong>Catat di notes.md:</strong> URL run + nama tag image.</p>
+<h3 id="langkah-24-verifikasi-attestation">Langkah 2.4 — Verifikasi attestation<a class="headerlink" href="#langkah-24-verifikasi-attestation" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh attestation verify oci://ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-$SHORT \
+  -R &lt;owner&gt;/&lt;repo&gt; \
+  --signer-workflow &lt;owner&gt;/&lt;repo&gt;/.github/workflows/ci.yml
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> ada baris <code>Loaded digest sha256:...</code> dan <code>Verification succeeded</code>.
+<strong>Kalau gagal:</strong> <code>no attestations found</code> → step <code>actions/attest@v4</code> nggak jalan (cek apakah <code>push-to-registry: true</code> dan <code>id-token: write</code> ada).
+<strong>Catat di notes.md:</strong> output lengkap yang sudah disanitasi.</p>
+<h3 id="langkah-25-tarik-image-by-digest-jalan-rollback">Langkah 2.5 — Tarik image by digest (jalan rollback)<a class="headerlink" href="#langkah-25-tarik-image-by-digest-jalan-rollback" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' sre-api:sha-$SHORT | cut -d@ -f2)
+docker pull ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api@$DIGEST
+docker run --rm ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api@$DIGEST -healthcheck; echo &quot;exit=$?&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> pull sukses; <code>-healthcheck</code> <strong>exit 1</strong> (karena nggak ada server yang nyala di container itu) — ini contoh penting: healthcheck mode butuh server-nya hidup.
+<strong>Kalau gagal:</strong> <code>manifest unknown</code> → digest salah, ulangi dari <code>docker inspect</code>.
+<strong>Catat di notes.md:</strong> beda output <code>docker inspect</code> (digest lokal) dengan <code>docker pull</code> by digest (manifest dari registry).</p>
+<h3 id="langkah-26-simpan-evidence">Langkah 2.6 — Simpan evidence<a class="headerlink" href="#langkah-26-simpan-evidence" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh run list --workflow ci.yml --limit 5 &gt; evidence/05-run-list.txt
+gh api /repos/&lt;owner&gt;/&lt;repo&gt;/packages/container/sre-api/versions \
+  | grep -E '&quot;name&quot;|sha256' | head -20 &gt; evidence/05-registry-versions.txt
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> dua file di <code>evidence/</code> berisi output yang bisa dibaca ulang.
+<strong>Kalau gagal:</strong> folder <code>evidence/</code> belum ada → <code>mkdir -p evidence</code>.
+<strong>Catat di notes.md:</strong> daftar file evidence yang lo kumpulkan.</p>
+<h2 id="hari-3-eksperimen-kegagalan-2-jam">Hari 3 · Eksperimen kegagalan (2 jam)<a class="headerlink" href="#hari-3-eksperimen-kegagalan-2-jam" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Aturan: <strong>setiap eksperimen punya langkah pemulihan.</strong> Jangan tinggalin repo/branch dalam kondisi rusak.</p>
+</blockquote>
+<h3 id="langkah-31-gagalkan-test-buktikan-pipeline-menolak">Langkah 3.1 — Gagalkan test, buktikan pipeline menolak<a class="headerlink" href="#langkah-31-gagalkan-test-buktikan-pipeline-menolak" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git switch -c lab/week-05-test-gagal
+printf 'func TestSengajaGagal(t *testing.T){ t.Fatal(&quot;sengaja&quot;) }\n' &gt; app/fail_test.go
+git add app/fail_test.go &amp;&amp; git commit -m &quot;week 05: test sengaja gagal&quot; &amp;&amp; git push -u origin lab/week-05-test-gagal
+gh pr create --fill &amp;&amp; gh run watch
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> job <code>lint-test</code> <strong>merah</strong>, dan <code>build-push</code> nggak jalan (skip/needs). Ini bukti acceptance criteria #3.
+<strong>Kalau gagal:</strong> kalau build tetap jalan, berarti <code>needs:</code> nggak kepasang — perbaiki <code>ci.yml</code> dan ulangi.
+<strong>Catat di notes.md:</strong> potongan log merah + URL run.</p>
+<p><strong>Pemulihan:</strong></p>
+<pre><code class="language-bash">rm app/fail_test.go &amp;&amp; git add -A &amp;&amp; git commit -m &quot;week 05: hapus test gagal&quot; &amp;&amp; git push
+gh pr close lab/week-05-test-gagal --delete-branch
+</code></pre>
+<h3 id="langkah-32-uji-concurrency-dua-push-beruntun">Langkah 3.2 — Uji concurrency: dua push beruntun<a class="headerlink" href="#langkah-32-uji-concurrency-dua-push-beruntun" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git commit --allow-empty -m &quot;week 05: push A&quot; &amp;&amp; git push origin main
+git commit --allow-empty -m &quot;week 05: push B&quot; &amp;&amp; git push origin main
+gh run list --workflow ci.yml --limit 3
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> run yang lebih lama statusnya <code>cancelled</code> (kena <code>cancel-in-progress: true</code>).
+<strong>Kalau gagal:</strong> dua-duanya tetap jalan → <code>concurrency.group</code> nggak kebaca (salah indent, atau <code>github.ref</code> beda).
+<strong>Catat di notes.md:</strong> mana yang dibatalkan, dan berapa detik jaraknya.</p>
+<p><strong>Pemulihan:</strong> nggak ada yang rusak; dua commit kosong ini boleh di-revert: <code>git revert</code> dua kali, atau biarkan (kosong, aman).</p>
+<h3 id="langkah-33-uji-kebocoran-secret-di-history">Langkah 3.3 — Uji kebocoran secret di history<a class="headerlink" href="#langkah-33-uji-kebocoran-secret-di-history" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># JANGAN bikin secret beneran. Ini cuma file palsu buat nguji detektor.
+printf 'AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\n' &gt; /tmp/fake.env
+gitleaks detect --no-git -s /tmp/fake.env -v
+gitleaks detect --log-opts=--all -v
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> deteksi pertama ketemu "finding" di <code>/tmp/fake.env</code> (bukti detektornya jalan); deteksi kedua <strong>bersih</strong> buat repo ini.
+<strong>Kalau gagal:</strong> kalau deteksi repo ketemu sesuatu, berarti ada kredensial nyata — <strong>rotasi dulu</strong> baru lanjut, dan jangan commit temuannya mentah-mentah.
+<strong>Catat di notes.md:</strong> output yang sudah disanitasi (potong nilainya).</p>
+<p><strong>Pemulihan/cleanup:</strong> <code>rm /tmp/fake.env</code>.</p>
+<h3 id="langkah-34-uji-permissions-terlalu-ketat-harusnya-gagal-dan-itu-bagus">Langkah 3.4 — Uji <code>permissions:</code> terlalu ketat (harusnya gagal, dan itu bagus)<a class="headerlink" href="#langkah-34-uji-permissions-terlalu-ketat-harusnya-gagal-dan-itu-bagus" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git switch -c lab/week-05-permissions
+# sementara: hapus baris `packages: write` dari job build-push, commit, push ke branch ini
+gh run watch
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> step push GHCR gagal dengan pesan mirip <code>resource not accessible by integration</code> / <code>denied</code>. Ini ngebuktiin bahwa <code>permissions:</code> beneran berlaku.
+<strong>Kalau gagal (justru sukses):</strong> berarti lo lupa nyimpan perubahan, atau repo masih punya <code>default_workflow_permissions: write</code>.
+<strong>Catat di notes.md:</strong> pesan error persisnya.</p>
+<p><strong>Pemulihan:</strong></p>
+<pre><code class="language-bash">git checkout .github/workflows/ci.yml &amp;&amp; git commit -am &quot;week 05: kembalikan permissions&quot; &amp;&amp; git push
+git switch main &amp;&amp; git branch -D lab/week-05-permissions
+</code></pre>
+<h3 id="langkah-35-rollback-sungguhan-pakai-digest">Langkah 3.5 — Rollback sungguhan pakai digest<a class="headerlink" href="#langkah-35-rollback-sungguhan-pakai-digest" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># Anggap versi sekarang bermasalah. Ambil digest image dari 2 commit lalu.
+git log --oneline -3
+OLD=$(git rev-parse --short=12 HEAD~2)
+docker pull ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-$OLD 2&gt;/dev/null || echo &quot;tag lama nggak ada (belum pernah di-push)&quot;
+docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-$OLD 2&gt;/dev/null
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> lo dapet digest image lama yang bisa dipakai buat deploy ulang. Kalau tag-nya nggak ada, itu sendiri adalah temuan: <strong>retensi image belum diatur</strong>.
+<strong>Kalau gagal:</strong> ulangi dengan SHA commit yang pernah ke-push (lihat <code>gh run list</code>).
+<strong>Catat di notes.md:</strong> perintah rollback final yang akan lo tulis di <code>docs/release-process.md</code>.</p>
+<h2 id="hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)<a class="headerlink" href="#hari-4-review-dokumentasi-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-41-isi-docsrelease-processmd">Langkah 4.1 — Isi <code>docs/release-process.md</code><a class="headerlink" href="#langkah-41-isi-docsrelease-processmd" title="Permanent link">&para;</a></h3>
+<p>Bikin file baru <code>docs/release-process.md</code> yang menjawab 4 pertanyaan ini:</p>
+<table>
+<thead>
+<tr>
+<th>Pertanyaan</th>
+<th>Jawaban yang harus ada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gimana cara build?</td>
+<td>Perintah + di mana jalannya (lokal vs CI)</td>
+</tr>
+<tr>
+<td>Gimana cara publish image?</td>
+<td>Registry + siapa yang punya akses + permission yang dipakai</td>
+</tr>
+<tr>
+<td>Gimana deploy versi tertentu?</td>
+<td>Perintah yang nunjuk <strong>digest</strong></td>
+</tr>
+<tr>
+<td>Gimana balikin versi sebelumnya?</td>
+<td>Perintah rollback + estimasi waktu + apa yang diverifikasi</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Yang harus terjadi:</strong> 4 baris itu kejawab dengan perintah nyata dari lab ini, bukan kalimat umum.
+<strong>Kalau gagal:</strong> ulangi langkah 2.4 dan 3.5.
+<strong>Catat di notes.md:</strong> link ke file-nya.</p>
+<h3 id="langkah-42-lengkapi-commandsmd">Langkah 4.2 — Lengkapi <code>commands.md</code><a class="headerlink" href="#langkah-42-lengkapi-commandsmd" title="Permanent link">&para;</a></h3>
+<p>Salin semua perintah yang lo jalanin Hari 2 dan Hari 3 ke <code>commands.md</code>, lengkap dengan output yang disanitasi dan interpretasinya.</p>
+<p><strong>Yang harus terjadi:</strong> minimal 15 perintah, terkelompok per hari.
+<strong>Kalau gagal:</strong> lo kurang nyatet — ini alasan kenapa tiap langkah minta lo nulis di <code>notes.md</code>.</p>
+<h3 id="langkah-43-isi-runbook-kegagalan">Langkah 4.3 — Isi runbook kegagalan<a class="headerlink" href="#langkah-43-isi-runbook-kegagalan" title="Permanent link">&para;</a></h3>
+<p>Tulis minimal 3 skenario di <code>runbooks/README.md</code> (atau file baru di folder <code>runbooks/</code>):</p>
+<ol>
+<li>Pipeline merah karena test gagal → apa yang dicek pertama.</li>
+<li>Push ke GHCR ditolak → permission mana yang kurang.</li>
+<li>Attestation nggak ketemu → langkah verifikasi dan kemungkinan sebab.</li>
+</ol>
+<p><strong>Yang harus terjadi:</strong> tiap skenario punya: gejala → cara buktikan → perintah pemulihan.
+<strong>Kalau gagal:</strong> contohin formatnya dari <code>docs/deployment.md</code>.</p>
+<h3 id="langkah-44-acceptance-test-ulang-dari-nol">Langkah 4.4 — Acceptance test ulang dari nol<a class="headerlink" href="#langkah-44-acceptance-test-ulang-dari-nol" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">gh run list --workflow ci.yml --limit 3
+gh attestation verify oci://ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api:sha-$(git rev-parse --short=12 HEAD) -R &lt;owner&gt;/&lt;repo&gt;
+gitleaks detect --log-opts=--all -v
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> run hijau, verifikasi lulus, gitleaks bersih.
+<strong>Kalau gagal:</strong> balik ke Hari 3, perbaiki, ulangi. Jangan centang minggu ini cuma karena tutorial udah ditonton.</p>
+<h3 id="langkah-45-commit">Langkah 4.5 — Commit<a class="headerlink" href="#langkah-45-commit" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">git add labs/week-05-cicd docs/release-process.md .github/workflows/ci.yml
+git commit -m &quot;week 05: CI/CD pipeline + attestation + prosedur rollback&quot;
+git push origin main
+gh run watch --workflow ci.yml
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> commit masuk, pipeline hijau, dan SHA commit terakhir tercatat di README (<code>Commit terakhir lab ini:</code>).
+<strong>Kalau gagal:</strong> cek <code>git status</code>; jangan <code>--force</code> push.</p>
+<h2 id="daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"<a class="headerlink" href="#daftar-periksa-minggu-ini-selesai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>bahan-bacaan.md</code> dibaca; 7 self-check bisa dijawab.</li>
+<li>[ ] Pipeline jalan otomatis tiap PR, durasi &lt; 10 menit (ada angkanya).</li>
+<li>[ ] Image punya tag <code>sha-&lt;12&gt;</code> dan digest tercatat.</li>
+<li>[ ] Ada bukti run <strong>merah</strong> karena test sengaja digagalkan + job build nggak jalan.</li>
+<li>[ ] <code>gh attestation verify</code> lulus (output ada di <code>evidence/</code>).</li>
+<li>[ ] <code>gitleaks detect</code> bersih di history repo.</li>
+<li>[ ] <code>permissions:</code> eksplisit di semua job (top-level + job-level).</li>
+<li>[ ] <code>docs/release-process.md</code> menjawab 4 pertanyaan wajib.</li>
+<li>[ ] Semua branch eksperimen (<code>lab/week-05-*</code>) sudah dibersihkan.</li>
+<li>[ ] <code>README.md</code> bagian Referensi terisi (bukan lagi komentar kosong).</li>
+</ul>
+<h2 id="cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer<a class="headerlink" href="#cara-membuktikan-ke-reviewer" title="Permanent link">&para;</a></h2>
+<p>Tunjukkin 4 hal ini, berurutan:</p>
+<ol>
+<li><code>gh run list --workflow ci.yml --limit 5</code> — tunjukkin mana yang hijau dan mana yang sengaja merah.</li>
+<li><code>gh attestation verify ...</code> — tunjukkin output <code>Verification succeeded</code> + digest yang cocok dengan yang di registry.</li>
+<li><code>docs/release-process.md</code> — tunjukkin perintah rollback yang nunjuk digest.</li>
+<li><code>evidence/</code> — tunjukkin file log/versi registry yang lo simpan (sudah disanitasi).</li>
+</ol>
+<p>Kalau reviewer nanya "kenapa nggak pakai <code>:latest</code>?", jawabannya ada di <code>ringkasan.md</code> → <em>Jebakan umum</em>.</p>
+<div class="foot"><span>production-reliability-lab/labs/week-05-cicd/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

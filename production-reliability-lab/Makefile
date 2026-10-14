@@ -1,4 +1,4 @@
-.PHONY: help up down reset logs ps health test test-int lint build loadtest backup restore fmt
+.PHONY: help up down reset logs ps health test test-int lint build loadtest backup restore fmt docs
 
 COMPOSE  := docker compose -f docker/compose.yaml --env-file .env
 IMAGE    := sre-lab-api
@@ -51,3 +51,6 @@ backup: ## Backup database (custom format)
 
 restore: ## Restore: make restore FILE=backup-xxx.dump
 	$(COMPOSE) exec -T postgres pg_restore -U $${PGUSER} -d $${PGDATABASE} --clean --if-exists < $(FILE)
+
+docs: ## Render semua .md jadi .html biar bisa dibaca enak di browser
+	@if [ -x ../.venv/bin/python ]; then ../.venv/bin/python ../tools/build_docs.py; elif [ -x ../../.venv/bin/python ]; then ../../.venv/bin/python ../tools/build_docs.py; else python3 ../tools/build_docs.py; fi

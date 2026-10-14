@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 4 · DNS, TLS, dan Reverse Proxy — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-04-reverse-proxy/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-4-dns-tls-dan-reverse-proxy-bahan-bacaan">Minggu 4 · DNS, TLS, dan Reverse Proxy — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-reverse-proxy-bedanya-sama-forward-proxy">2.1 Reverse proxy bedanya sama forward proxy</a></li>
+<li><a href="#22-upstream-dan-proxy_next_upstream">2.2 Upstream dan proxy_next_upstream</a></li>
+<li><a href="#23-proxy-headers-jangan-lupa-ini">2.3 Proxy headers — jangan lupa ini</a></li>
+<li><a href="#24-timeout-sumber-502-504-499">2.4 Timeout — sumber 502 / 504 / 499</a></li>
+<li><a href="#25-keep-alive-upstream">2.5 Keep-alive upstream</a></li>
+<li><a href="#26-tls-dan-sertifikat-perubahan-2025-yang-penting">2.6 TLS dan sertifikat (perubahan 2025 yang penting)</a></li>
+<li><a href="#27-failure-matrix-502-vs-504-vs-499">2.7 Failure matrix: 502 vs 504 vs 499</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-4-dns-tls-dan-reverse-proxy-bahan-bacaan">Minggu 4 · DNS, TLS, dan Reverse Proxy — Bahan Bacaan<a class="headerlink" href="#minggu-4-dns-tls-dan-reverse-proxy-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini <strong>berdiri sendiri</strong>. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham konsepnya. Baru setelah itu kerjakan <code>lab.md</code>.</p>
+</blockquote>
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Bayangin lo bikin API yang jalan sempurna, tapi besok pagi user komplain "web-nya error semua". Lo cek aplikasi — normal. Lo cek database — normal. Ternyata yang rusak adalah Nginx di depannya yang nolak koneksi karena sertifikat TLS kedaluwarsa. Atau proxy yang nggak bisa nyambung ke backend karena <code>proxy_read_timeout</code> kepanjangan.</p>
+<p>Di minggu 2 lo belajar request sampai ke aplikasi. Di minggu 4 lo belajar apa yang terjadi <strong>tepat di depan</strong> aplikasi: lapisan yang paling sering jadi penyebab "tapi di lokal kan jalan" — padahal di lokal lo nggak pakai proxy. Reverse proxy, TLS, dan timeout adalah tempat lahirnya 80% keluhan "lambat" dan "error aneh", dan kebanyakan orang salah diagnosa karena nggak tahu bedanya <strong>502</strong> sama <strong>504</strong>. Minggu ini lo belajar membedakannya pakai bukti dari log, bukan tebakan.</p>
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-reverse-proxy-bedanya-sama-forward-proxy">2.1 Reverse proxy bedanya sama forward proxy<a class="headerlink" href="#21-reverse-proxy-bedanya-sama-forward-proxy" title="Permanent link">&para;</a></h3>
+<p><strong>Forward proxy</strong> = perantara buat <em>client</em> (lo akses internet lewat dia). <strong>Reverse proxy</strong> = perantara buat <em>server</em>: client nggak tahu ada banyak backend di belakangnya. Nginx di sini nerima request dari publik, lalu neruskannya ke <code>api:8080</code> (container internal). Keuntungannya: lo cuma buka <strong>SATU</strong> port ke publik, backend nggak kelihatan ke luar, dan lo bisa pasang TLS, limit, dan log di satu titik.</p>
+<h3 id="22-upstream-dan-proxy_next_upstream">2.2 Upstream dan <code>proxy_next_upstream</code><a class="headerlink" href="#22-upstream-dan-proxy_next_upstream" title="Permanent link">&para;</a></h3>
+<p><code>upstream</code> adalah daftar backend yang dilayani proxy. Nginx bisa "pindah" ke backend lain kalau satu backend balas error/timeout lewat direktif <code>proxy_next_upstream error timeout http_502</code>. Di lab kita cuma punya satu backend, tapi polanya identik kalau nanti lo punya 5 replica.</p>
+<h3 id="23-proxy-headers-jangan-lupa-ini">2.3 Proxy headers — jangan lupa ini<a class="headerlink" href="#23-proxy-headers-jangan-lupa-ini" title="Permanent link">&para;</a></h3>
+<p>Waktu Nginx neruskkan request, backend butuh tahu:
+- client aslinya dari IP mana → <code>X-Real-IP</code> dan <code>X-Forwarded-For</code>
+- pakai http atau https → <code>X-Forwarded-Proto</code>
+- nama host asli → <code>Host</code></p>
+<p>Lupa set <code>Host $host</code> → backend salah milih virtual host. Lupa <code>X-Forwarded-Proto</code> → aplikasi ngerasa di http terus, bisa bikin redirect loop ke https. Ini jebakan klasik yang nggak kelihatan sampai lo pasang TLS.</p>
+<h3 id="24-timeout-sumber-502-504-499">2.4 Timeout — sumber 502 / 504 / 499<a class="headerlink" href="#24-timeout-sumber-502-504-499" title="Permanent link">&para;</a></h3>
+<p>Nginx punya tiga timeout penting:
+- <code>proxy_connect_timeout</code> — waktu buat <strong>nyambung</strong> ke backend
+- <code>proxy_read_timeout</code> — waktu <strong>nunggu</strong> backend balas
+- <code>proxy_send_timeout</code> — waktu nunggu backend nerima body</p>
+<p>Default ketiganya <strong>60 detik</strong> — kepanjangan buat API modern. Turunin. <strong>Aturan main:</strong> timeout di <em>client</em> (mis. <code>curl --max-time</code>) harus <strong>lebih kecil</strong> dari <code>proxy_read_timeout</code>. Kalau sebaliknya, lo dapet <strong>499</strong> (client kabur duluan), bukan 504.</p>
+<h3 id="25-keep-alive-upstream">2.5 Keep-alive upstream<a class="headerlink" href="#25-keep-alive-upstream" title="Permanent link">&para;</a></h3>
+<p>Nginx bisa pakai ulang koneksi TCP ke backend biar nggak buka baru tiap request. Caranya: <code>keepalive 32</code> di blok <code>upstream</code> + <code>proxy_http_version 1.1</code> + <code>proxy_set_header Connection ""</code>. Mulai <strong>nginx 1.29.7</strong> ini default ON, tapi tetap tulis eksplisit biar aman di versi lama dan gampang dibaca orang lain.</p>
+<h3 id="26-tls-dan-sertifikat-perubahan-2025-yang-penting">2.6 TLS dan sertifikat (perubahan 2025 yang penting)<a class="headerlink" href="#26-tls-dan-sertifikat-perubahan-2025-yang-penting" title="Permanent link">&para;</a></h3>
+<p>TLS = enskripsi lapisan transport antara client dan proxy. Di production, sertifikat datang dari CA (Let's Encrypt lewat protokol ACME). <strong>Yang berubah 2025:</strong> Let's Encrypt mulai terbitkan sertifikat umur <strong>6 hari</strong> (awal 2026 GA penuh). Artinya renewal <strong>harus otomatis harian</strong> — cron bulanan = outage berkala. Buat lab, pakai <code>mkcert</code> (bikin CA lokal di mesin lo sendiri) atau <code>step-ca</code>. <strong>Jangan</strong> pakai sertifikat lab buat domain publik — cuma dipercaya di mesin lo.</p>
+<h3 id="27-failure-matrix-502-vs-504-vs-499">2.7 Failure matrix: 502 vs 504 vs 499<a class="headerlink" href="#27-failure-matrix-502-vs-504-vs-499" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>502 Bad Gateway</strong> → Nginx nyambung tapi upstream <em>nolak/reset</em> (backend mati, port tutup).</li>
+<li><strong>504 Gateway Timeout</strong> → <code>proxy_read_timeout</code> habis, backend <em>kelamaan</em> mikir.</li>
+<li><strong>499</strong> → kode <em>internal</em> Nginx, <strong>bukan</strong> standar HTTP. Artinya client nutup koneksi duluan (biasanya client timeout &lt; proxy timeout).</li>
+</ul>
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Waktu lo jalanin <code>curl http://localhost/health</code>:</p>
+<ol>
+<li>Client buka koneksi TCP ke <strong>port 80</strong> (cuma port ini yang kebuka ke host).</li>
+<li>Nginx terima, cocokkan <code>server_name</code>, masuk <code>location /</code>.</li>
+<li>Nginx ambil koneksi dari pool keep-alive ke <code>api:8080</code>, tambahin header <code>X-Forwarded-*</code>.</li>
+<li>Backend proses, balikin response.</li>
+<li>Nginx tulis <code>access.log</code> (status, <code>request_time</code>, <code>upstream_response_time</code>).</li>
+<li>Kalau backend <strong>mati</strong> → Nginx balik <strong>502</strong>, <code>error.log</code>: <code>connect() failed (111: Connection refused)</code>.</li>
+<li>Kalau backend <strong>lambat</strong> lewat 30 detik → <strong>504</strong>, <code>error.log</code>: <code>upstream timed out</code>.</li>
+</ol>
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti dengan bahasa sederhana</th>
+<th>Contoh konkret</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reverse proxy</td>
+<td>Penghubung di depan server; client nggak lihat backend</td>
+<td>Nginx di depan Go API</td>
+</tr>
+<tr>
+<td>Upstream</td>
+<td>Daftar backend yang dilayani proxy</td>
+<td><code>upstream api { server api:8080; }</code></td>
+</tr>
+<tr>
+<td>502</td>
+<td>Backend nolak/reset koneksi</td>
+<td>Container <code>api</code> mati</td>
+</tr>
+<tr>
+<td>504</td>
+<td>Backend kelamaan sampai proxy timeout</td>
+<td>Endpoint <code>/slow?ms=60000</code></td>
+</tr>
+<tr>
+<td>499</td>
+<td>Client nutup koneksi duluan (kode Nginx)</td>
+<td><code>curl --max-time 2</code> ke endpoint lambat</td>
+</tr>
+<tr>
+<td>TLS</td>
+<td>Enskripsi transport (https)</td>
+<td>Sertifikat Let's Encrypt</td>
+</tr>
+<tr>
+<td>Keep-alive</td>
+<td>Pakai ulang koneksi TCP biar nggak buka baru</td>
+<td><code>keepalive 32</code></td>
+</tr>
+<tr>
+<td>X-Forwarded-For</td>
+<td>Jejak IP asli client lewat proxy</td>
+<td><code>203.0.113.5</code> di log backend</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber</th>
+<th>Apa yang dibaca / dicari</th>
+<th>Estimasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://nginx.org/en/docs/beginners_guide.html">NGINX Beginner's Guide</a></td>
+<td>Konsep <code>server</code>, <code>location</code>, <code>proxy_pass</code></td>
+<td>20 mnt</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://nginx.org/en/docs/http/ngx_http_proxy_module.html">ngx_http_proxy_module</a></td>
+<td>Timeout, <code>proxy_set_header</code>, <code>proxy_next_upstream</code></td>
+<td>30 mnt</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://github.com/FiloSottile/mkcert">mkcert (GitHub)</a></td>
+<td>Cara bikin sertifikat lokal tepercaya</td>
+<td>10 mnt</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://github.com/smallstep/certificates">step-ca (smallstep)</a></td>
+<td>CA lokal yang lebih serius buat lab</td>
+<td>15 mnt</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://letsencrypt.org/">Let's Encrypt</a></td>
+<td>Kenapa sertifikat sekarang umur 6 hari</td>
+<td>10 mnt</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://caddyserver.com/docs/">Caddy docs</a></td>
+<td>Alternatif proxy "HTTPS otomatis"</td>
+<td>15 mnt</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa bedanya reverse proxy sama forward proxy?</li>
+<li>Kenapa <code>X-Forwarded-Proto</code> penting kalau lo pasang TLS?</li>
+<li>Kapan lo dapet 502, kapan 504, kapan 499?</li>
+<li>Kenapa <code>proxy_read_timeout</code> 60 detik itu terlalu lama buat API?</li>
+<li>Apa fungsi <code>keepalive</code> di blok <code>upstream</code>?</li>
+<li>Kenapa sertifikat 6 hari butuh renewal otomatis harian?</li>
+</ol>
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"502 sama 504 kan sama-sama gateway error"</td>
+<td>502 = upstream <strong>nolak</strong>, 504 = upstream <strong>kelamaan</strong>. Penanganannya beda.</td>
+</tr>
+<tr>
+<td>"499 itu error server"</td>
+<td>Bukan. 499 adalah kode internal Nginx: <strong>client</strong> yang nutup duluan.</td>
+</tr>
+<tr>
+<td>"Set ProxyPass sudah cukup"</td>
+<td>Tanpa <code>Host</code>/<code>X-Forwarded-*</code> backend bisa salah behavior, apalagi kalau ada redirect.</td>
+</tr>
+<tr>
+<td>"Sertifikat cuma perlu dibikin sekali"</td>
+<td>2025: umur 6 hari. Tanpa auto-renewal harian = outage berkala.</td>
+</tr>
+<tr>
+<td>"Timeout default aman"</td>
+<td>Default 60s kepanjangan; client biasanya timeout duluan → 499 misterius.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-04-reverse-proxy/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

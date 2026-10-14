@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Week 09 · Metrics dengan Prometheus</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-09-prometheus/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-week-09-metrics-dengan-prometheus">Lab — Week 09 · Metrics dengan Prometheus</a><ul>
+<li><a href="#persiapan-wajib-sebelum-hari-1">Persiapan (wajib sebelum Hari 1)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak</a></li>
+<li><a href="#hari-4-review-2-jam">Hari 4 · Review (2 jam)</a></li>
+<li><a href="#daftar-periksa-checklist">Daftar periksa (checklist)</a></li>
+<li><a href="#cara-buktikan-acceptance">Cara buktikan (acceptance)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-week-09-metrics-dengan-prometheus">Lab — Week 09 · Metrics dengan Prometheus<a class="headerlink" href="#lab-week-09-metrics-dengan-prometheus" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Target: tahu kondisi service dari metrics, bukan dari chat user.
+Waktu: 4 hari × 2 jam. Stack: <code>api</code> (Go) + <code>prometheus</code> (3.13.x) + <code>postgres</code>.</p>
+</blockquote>
+<h2 id="persiapan-wajib-sebelum-hari-1">Persiapan (wajib sebelum Hari 1)<a class="headerlink" href="#persiapan-wajib-sebelum-hari-1" title="Permanent link">&para;</a></h2>
+<pre><code>docker compose ps
+</code></pre>
+<p>Pastikan <code>sre-lab-api-1</code> dan <code>sre-lab-prometheus-1</code> status <code>Up</code>.
+Kalau <code>prometheus</code> <code>Exit</code>, cek <code>observability/prometheus/prometheus.yml</code> —
+job <code>api</code> menunjuk ke <code>api:8080</code> dan <code>scrape_native_histograms: true</code> sudah ada.
+Buka <code>http://localhost:9090/targets</code> → job <code>api</code> harus <code>UP</code>.</p>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Baca <code>bahan-bacaan.md</code> sampai selesai (seksi 1–7).</li>
+<li>Catat di <code>notes.md</code>: beda Counter vs Gauge vs Histogram vs Summary pakai
+  kata lo sendiri + analogi odometer/speedometer/ember.</li>
+<li>Pahami <code>rate()</code> vs nilai mentah, dan kenapa <code>histogram_quantile</code> itu aproksimasi.</li>
+</ul>
+<p><strong>Yang harus terjadi:</strong> lo bisa jelasin kenapa <code>rate(http_server_requests_total[5m])</code>
+lebih benar dari nilai mentah, tanpa buka dokumen.</p>
+<p><strong>Kalau gagal:</strong> balik ke <code>bahan-bacaan.md</code> seksi 2.1–2.3. Jangan lanjut praktik
+kalau 4 tipe metrik masih baur.</p>
+<p><strong>Catat notes:</strong> tulis 1 contoh metrik di <code>app/main.go</code> untuk tiap tipe.</p>
+<hr />
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Cek raw metrics:
+   <code>curl -fsS http://localhost:8080/metrics | grep http_server</code>
+   <strong>Yang harus terjadi:</strong> muncul <code>http_server_requests_total</code>,
+   <code>http_server_request_duration_seconds_bucket</code>, <code>http_server_requests_in_flight</code>.
+   <strong>Kalau gagal:</strong> cek app jalan (<code>docker compose ps</code>), port 8080 diekspos.</p>
+</li>
+<li>
+<p>Jalankan query di Prometheus UI (<code>http://localhost:9090</code>):
+   <code>sum by (route) (rate(http_server_requests_total[5m]))</code>
+   <strong>Yang harus terjadi:</strong> nilai &gt; 0 setelah lo kirim traffic.
+   <strong>Kalau gagal (hasil kosong):</strong> target DOWN → lihat <code>/targets</code>, cek <code>lastError</code>.</p>
+</li>
+<li>
+<p>Simpan 4 query wajib ke <code>labs/week-09-prometheus/queries.promql</code>:
+   request rate, error ratio, p95 latency, in-flight.</p>
+</li>
+</ol>
+<p><strong>Catat notes:</strong> screenshot hasil query sebelum ada traffic (nol) dan sesudah.</p>
+<hr />
+<h2 id="hari-3-eksperimen-2-jam-sengaja-rusak">Hari 3 · Eksperimen (2 jam) — sengaja rusak<a class="headerlink" href="#hari-3-eksperimen-2-jam-sengaja-rusak" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Kirim 100 request normal:
+   <code>for i in $(seq 1 100); do curl -sS -o /dev/null http://localhost/orders; done</code>
+   <strong>Yang harus terjadi:</strong> <code>status="200"</code> naik ~100.</p>
+</li>
+<li>
+<p>Kirim 20 request error:
+   <code>for i in $(seq 1 20); do curl -sS -o /dev/null -X POST -d 'bad' http://localhost/orders; done
+   curl -sS http://localhost:8080/metrics | grep 'http_server_requests_total{.*status="500"'</code>
+   <strong>Yang harus terjadi:</strong> tepat 20 di <code>status="500"</code>.
+   <strong>Kalau gagal:</strong> pastikan <code>POST /orders</code> memang return 500 (lihat <code>handleOrders</code>).</p>
+</li>
+<li>
+<p>Bikin lambat &amp; cek histogram:
+   <code>curl -sS "http://localhost/slow?ms=2000" &amp;</code>
+   Lalu query p95:
+   <code>histogram_quantile(0.95, sum by (le,route)(rate(http_server_request_duration_seconds_bucket[5m])))</code>
+   <strong>Yang harus terjadi:</strong> <code>{route="/slow"}</code> mendekati 2s.
+   <strong>Kalau gagal:</strong> request terlalu cepat selesai — naikin <code>ms</code> atau kirim berulang.</p>
+</li>
+<li>
+<p><strong>CARA KEMBALI NORMAL (wajib):</strong>
+   <code>docker compose restart api        # reset counter &amp; state eksperimen
+   # atau cukup berhenti kirim request /slow; in-flight akan turun sendiri
+   curl -fsS http://localhost:8080/metrics | grep http_server_requests_in_flight</code>
+   <strong>Yang harus terjadi:</strong> <code>in_flight</code> kembali ke angka kecil (0–3),
+   error ratio kembali mendekati baseline. Bukan rollback image — cukup stop
+   traffic eksperimen &amp; restart container kalau perlu.</p>
+</li>
+</ol>
+<p><strong>Catat notes:</strong> selisih error ratio sebelum (#2 awal) vs sesudah (#2 akhir).</p>
+<hr />
+<h2 id="hari-4-review-2-jam">Hari 4 · Review (2 jam)<a class="headerlink" href="#hari-4-review-2-jam" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Uji kardinalitas:
+   <code>topk(10, count by (__name__)({__name__=~".+"}))</code>
+   <strong>Yang harus terjadi:</strong> jumlah seri rendah, TIDAK ada <code>user_id</code>/<code>request_id</code>.</li>
+<li>Verifikasi <code>route</code> dipakai, bukan path mentah:
+   <code>count by (route) (http_server_requests_total)</code></li>
+<li>Commit <code>queries.promql</code> + <code>commands.md</code> + <code>evidence/</code>.</li>
+</ol>
+<p><strong>Catat notes:</strong> simpulkan 1 kesalahan paling umum yang lo sendiri suka lakuin.</p>
+<hr />
+<h2 id="daftar-periksa-checklist">Daftar periksa (checklist)<a class="headerlink" href="#daftar-periksa-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>docker compose ps</code> → api &amp; prometheus Up</li>
+<li>[ ] <code>/targets</code> → job <code>api</code> UP</li>
+<li>[ ] 4 query wajib tersimpan &amp; jalan</li>
+<li>[ ] 100 req normal → counter 200 naik</li>
+<li>[ ] 20 req error → counter 500 naik tepat 20</li>
+<li>[ ] p95 <code>/slow</code> ≈ 2s</li>
+<li>[ ] <code>topk</code> kardinalitas rendah, tanpa label high-card</li>
+<li>[ ] Cara kembali normal sudah dicoba &amp; dokumentasikan</li>
+</ul>
+<h2 id="cara-buktikan-acceptance">Cara buktikan (acceptance)<a class="headerlink" href="#cara-buktikan-acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Buka <code>/targets</code>, screenshot job <code>api</code> = UP → masukkan ke <code>evidence/</code>.</li>
+<li>Sebelum/sesudah kirim 20 error: <code>grep status="500"</code> naik 20 → <code>evidence/</code>.</li>
+<li>Query p95 jalan &amp; <code>{route="/slow"}</code> ≈ 2s → <code>evidence/</code>.</li>
+<li><code>topk</code> kardinalitas: daftar metrik &amp; jumlah seri → <code>evidence/</code>.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-09-prometheus/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

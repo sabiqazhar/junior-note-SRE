@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringkasan — Minggu 01 · Linux observability dan troubleshooting</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-01-linux/ringkasan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#ringkasan-minggu-01-linux-observability-dan-troubleshooting">Ringkasan — Minggu 01 · Linux observability dan troubleshooting</a><ul>
+<li><a href="#inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat</a></li>
+<li><a href="#peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)</a></li>
+<li><a href="#perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output</a></li>
+<li><a href="#failure-matrix-decision-tree">Failure matrix / decision tree</a></li>
+<li><a href="#jebakan-umum">Jebakan umum</a></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a></li>
+<li><a href="#satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="ringkasan-minggu-01-linux-observability-dan-troubleshooting">Ringkasan — Minggu 01 · Linux observability dan troubleshooting<a class="headerlink" href="#ringkasan-minggu-01-linux-observability-dan-troubleshooting" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Satu halaman untuk dibaca ulang sebelum ujian/wawancara. Bukan pengganti <code>bahan-bacaan.md</code>.</p>
+</blockquote>
+<hr />
+<h2 id="inti-minggu-ini-dalam-5-kalimat">Inti minggu ini dalam 5 kalimat<a class="headerlink" href="#inti-minggu-ini-dalam-5-kalimat" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Semua insiden produksi ujungnya cuma tiga pertanyaan: siapa makan CPU, siapa makan memori atau kena limit, dan prosesnya masih bisa diajak ngomong atau nggak.</li>
+<li><code>free -h</code> yang harus lo baca itu kolom <code>available</code>, bukan <code>free</code> — Linux sengaja pakai sisa RAM buat page cache.</li>
+<li>Load average itu bukan persentase CPU: dia ngitung task yang runnable <strong>dan</strong> yang nunggu IO, makanya bisa tinggi saat CPU idle.</li>
+<li>Container kena OOM karena batas <strong>cgroup v2</strong>-nya, bukan karena RAM host — buktinya ada di <code>memory.events</code> dan journal <code>systemd-oomd</code>, seringkali bukan di <code>dmesg</code>.</li>
+<li>PSI (<code>/proc/pressure/*</code>) adalah satu-satunya jawaban buat pertanyaan "CPU nggak penuh, tapi kok lambat?": dia ngukur waktu <em>nunggu</em>, bukan waktu <em>terpakai</em>.</li>
+</ol>
+<hr />
+<h2 id="peta-konsep-daftar-bertingkat">Peta konsep (daftar bertingkat)<a class="headerlink" href="#peta-konsep-daftar-bertingkat" title="Permanent link">&para;</a></h2>
+<pre><code>Linux observability
+├─ Identitas proses
+│  ├─ proses vs thread            → top -H, ps -eLo
+│  ├─ PID &amp; command line          → pgrep -af
+│  └─ status internal             → /proc/&lt;PID&gt;/status, /proc/&lt;PID&gt;/limits
+├─ CPU
+│  ├─ utilisasi per proses        → pidstat -u, top
+│  ├─ utilisasi per thread        → top -H -p &lt;PID&gt;
+│  ├─ load average                → uptime, vmstat (kolom r, b, wa)
+│  └─ tekanan CPU (stall)         → /proc/pressure/cpu
+├─ Memori
+│  ├─ free vs available           → free -h
+│  ├─ page cache (bukan musuh)    → kolom buff/cache
+│  ├─ swap &amp; thrashing            → vmstat si/so, psi full
+│  ├─ batas cgroup                → memory.max, memory.current, memory.events
+│  └─ OOM
+│     ├─ kernel OOM killer        → journalctl -k, oom_score, oom_score_adj
+│     └─ systemd-oomd (userspace) → journalctl -u systemd-oomd
+├─ IO &amp; disk
+│  ├─ disk penuh vs inode habis   → df -h, df -i
+│  ├─ tekanan IO                  → /proc/pressure/io
+│  └─ per proses                  → pidstat -d, iotop
+├─ Jaringan &amp; fd
+│  ├─ siapa listen di port X      → ss -lntp
+│  ├─ fd yang dibuka proses       → ls /proc/&lt;PID&gt;/fd, lsof -p
+│  └─ koneksi database            → lsof -i, ss -tnp
+├─ Signal &amp; lifecycle
+│  ├─ SIGTERM (15) = minta berhenti, bisa ditangkap
+│  ├─ SIGKILL (9)  = paksa, nggak bisa ditangkap
+│  └─ SIGINT (2)   = Ctrl-C, diperlakukan sama kayak SIGTERM di app Go kita
+└─ Log terpusat
+   ├─ log unit tertentu           → journalctl -u
+   ├─ log kernel                  → journalctl -k
+   └─ filter waktu &amp; level        → --since, -p err, -b
+</code></pre>
+<hr />
+<h2 id="perintah-kunci-yang-harus-lo-lihat-di-output">Perintah kunci + yang harus lo lihat di output<a class="headerlink" href="#perintah-kunci-yang-harus-lo-lihat-di-output" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Perintah</th>
+<th>Yang dicari di output</th>
+<th>Artinya kalau beda</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uname -a</code></td>
+<td>Kernel versi 6.x, arsitektur <code>x86_64</code> atau <code>aarch64</code></td>
+<td>Kernel &lt; 5.13: <code>full</code> di <code>/proc/pressure/cpu</code> nggak terlapor</td>
+</tr>
+<tr>
+<td><code>uptime</code></td>
+<td><code>load average</code> 1/5/15 menit</td>
+<td>1 &gt; 5 &gt; 15 = beban baru naik. 15 &gt; 1 = beban sudah turun</td>
+</tr>
+<tr>
+<td><code>free -h</code></td>
+<td>Baris <code>Mem:</code> kolom <strong>available</strong></td>
+<td><code>available</code> kecil + swap terpakai = masalah memori nyata</td>
+</tr>
+<tr>
+<td><code>df -h</code></td>
+<td>Kolom <code>Use%</code> tiap mount</td>
+<td>100% = disk penuh → aplikasi bisa gagal nulis log/DB</td>
+</tr>
+<tr>
+<td><code>df -i</code></td>
+<td>Kolom <code>IUse%</code></td>
+<td>Penuh padahal <code>df -h</code> lega = kehabisan inode (banyak file kecil)</td>
+</tr>
+<tr>
+<td><code>ps aux --sort=-%cpu \| head -10</code></td>
+<td>Baris teratas = proses paling rakus CPU</td>
+<td>Yang muncul malah <code>top</code>/<code>ps</code> sendiri = nggak ada yang aneh</td>
+</tr>
+<tr>
+<td><code>ps -eLo pid,tid,pcpu,comm --sort=-pcpu \| head</code></td>
+<td>TID spesifik dengan <code>%cpu</code> tinggi</td>
+<td>Proses wajar tapi thread tertentu 100% = cari thread itu, bukan prosesnya</td>
+</tr>
+<tr>
+<td><code>top -H -p &lt;PID&gt;</code></td>
+<td>Daftar thread dengan <code>%CPU</code></td>
+<td>Cuma satu thread tinggi → masalahnya di satu goroutine/worker</td>
+</tr>
+<tr>
+<td><code>pidstat -urd -p &lt;PID&gt; 1 5</code></td>
+<td><strong>Baris ke-2 dst</strong>, kolom <code>%usr</code>, <code>%system</code>, <code>RSS</code>, <code>kB_rd/s</code></td>
+<td>Baris pertama = rata-rata sejak boot, jangan dipakai</td>
+</tr>
+<tr>
+<td><code>vmstat 1 5</code></td>
+<td>Kolom <code>r</code> (runnable), <code>b</code> (blocked), <code>wa</code> (wait IO)</td>
+<td><code>b</code> dan <code>wa</code> tinggi = masalah IO, bukan CPU</td>
+</tr>
+<tr>
+<td><code>cat /proc/pressure/cpu</code></td>
+<td><code>some avg10</code>, <code>avg60</code>, <code>avg300</code></td>
+<td><code>avg10</code> &gt; 10% = user sudah ngerasa lambat</td>
+</tr>
+<tr>
+<td><code>cat /proc/pressure/memory</code></td>
+<td><code>some</code> dan <code>full</code></td>
+<td><code>full</code> &gt; 0 terus-menerus = thrashing, kritis</td>
+</tr>
+<tr>
+<td><code>cat /proc/pressure/io</code></td>
+<td><code>some avg10</code></td>
+<td>Tinggi = disk atau network storage jadi bottleneck</td>
+</tr>
+<tr>
+<td><code>ss -lntp</code></td>
+<td>Baris <code>LISTEN</code> dengan <code>users:(("sre-api",pid=..))</code></td>
+<td>Port nggak muncul = proses nggak listen (lihat decision tree)</td>
+</tr>
+<tr>
+<td><code>ss -lntp \| grep 8080</code></td>
+<td>Satu baris LISTEN di 8080</td>
+<td>Kosong = aplikasi belum bind; dobel = bentrok port</td>
+</tr>
+<tr>
+<td><code>lsof -i :8080</code></td>
+<td>Proses pemilik port</td>
+<td>Muncul <code>COMMAND</code> yang bukan aplikasi lo = ada yang rebut port</td>
+</tr>
+<tr>
+<td><code>lsof -p &lt;PID&gt;</code></td>
+<td>Koneksi ke <code>postgres</code>, <code>redis</code>, file log</td>
+<td>Nggak ada koneksi DB = aplikasi belum konek</td>
+</tr>
+<tr>
+<td><code>ls /proc/&lt;PID&gt;/fd \| wc -l</code></td>
+<td>Jumlah fd</td>
+<td>Mendekati limit di <code>/proc/&lt;PID&gt;/limits</code> = risiko EMFILE</td>
+</tr>
+<tr>
+<td><code>cat /proc/&lt;PID&gt;/status \| grep -E 'Threads\|VmRSS'</code></td>
+<td><code>Threads: N</code>, <code>VmRSS: N kB</code></td>
+<td>Threads naik terus = leak goroutine/thread</td>
+</tr>
+<tr>
+<td><code>systemctl --failed</code></td>
+<td>Daftar unit gagal (bisa kosong)</td>
+<td>Ada isi = baca <code>systemctl status &lt;unit&gt;</code></td>
+</tr>
+<tr>
+<td><code>journalctl -p err -b --no-pager</code></td>
+<td>Error sejak boot</td>
+<td>Error <code>sre-api</code> = aplikasi; error kernel = infrastruktur</td>
+</tr>
+<tr>
+<td><code>journalctl -k \| grep -i 'out of memory'</code></td>
+<td>Baris <code>Killed process &lt;PID&gt; (&lt;nama&gt;)</code></td>
+<td>Ada = OAM kernel; kosong = cek <code>systemd-oomd</code></td>
+</tr>
+<tr>
+<td><code>cat /sys/fs/cgroup/memory.events</code></td>
+<td>Kolom <code>oom</code> dan <code>oom_kill</code></td>
+<td>Angka &gt; 0 = cgroup ini pernah OOM. Ini bukti paling kuat</td>
+</tr>
+<tr>
+<td><code>cat /sys/fs/cgroup/memory.max</code></td>
+<td>Angka byte atau <code>max</code></td>
+<td>Angka = ada batas; <code>max</code> = nggak dibatasi (bahaya di shared host)</td>
+</tr>
+<tr>
+<td><code>cat /proc/&lt;PID&gt;/oom_score_adj</code></td>
+<td><code>-1000</code> s.d. <code>1000</code></td>
+<td><code>-1000</code> = kebal OOM; <code>1000</code> = korban pertama</td>
+</tr>
+<tr>
+<td><code>curl -sS -o /dev/null -w '%{http_code}\n' --max-time 3 http://127.0.0.1:8080/healthz</code></td>
+<td><code>200</code></td>
+<td><code>000</code> + exit 7 = refused; <code>000</code> + exit 28 = timeout</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="failure-matrix-decision-tree">Failure matrix / decision tree<a class="headerlink" href="#failure-matrix-decision-tree" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Kemungkinan penyebab</th>
+<th>Cara buktikan</th>
+<th>Mitigasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Request lambat, CPU &lt; 50%</td>
+<td>Proses ngantri IO atau memori (bukan CPU)</td>
+<td><code>cat /proc/pressure/io</code>, <code>vmstat</code> kolom <code>wa</code>, <code>pidstat -d</code></td>
+<td>Kurangi beban IO, tambah cache, atau pindahkan storage</td>
+</tr>
+<tr>
+<td>Request lambat, CPU 100%</td>
+<td>Satu thread looping / query berat</td>
+<td><code>top -H -p &lt;PID&gt;</code>, <code>ps -eLo ... --sort=-pcpu</code></td>
+<td>Identifikasi thread → perbaiki kode atau scale out</td>
+</tr>
+<tr>
+<td>Load average tinggi, CPU idle</td>
+<td>Banyak task di state D (nunggu disk/NFS)</td>
+<td><code>vmstat</code> kolom <code>b</code> tinggi, <code>wa</code> tinggi, PSI <code>io</code> tinggi</td>
+<td>Cek storage: <code>iostat -x 1</code>, cek NFS/volume Docker</td>
+</tr>
+<tr>
+<td>Container restart mendadak</td>
+<td>OOM cgroup atau <code>systemd-oomd</code></td>
+<td><code>memory.events</code> (<code>oom_kill</code>), <code>journalctl -u systemd-oomd</code></td>
+<td>Naikin <code>memory.max</code> <strong>atau</strong> turunkan working set; jangan asal naikin</td>
+</tr>
+<tr>
+<td><code>Too many open files</code></td>
+<td>Koneksi DB/HTTP nggak ditutup</td>
+<td><code>ls /proc/&lt;PID&gt;/fd \| wc -l</code>, bandingkan <code>/proc/&lt;PID&gt;/limits</code></td>
+<td>Perbaiki leak di kode; naikin <code>LimitNOFILE</code> cuma buat nafas sementara</td>
+</tr>
+<tr>
+<td><code>Connection refused</code></td>
+<td>Nggak ada yang listen di port itu</td>
+<td><code>ss -lntp \| grep &lt;port&gt;</code>, <code>pgrep -af &lt;nama&gt;</code></td>
+<td>Nyalain service, atau perbaiki port/konfigurasi</td>
+</tr>
+<tr>
+<td>Proses hidup tapi port nggak listen</td>
+<td>Aplikasi gagal bind (port dipakai, atau crash saat init)</td>
+<td><code>pgrep</code> ada tapi <code>ss</code> kosong; baca <code>journalctl -u</code></td>
+<td>Baca log aplikasi — hampir selalu ada <code>bind: address already in use</code> atau error init</td>
+</tr>
+<tr>
+<td>Port listen, tapi <code>curl</code> nggak pernah balas</td>
+<td>Thread pool / koneksi DB habis, aplikasi hang</td>
+<td><code>curl --max-time 3</code> exit 28; <code>ss -tnp</code> nunjukin backlog</td>
+<td>Cek pool koneksi DB, jumlah worker, dependency health</td>
+</tr>
+<tr>
+<td>Disk <code>100%</code></td>
+<td>Log nggak di-rotate, atau volume penuh</td>
+<td><code>df -h</code>, <code>du -sh /var/lib/docker/*</code></td>
+<td>Rotasi log (<code>max-size</code>/<code>max-file</code> di compose), bersihkan image lama</td>
+</tr>
+<tr>
+<td>Disk lega tapi "No space left on device"</td>
+<td>Inode habis</td>
+<td><code>df -i</code> kolom <code>IUse%</code> = 100%</td>
+<td>Hapus file kecil yang numpuk (biasanya log atau cache)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Decision tree utama minggu ini (hapal ini):</strong></p>
+<pre><code>&quot;Endpoint nggak bisa diakses&quot;
+├─ pgrep -af &lt;nama&gt; kosong?
+│   └─ YA  → proses mati. Baca journalctl -u &lt;unit&gt;, cari kenapa exit.
+├─ ss -lntp | grep &lt;port&gt; kosong?
+│   └─ YA  → proses hidup tapi nggak listen. Baca log aplikasi (gagal bind/init).
+├─ curl --max-time 3 exit 28?
+│   └─ YA  → listen tapi nggak responsif. Cek pool koneksi DB, worker, dependency.
+└─ exit 0 tapi 5xx
+    └─ aplikasi jalan dan jawab, tapi jawabannya jelek. Cek log aplikasi + dependency.
+</code></pre>
+<hr />
+<h2 id="jebakan-umum">Jebakan umum<a class="headerlink" href="#jebakan-umum" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Load average tinggi ≠ CPU tinggi.</strong> Bisa jadi proses numpuk nunggu I/O. Cek <code>wa</code> di <code>vmstat</code> dan <code>b</code>.</li>
+<li><strong>"Memory penuh" palsu.</strong> Linux pakai sisa RAM buat page cache. Lihat <code>MemAvailable</code>, dan <code>buff/cache</code> bukan musuh lo.</li>
+<li><strong>OOM di container nggak selalu muncul di <code>dmesg</code> host.</strong> Yang kena limit itu cgroup — cek <code>memory.events</code> dan <code>systemd-oomd</code>.</li>
+<li><strong><code>pidstat</code> iterasi pertama itu rata-rata sejak boot</strong>, bukan kondisi sekarang. Tunggu baris ke-2.</li>
+<li><strong><code>kill -9</code> sebagai solusi pertama.</strong> Nggak ngasih aplikasi kesempatan nutup koneksi DB dengan rapi → bakal jadi bug misterius di minggu 6.</li>
+<li><strong><code>top</code> biasa nyembunyiin thread.</strong> Selalu lanjutkan dengan <code>top -H</code> sebelum nyimpulin "nggak ada yang aneh".</li>
+<li><strong><code>df -h</code> lega bukan jaminan aman.</strong> Bisa aja inode yang habis — selalu jalanin <code>df -h &amp;&amp; df -i</code> berpasangan.</li>
+<li><strong>Log aplikasi hilang saat container restart.</strong> Satu-satunya yang bertahan ya <code>journalctl</code> (kalau service-nya lewat systemd) atau log driver Docker.</li>
+</ul>
+<hr />
+<h2 id="acceptance-criteria">Acceptance criteria<a class="headerlink" href="#acceptance-criteria" title="Permanent link">&para;</a></h2>
+<p>Disalin dari <code>README.md</code>, ditambah cara buktinya:</p>
+<ol>
+<li>Bisa menunjuk proses/thread penyebab CPU tinggi dalam <strong>&lt; 5 menit</strong> lengkap dengan bukti (<code>pidstat</code>, <code>top -H</code>, <code>ps -eLo</code>).
+   - Bukti: file <code>evidence/week-01-high-cpu.txt</code> berisi output <code>top -H</code> + <code>pidstat</code> + timestamp.</li>
+<li>Bisa membuktikan OOM: entri kernel <code>oom-kill</code> <strong>ATAU</strong> <code>systemd-oomd</code>, plus cgroup yang kena (<code>memory.events</code>, <code>memory.pressure</code>).
+   - Bukti: <code>evidence/week-01-oom.txt</code> berisi <code>memory.events</code> dengan <code>oom_kill &gt; 0</code> dan baris journal yang relevan.</li>
+<li>Bisa membedakan service mati vs hidup tapi tidak menerima koneksi (<code>ss -lntp</code>, <code>curl</code>, <code>journalctl</code>).
+   - Bukti: <code>evidence/week-01-three-states.md</code> berisi tabel tiga kondisi + output per kondisi.</li>
+<li>Bisa menjelaskan beda <code>kill -TERM</code> dan <code>kill -KILL</code>, serta kapan <code>-KILL</code> jadi keputusan buruk.
+   - Bukti: catatan di <code>notes.md</code> + log aplikasi yang nunjukin <code>shutdown signal received</code> saat TERM.</li>
+<li><em>(tambahan)</em> Bisa menjelaskan beda load average tinggi karena CPU vs karena I/O.
+   - Bukti: output <code>vmstat</code> dan <code>/proc/pressure/*</code> yang diambil saat dua eksperimen berbeda.</li>
+</ol>
+<hr />
+<h2 id="satu-kalimat-yang-harus-lo-ingat">Satu kalimat yang harus lo ingat<a class="headerlink" href="#satu-kalimat-yang-harus-lo-ingat" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Jangan nebak — tanya kernelnya langsung: <code>ss</code> buat port, <code>/proc</code> buat proses, <code>memory.events</code> buat OOM, dan PSI buat "kok lambat padahal CPU nggak penuh".</strong></p>
+</blockquote>
+<div class="foot"><span>production-reliability-lab/labs/week-01-linux/ringkasan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

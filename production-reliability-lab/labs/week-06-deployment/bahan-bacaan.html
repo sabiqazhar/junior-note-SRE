@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 06 · Secrets, konfigurasi, dan deployment — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-06-deployment/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-06-secrets-konfigurasi-dan-deployment-bahan-bacaan">Minggu 06 · Secrets, konfigurasi, dan deployment — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-konfigurasi-itu-bukan-rahasia-rahasia-itu-bukan-konfigurasi">2.1 Konfigurasi itu bukan rahasia, rahasia itu bukan konfigurasi</a></li>
+<li><a href="#22-tiga-probe-startup-readiness-liveness">2.2 Tiga probe: startup, readiness, liveness</a></li>
+<li><a href="#23-graceful-shutdown-di-go">2.3 Graceful shutdown di Go</a></li>
+<li><a href="#24-pid-1-dan-exec-form">2.4 PID 1 dan exec form</a></li>
+<li><a href="#25-rolling-deployment-batas-docker-compose">2.5 Rolling deployment &amp; batas Docker Compose</a></li>
+<li><a href="#26-kapan-rollback-jangan-debat">2.6 Kapan rollback, jangan debat</a></li>
+<li><a href="#27-satu-artefak-banyak-environment">2.7 Satu artefak, banyak environment</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check">6. Self-check</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-06-secrets-konfigurasi-dan-deployment-bahan-bacaan">Minggu 06 · Secrets, konfigurasi, dan deployment — Bahan Bacaan<a class="headerlink" href="#minggu-06-secrets-konfigurasi-dan-deployment-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham kenapa deployment itu soal kepercayaan, bukan cuma "jalankan perintah". Baru setelah itu kerjakan lab.md.</p>
+</blockquote>
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Bayangin jam 2 pagi. Pager nyala: aplikasi di produksi ngerespons 500 buat semua request. Lo cek log, ternyata koneksi ke Redis putus tiap 30 detik, dan tiap kali itu terjadi, Kubernetes ngerasa prosesnya "mati" lalu merestart semua pod. Sekarang lo punya: Redis lagi flaky + semua pod restart barengan + connection storm pas Redis balik. Satu detik gangguan jadi outage 5 menit. Ini bukan skenario langka — ini salah konfigurasi yang paling sering bikin insiden: <strong>liveness probe yang ngecek dependency.</strong></p>
+<p>Atau yang lebih senyap: lo deploy versi baru, tapi lupa kalau password database disimpen plaintext di environment variable. Besoknya ada orang screenshot <code>docker inspect</code> dan password-nya kebocoran di Slack. Atau lo deploy pakai <code>:latest</code>, rollback-nya "pakai versi sebelumnya" tapi nggak ingat versi sebelumnya itu apa. Semua ini satu akar: <strong>deployment dianggap sekadar "menjalankan perintah", padahal dia soal kepercayaan</strong> — kepercayaan bahwa versi yang jalan persis seperti yang lo uji, bahwa proses berhenti pelan-pelan nggak nebang request di tengah jalan, dan bahwa secret nggak pernah kelihatan di tempat yang salah.</p>
+<p>Analogi yang pas: deployment itu kayak pindah rumah. Barangnya sama, tapi cara lo bungkus (konfigurasi), cara lo angkat (rolling vs sekaligus), dan di mana lo naruh surat berharga (secret) menentukan apakah pas sampai tujuan semuanya utuh. Kalau lo cuma "pindahin tanpa rencana", yang hilang biasanya bukan kursi — tapi dokumen penting.</p>
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-konfigurasi-itu-bukan-rahasia-rahasia-itu-bukan-konfigurasi">2.1 Konfigurasi itu bukan rahasia, rahasia itu bukan konfigurasi<a class="headerlink" href="#21-konfigurasi-itu-bukan-rahasia-rahasia-itu-bukan-konfigurasi" title="Permanent link">&para;</a></h3>
+<p>Dua hal sering dicampur: <strong>config</strong> (port, nama database, batas koneksi — aman diliat orang) dan <strong>secret</strong> (password, API key, token — nggak boleh bocor). Aturan 12-factor: config lewat environment variable, tapi secret jangan ditaruh sebagai env var biasa yang gampang bocor ke <code>docker inspect</code>, crash report, atau log.</p>
+<p>Solusinya di lab ini: <strong>SOPS + age</strong>. File <code>.env</code> terenkripsi, cuma bisa dibuka pakai private key <code>age</code> lo. Di CI, private key disuntikkan sebagai secret, didekripsi di memori, nggak pernah ditulis ke disk sebagai plaintext.</p>
+<pre><code class="language-bash"># enkripsi file env (age key)
+sops --encrypt --age &lt;AGE_PUBLIC_KEY&gt; .env.example &gt; .env.enc
+# dekripsi di CI / lokal (butuh AGE_SECRET_KEY)
+sops --decrypt .env.enc &gt; .env
+</code></pre>
+<h3 id="22-tiga-probe-startup-readiness-liveness">2.2 Tiga probe: startup, readiness, liveness<a class="headerlink" href="#22-tiga-probe-startup-readiness-liveness" title="Permanent link">&para;</a></h3>
+<p>Ini sumber insiden paling klasik kalau disalahpahami.</p>
+<table>
+<thead>
+<tr>
+<th>Probe</th>
+<th>Pertanyaan</th>
+<th>Kalau gagal</th>
+<th>Boleh ngecek dependency?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>startupProbe</strong></td>
+<td>"udah selesai booting?"</td>
+<td>tunggu, jangan restart</td>
+<td>ya (wajar)</td>
+</tr>
+<tr>
+<td><strong>readinessProbe</strong></td>
+<td>"boleh terima traffic?"</td>
+<td>dicabut dari load balancer</td>
+<td><strong>ya, ini tempatnya</strong></td>
+</tr>
+<tr>
+<td><strong>livenessProbe</strong></td>
+<td>"proses masih waras?"</td>
+<td>restart</td>
+<td><strong>jangan</strong> — cuma cek proses responsif</td>
+</tr>
+</tbody>
+</table>
+<p>Liveness yang ngecek DB = mesin pembuat outage (lihat cerita awal). Di <code>app/main.go</code>, <code>/healthz</code> cuma bilang "proses hidup", sedangkan <code>/readyz</code> yang ngecek Postgres + Redis. Itu sebabnya Dockerfile pakai <code>/healthz</code> buat <code>HEALTHCHECK</code>, bukan <code>/readyz</code>.</p>
+<h3 id="23-graceful-shutdown-di-go">2.3 Graceful shutdown di Go<a class="headerlink" href="#23-graceful-shutdown-di-go" title="Permanent link">&para;</a></h3>
+<p>Proses nggak boleh "dibunuh tengah makan". Di Go, kita pakai <code>signal.NotifyContext</code> buat nangkep <code>SIGTERM</code>, lalu <code>srv.Shutdown(ctx)</code> yang menyelesaikan request yang lagi jalan (in-flight) sebelum nutup.</p>
+<pre><code class="language-go">ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+defer stop()
+go func() { _ = srv.ListenAndServe() }()
+&lt;-ctx.Done()                         // dapet SIGTERM
+c, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+defer cancel()
+_ = srv.Shutdown(c)                  // selesaiin request in-flight
+db.Close(); redis.Close()            // tutup pool rapi
+</code></pre>
+<p>Aturan emas: <strong>timeout shutdown HARUS lebih kecil dari <code>terminationGracePeriodSeconds</code></strong> di Kubernetes, atau orchestrator memaksa kill di tengah jalan. Di Compose, <code>stop_grace_period</code> peranannya sama.</p>
+<h3 id="24-pid-1-dan-exec-form">2.4 PID 1 dan exec form<a class="headerlink" href="#24-pid-1-dan-exec-form" title="Permanent link">&para;</a></h3>
+<p>Di container, kalau PID 1-nya shell (<code>/bin/sh -c "..."</code>), sinyal <code>SIGTERM</code> kadang nggak nyampe ke binary lo. Pakai <strong>exec form</strong> di Dockerfile (<code>["/app/sre-api"]</code>, bukan <code>/app/sre-api</code>), atau <code>init: true</code> di Compose supaya ada init yang neruskans sinyal. Tanpa ini, graceful shutdown lo cuma harapan.</p>
+<h3 id="25-rolling-deployment-batas-docker-compose">2.5 Rolling deployment &amp; batas Docker Compose<a class="headerlink" href="#25-rolling-deployment-batas-docker-compose" title="Permanent link">&para;</a></h3>
+<p>Rolling = ganti versi satu per satu, versi lama tetap jalan sampai yang baru sehat. Kubernetes punya <code>kubectl rollout</code> + <code>maxSurge</code>/<code>maxUnavailable</code>. <strong>Docker Compose nggak punya perintah rollout</strong> — <code>update_config</code> itu fitur Swarm, bukan Compose v2. Jadi di lab ini, "zero-downtime" di Compose terbatas: <code>docker compose up -d</code> ganti container, tapi ada jendela kosong. Catat keterbatasan ini jujur, bukan pura-pura.</p>
+<pre><code class="language-bash">kubectl set image deployment/sre-api api=ghcr.io/&lt;owner&gt;/&lt;repo&gt;/sre-api@sha256:&lt;digest&gt;
+kubectl rollout status deployment/sre-api --timeout=5m
+# Compose (keterbatasan dicatat):
+docker compose down &amp;&amp; docker compose up -d --wait   # ada jeda, bukan zero-downtime
+</code></pre>
+<h3 id="26-kapan-rollback-jangan-debat">2.6 Kapan rollback, jangan debat<a class="headerlink" href="#26-kapan-rollback-jangan-debat" title="Permanent link">&para;</a></h3>
+<p>Rollback itu fitur, bukan rencana cadangan. Kalau belum diuji, berarti belum punya rollback. Kriteria objektif (dari <code>docs/deployment.md</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Ambang</th>
+<th>Tindakan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Error rate</td>
+<td>&gt; 2% selama 5 menit</td>
+<td>Rollback</td>
+</tr>
+<tr>
+<td>p95 latency</td>
+<td>&gt; 2× baseline 10 menit</td>
+<td>Rollback</td>
+</tr>
+<tr>
+<td>CrashLoop</td>
+<td>≥ 3× dalam 5 menit</td>
+<td>Rollback</td>
+</tr>
+</tbody>
+</table>
+<h3 id="27-satu-artefak-banyak-environment">2.7 Satu artefak, banyak environment<a class="headerlink" href="#27-satu-artefak-banyak-environment" title="Permanent link">&para;</a></h3>
+<p>Image dibangun sekali (minggu 5), diberi tag digest, nggak pernah diubah. Yang beda antar environment cuma konfigurasi + secret. Jangan rebuild di tiap environment — lo nggak akan nguji barang yang sama.</p>
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Dari <code>docker compose up</code> sampai traffic lewat, ini yang terjadi:</p>
+<ol>
+<li><strong>Compose baca <code>docker/compose.yaml</code></strong> → validasi, resolve image by digest/tag, buat network &amp; volume kalau belum ada.</li>
+<li><strong>Container mulai booting</strong> → <code>startupProbe</code> (kalau ada) nunggu sampai aplikasi selesai init; selama ini, pod dianggap belum siap.</li>
+<li><strong><code>/healthz</code> mulai 200</strong> → liveness bilang proses waras. Tapi ini BELUM berarti bisa terima traffic.</li>
+<li><strong><code>/readyz</code> diuji</strong> → cek <code>db.PingContext</code> + <code>redis.Ping</code>. Kalau keduanya OK, container masuk ke load balancer (readiness = true).</li>
+<li><strong>Traffic masuk</strong> → request dilayani. Di tengahnya, orchestrator kirim <strong><code>SIGTERM</code></strong> (mis. <code>docker compose stop</code>).</li>
+<li><strong><code>signal.NotifyContext</code> kebakar</strong> → <code>srv.Shutdown(c)</code> jalan: stop terima koneksi BARU, selesaiin request lama dalam 20 detik.</li>
+<li><strong>Pool ditutup rapi</strong> (<code>db.Close()</code>, <code>redis.Close()</code>) → nggak ada koneksi gantung.</li>
+<li><strong>Proses exit 0</strong> → orchestrator lepas container. Kalau sampai <code>terminationGracePeriod</code> habis tapi proses belum exit, baru dipaksa <code>SIGKILL</code> (ini yang bikin 5xx).</li>
+</ol>
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti sederhana</th>
+<th>Contoh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Config</strong></td>
+<td>Pengaturan yang aman diliat orang</td>
+<td><code>APP_PORT</code>, nama DB</td>
+</tr>
+<tr>
+<td><strong>Secret</strong></td>
+<td>Kredensial yang nggak boleh bocor</td>
+<td>password DB, API key</td>
+</tr>
+<tr>
+<td><strong>SOPS</strong></td>
+<td>Alat enkripsi file config/secret</td>
+<td><code>sops --encrypt .env</code></td>
+</tr>
+<tr>
+<td><strong>age</strong></td>
+<td>Algoritma kunci publik buat enkripsi</td>
+<td><code>AGE_PUBLIC_KEY</code> / <code>AGE_SECRET_KEY</code></td>
+</tr>
+<tr>
+<td><strong>Liveness</strong></td>
+<td>"proses masih waras?"</td>
+<td><code>/healthz</code> → 200</td>
+</tr>
+<tr>
+<td><strong>Readiness</strong></td>
+<td>"boleh terima traffic?"</td>
+<td><code>/readyz</code> → cek DB+Redis</td>
+</tr>
+<tr>
+<td><strong>Startup probe</strong></td>
+<td>"udah selesai boot?"</td>
+<td>tunggu init selesai</td>
+</tr>
+<tr>
+<td><strong>Graceful shutdown</strong></td>
+<td>berhenti pelan, selesaiin request</td>
+<td><code>srv.Shutdown(ctx)</code></td>
+</tr>
+<tr>
+<td><strong>SIGTERM</strong></td>
+<td>sinyal "tolong berhenti pelan"</td>
+<td><code>docker compose stop</code></td>
+</tr>
+<tr>
+<td><strong>Rolling update</strong></td>
+<td>ganti versi bertahap</td>
+<td><code>kubectl rollout</code></td>
+</tr>
+<tr>
+<td><strong>Rollback</strong></td>
+<td>balik ke versi sebelumnya</td>
+<td><code>kubectl rollout undo</code></td>
+</tr>
+<tr>
+<td><strong>PID 1</strong></td>
+<td>proses pertama di container</td>
+<td>shell vs binary lo</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber</th>
+<th>Yang dicari</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes">Container probes — Kubernetes</a></td>
+<td>beda liveness/readiness/startup + efek <code>restartPolicy</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/">Configure liveness/readiness/startup probes — Kubernetes</a></td>
+<td>contoh YAML tiap probe</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://pkg.go.dev/os/signal#NotifyContext"><code>signal.NotifyContext</code> — Go pkg.go.dev</a></td>
+<td>gimana context kebakar pas dapat sinyal</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="https://12factor.net/config">The Twelve-Factor App: Config</a></td>
+<td>kenapa config lewat env, secret dipisah</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://github.com/getsops/sops">SOPS — GitHub</a></td>
+<td>enkripsi file secret dengan age/KMS/PGP</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-update-deployment">Rolling updates &amp; rollbacks — Kubernetes</a></td>
+<td><code>maxSurge</code>, <code>maxUnavailable</code>, <code>rollout undo</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-self-check">6. Self-check<a class="headerlink" href="#6-self-check" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Kenapa liveness probe yang ngecek database itu berbahaya, dan probe mana yang seharusnya ngecek dependency?</li>
+<li>Apa beda <code>/healthz</code> dan <code>/readyz</code> di <code>app/main.go</code>, dan kenapa Dockerfile pakai <code>/healthz</code> buat HEALTHCHECK?</li>
+<li>Di Go, apa yang terjadi kalau timeout <code>srv.Shutdown</code> lebih besar dari <code>terminationGracePeriodSeconds</code>?</li>
+<li>Kenapa PID 1 di container sebaiknya binary lo (exec form), bukan shell?</li>
+<li>Docker Compose punya perintah <code>rollout</code> seperti Kubernetes? Kalau nggak, apa batasnya?</li>
+<li>Kapan lo harus rollback menurut tabel di <code>docs/deployment.md</code>?</li>
+</ol>
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"Liveness cek DB biar tau kalau DB mati."</td>
+<td>Liveness yang ngecek DB bikin restart massal saat DB flaky → outage makin parah. Pakai readiness.</td>
+</tr>
+<tr>
+<td>"Secret di env var aman, kan cuma di dalam container."</td>
+<td>Gampang bocor ke <code>docker inspect</code>, log error, crash report. Pakai SOPS/secret manager.</td>
+</tr>
+<tr>
+<td>"Compose bisa zero-downtime kalau pakai <code>up -d</code>."</td>
+<td>Compose v2 nggak punya rollout; ada jeda. <code>update_config</code> itu Swarm. Catat keterbatasan.</td>
+</tr>
+<tr>
+<td>"Rollback cuma ganti tag balik."</td>
+<td>Rollback harus nunjuk <strong>digest</strong> versi sebelumnya, bukan <code>latest</code> yang udah berubah.</td>
+</tr>
+<tr>
+<td>"SIGTERM otomatis graceful."</td>
+<td>Cuma kalau kode lo nangkep sinyal &amp; shutdown pelan. Kalau PID 1 shell, sinyal nggak nyampe.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-06-deployment/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

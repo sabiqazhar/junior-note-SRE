@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Minggu 07 · Backup dan disaster recovery</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-07-backup-recovery/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-minggu-07-backup-dan-disaster-recovery">Lab — Minggu 07 · Backup dan disaster recovery</a><ul>
+<li><a href="#persiapan-10-menit">Persiapan (10 menit)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a><ul>
+<li><a href="#langkah-11-baca-bahan-bacaan">Langkah 1.1 — Baca bahan bacaan</a></li>
+<li><a href="#langkah-12-catat-rporto-lab">Langkah 1.2 — Catat RPO/RTO lab</a></li>
+<li><a href="#langkah-13-baca-docsdisaster-recoverymd">Langkah 1.3 — Baca docs/disaster-recovery.md</a></li>
+</ul>
+</li>
+<li><a href="#hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)</a><ul>
+<li><a href="#langkah-21-logical-dump-sanity-check-cepat">Langkah 2.1 — Logical dump (sanity check cepat)</a></li>
+<li><a href="#langkah-22-cek-konfigurasi-pitr-archive_mode">Langkah 2.2 — Cek konfigurasi PITR (archive_mode)</a></li>
+<li><a href="#langkah-23-full-backup-pgbackrest">Langkah 2.3 — Full backup (pgBackRest)</a></li>
+<li><a href="#langkah-24-incremental-backup">Langkah 2.4 — Incremental backup</a></li>
+</ul>
+</li>
+<li><a href="#hari-3-eksperimen-kegagalan-2-jam-restore-drill-di-db-disposable">Hari 3 · Eksperimen kegagalan (2 jam) — RESTORE DRILL DI DB DISPOSABLE</a><ul>
+<li><a href="#langkah-31-siapkan-instance-disposable-terpisah">Langkah 3.1 — Siapkan instance disposable (terpisah)</a></li>
+<li><a href="#langkah-32-restore-ke-instance-disposable-pitr-titik-waktu">Langkah 3.2 — Restore ke instance disposable (PITR titik waktu)</a></li>
+<li><a href="#langkah-33-verifikasi-data-jangan-berhenti-di-exit-code-0">Langkah 3.3 — Verifikasi data (jangan berhenti di exit code 0)</a></li>
+<li><a href="#langkah-34-simulasi-kehilangan-data-hanya-di-disposable">Langkah 3.4 — Simulasi "kehilangan data" (HANYA di disposable)</a></li>
+<li><a href="#langkah-35-catat-metrik-recovery">Langkah 3.5 — Catat metrik recovery</a></li>
+</ul>
+</li>
+<li><a href="#hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)</a><ul>
+<li><a href="#langkah-41-isi-docsdisaster-recoverymd-lengkapi">Langkah 4.1 — Isi docs/disaster-recovery.md (lengkapi)</a></li>
+<li><a href="#langkah-42-lengkapi-commandsmd">Langkah 4.2 — Lengkapi commands.md</a></li>
+<li><a href="#langkah-43-runbook-kegagalan">Langkah 4.3 — Runbook kegagalan</a></li>
+<li><a href="#langkah-44-acceptance-commit">Langkah 4.4 — Acceptance &amp; commit</a></li>
+</ul>
+</li>
+<li><a href="#daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"</a></li>
+<li><a href="#cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-minggu-07-backup-dan-disaster-recovery">Lab — Minggu 07 · Backup dan disaster recovery<a class="headerlink" href="#lab-minggu-07-backup-dan-disaster-recovery" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Ikuti BERURUTAN. Setiap langkah: perintah → Yang harus terjadi → Kalau gagal → Catat notes.
+<strong>Aturan mutlak:</strong> simulasi kehilangan data HANYA di database disposable. Jangan <code>DROP TABLE</code> di produksi/lab yang jadi dependency.</p>
+</blockquote>
+<h2 id="persiapan-10-menit">Persiapan (10 menit)<a class="headerlink" href="#persiapan-10-menit" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>docker compose version</code> → v2.x.</li>
+<li>[ ] Stack jalan: <code>make up</code>. <code>curl -fsS http://localhost/readyz</code> → 200.</li>
+<li>[ ] Ada data: pastikan tabel <code>orders</code> punya beberapa row (jalankan load test <code>make loadtest</code> sebentar kalau kosong).</li>
+<li>[ ] MinIO (atau S3-compatible) jalan sebagai repo pgBackRest — cek <code>docker compose ps minio</code>.</li>
+</ul>
+<pre><code class="language-bash">docker compose ps postgres minio
+psql &quot;$(grep DATABASE_URL .env | cut -d= -f2)&quot; -c &quot;SELECT count(*) FROM orders;&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> kedua service up, <code>orders</code> punya row.
+<strong>Kalau gagal:</strong> <code>make logs postgres</code> buat lihat kenapa DB nggak sehat.
+<strong>Catat di notes.md:</strong> jumlah row awal sebagai baseline verifikasi nanti.</p>
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-11-baca-bahan-bacaan">Langkah 1.1 — Baca bahan bacaan<a class="headerlink" href="#langkah-11-baca-bahan-bacaan" title="Permanent link">&para;</a></h3>
+<p>Buka <code>bahan-bacaan.md</code>, baca sampai selesai.</p>
+<p><strong>Yang harus terjadi:</strong> lo bisa jawab 6 self-check tanpa Google.
+<strong>Kalau gagal:</strong> ulangi bagian 2 (logical vs physical, PITR).
+<strong>Catat di notes.md:</strong> 1 kalimat beda <code>pg_dump</code> vs base backup + WAL.</p>
+<h3 id="langkah-12-catat-rporto-lab">Langkah 1.2 — Catat RPO/RTO lab<a class="headerlink" href="#langkah-12-catat-rporto-lab" title="Permanent link">&para;</a></h3>
+<p>Tulis di <code>notes.md</code>: RPO ≤ 5 menit (karena <code>archive_timeout=60s</code>), RTO ≤ 30 menit (target, akan diukur).</p>
+<p><strong>Yang harus terjadi:</strong> ada dua angka tertulis + alasan.
+<strong>Kalau gagal:</strong> baca <code>docs/disaster-recovery.md</code> bagian "Target lab".
+<strong>Catat di notes.md:</strong> angka + alasan.</p>
+<h3 id="langkah-13-baca-docsdisaster-recoverymd">Langkah 1.3 — Baca <code>docs/disaster-recovery.md</code><a class="headerlink" href="#langkah-13-baca-docsdisaster-recoverymd" title="Permanent link">&para;</a></h3>
+<p>Fokus ke strategi backup (full/incr/WAL) dan runbook restore.</p>
+<p><strong>Yang harus terjadi:</strong> lo paham urutan restore: isolate → instance kosong → restore → verifikasi → catat waktu.
+<strong>Kalau gagal:</strong> baca lagi bagian 3 bahan-bacaan.
+<strong>Catat di notes.md:</strong> 3 hal yang diverifikasi setelah restore.</p>
+<h2 id="hari-2-praktik-2-jam">Hari 2 · Praktik (2 jam)<a class="headerlink" href="#hari-2-praktik-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-21-logical-dump-sanity-check-cepat">Langkah 2.1 — Logical dump (sanity check cepat)<a class="headerlink" href="#langkah-21-logical-dump-sanity-check-cepat" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker compose exec -T postgres pg_dump -U app -d sre_lab -Fc &gt; /tmp/backup.dump
+pg_restore --list /tmp/backup.dump | head -5
+ls -lh /tmp/backup.dump
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> file dump kebentuk; <code>--list</code> keluar daftar objek (tabel, index).
+<strong>Kalau gagal:</strong> <code>role app does not exist</code> → pastikan <code>-U app</code> sesuai user DB.
+<strong>Catat di notes.md:</strong> ukuran dump sebagai pembanding.</p>
+<h3 id="langkah-22-cek-konfigurasi-pitr-archive_mode">Langkah 2.2 — Cek konfigurasi PITR (archive_mode)<a class="headerlink" href="#langkah-22-cek-konfigurasi-pitr-archive_mode" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker compose exec postgres psql -U app -d sre_lab -c &quot;SHOW archive_mode;&quot;
+docker compose exec postgres psql -U app -d sre_lab -c &quot;SHOW archive_command;&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>archive_mode = on</code>, <code>archive_command</code> arahkan ke pgBackRest.
+<strong>Kalau gagal:</strong> kalau <code>off</code> → PITR mustahil; catat sebagai temuan &amp; perbaiki <code>postgresql.conf</code>.
+<strong>Catat di notes.md:</strong> nilai keduanya.</p>
+<h3 id="langkah-23-full-backup-pgbackrest">Langkah 2.3 — Full backup (pgBackRest)<a class="headerlink" href="#langkah-23-full-backup-pgbackrest" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">time docker compose exec pgbackrest pgbackrest --stanza=app --type=full backup
+docker compose exec pgbackrest pgbackrest --stanza=app info
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> backup selesai; <code>info</code> keluar daftar backup + ukuran + waktu.
+<strong>Kalau gagal:</strong> <code>repo not found</code> → cek koneksi MinIO &amp; <code>repo1-s3-*</code> di config pgBackRest.
+<strong>Catat di notes.md:</strong> durasi full backup + ukuran.</p>
+<h3 id="langkah-24-incremental-backup">Langkah 2.4 — Incremental backup<a class="headerlink" href="#langkah-24-incremental-backup" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker compose exec pgbackrest pgbackrest --stanza=app --type=incr backup
+docker compose exec pgbackrest pgbackrest --stanza=app verify
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> incr selesai lebih cepat; <code>verify</code> keluar <code>status: ok</code>.
+<strong>Kalau gagal:</strong> verify gagal → jangan lanjut ke restore, periksa integritas repo.
+<strong>Catat di notes.md:</strong> durasi incr + hasil verify.</p>
+<h2 id="hari-3-eksperimen-kegagalan-2-jam-restore-drill-di-db-disposable">Hari 3 · Eksperimen kegagalan (2 jam) — RESTORE DRILL DI DB DISPOSABLE<a class="headerlink" href="#hari-3-eksperimen-kegagalan-2-jam-restore-drill-di-db-disposable" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>WAJIB: restore ke instance BARU yang kosong (disposable). Jangan restore menimpa <code>postgres</code> yang jalan.</p>
+</blockquote>
+<h3 id="langkah-31-siapkan-instance-disposable-terpisah">Langkah 3.1 — Siapkan instance disposable (terpisah)<a class="headerlink" href="#langkah-31-siapkan-instance-disposable-terpisah" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># container Postgres &quot;rongsokan&quot; terpisah, volume sendiri, akan dibuang habis
+docker run -d --name pg-restore \
+  -e POSTGRES_USER=app -e POSTGRES_PASSWORD=labpassword -e POSTGRES_DB=sre_lab \
+  -v pgrestore_vol:/var/lib/postgresql/data postgres:18
+sleep 5
+docker ps --filter name=pg-restore
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> <code>pg-restore</code> status <code>Up</code>, database KOSONG (belum ada tabel <code>orders</code>).
+<strong>Kalau gagal:</strong> port bentrok → tambah <code>-p 5433:5432</code>; volume lama → pakai nama volume baru.
+<strong>Catat di notes.md:</strong> ini instance disposable, akan di-<code>rm -f</code> setelah drill.</p>
+<h3 id="langkah-32-restore-ke-instance-disposable-pitr-titik-waktu">Langkah 3.2 — Restore ke instance disposable (PITR titik waktu)<a class="headerlink" href="#langkah-32-restore-ke-instance-disposable-pitr-titik-waktu" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># hentikan server disposable dulu, lalu restore dari repo pgBackRest
+docker stop pg-restore
+docker run --rm --name pg-restore-restore \
+  -e PGBACKREST_STANZA=app -e PGBACKREST_REPO1_... \
+  pgbackrest --stanza=app --type=time \
+  --target=&quot;2026-10-12 10:00:00+00&quot; --target-action=promote restore
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> pgBackRest keluarkan base backup lalu replay WAL sampai titik target, lalu promote.
+<strong>Kalau gagal:</strong> <code>target time not found</code> → kurangi <code>--target</code> ke waktu yang pasti ada (pakai <code>info</code> buat lihat range).
+<strong>Catat di notes.md:</strong> titik waktu target + durasi restore (ukur dengan <code>time</code>).</p>
+<blockquote>
+<p>Catatan praktis: di lab ini pgBackRest jalan sebagai container terpisah (<code>pgbackrest</code>) yang share repo MinIO. Sesuaikan env/volume agar container restore bisa baca repo yang sama. Intinya: <strong>restore ke direktori data container disposable, bukan ke <code>postgres</code> produksi lab.</strong></p>
+</blockquote>
+<h3 id="langkah-33-verifikasi-data-jangan-berhenti-di-exit-code-0">Langkah 3.3 — Verifikasi data (jangan berhenti di exit code 0)<a class="headerlink" href="#langkah-33-verifikasi-data-jangan-berhenti-di-exit-code-0" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker start pg-restore
+sleep 5
+psql -h localhost -p 5433 -U app -d sre_lab -c &quot;SELECT count(*) FROM orders;&quot;
+psql -h localhost -p 5433 -U app -d sre_lab -c &quot;SELECT md5(string_agg(id::text, ',' ORDER BY id)) FROM orders;&quot;
+psql -h localhost -p 5433 -U app -d sre_lab -c &quot;\d+ orders&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> jumlah row == baseline (atau sesuai titik waktu target); checksum konsisten; constraint + index + FK ikut kebawa.
+<strong>Kalau gagal:</strong> row 0 / constraint hilang → restore salah stanza atau target waktu kelewat; ulangi 3.2.
+<strong>Catat di notes.md:</strong> row count, checksum, status constraint — ini bukti sejati.</p>
+<h3 id="langkah-34-simulasi-kehilangan-data-hanya-di-disposable">Langkah 3.4 — Simulasi "kehilangan data" (HANYA di disposable)<a class="headerlink" href="#langkah-34-simulasi-kehilangan-data-hanya-di-disposable" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash"># ini aman: di container pg-restore, BUKAN di postgres produksi lab
+psql -h localhost -p 5433 -U app -d sre_lab -c &quot;DROP TABLE orders;&quot;
+psql -h localhost -p 5433 -U app -d sre_lab -c &quot;SELECT count(*) FROM orders;&quot;   # ERROR
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> tabel hilang di disposable → bukti kita butuh restore.
+<strong>Kalau gagal:</strong> (justru tabel masih ada) → perintah belum jalan di container yang benar.
+<strong>Catat di notes.md:</strong> ini membuktikan mengapa drill penting.</p>
+<p><strong>Cara kembali normal (wajib):</strong></p>
+<pre><code class="language-bash"># buang instance disposable beserta volumenya — produksi lab TIDAK tersentuh
+docker rm -f pg-restore
+docker volume rm pgrestore_vol
+docker ps --filter name=pg-restore   # harus kosong
+make health                         # produksi lab tetap 200
+</code></pre>
+<h3 id="langkah-35-catat-metrik-recovery">Langkah 3.5 — Catat metrik recovery<a class="headerlink" href="#langkah-35-catat-metrik-recovery" title="Permanent link">&para;</a></h3>
+<p>Isi di <code>notes.md</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Metrik</th>
+<th>Hasil</th>
+<th>Target (RTO)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Waktu full backup</td>
+<td>...</td>
+<td>catat apa adanya</td>
+</tr>
+<tr>
+<td>Waktu restore</td>
+<td>...</td>
+<td>≤ 30 menit</td>
+</tr>
+<tr>
+<td>Waktu verifikasi</td>
+<td>...</td>
+<td>bagian dari RTO</td>
+</tr>
+<tr>
+<td>Row count pasca-restore</td>
+<td>== baseline</td>
+<td>ya</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Yang harus terjadi:</strong> tabel terisi, angka dibandingkan dengan RTO.
+<strong>Kalau gagal:</strong> kalau lampaui RTO → tulis kenapa di Hari 4.</p>
+<h2 id="hari-4-review-dokumentasi-2-jam">Hari 4 · Review &amp; dokumentasi (2 jam)<a class="headerlink" href="#hari-4-review-dokumentasi-2-jam" title="Permanent link">&para;</a></h2>
+<h3 id="langkah-41-isi-docsdisaster-recoverymd-lengkapi">Langkah 4.1 — Isi <code>docs/disaster-recovery.md</code> (lengkapi)<a class="headerlink" href="#langkah-41-isi-docsdisaster-recoverymd-lengkapi" title="Permanent link">&para;</a></h3>
+<p>Pastikan: target RPO/RTO + alasan, strategi backup (full/incr/WAL), runbook restore, jadwal drill, dan "yang belum ditangani" (off-site region lain, object lock, dll).</p>
+<p><strong>Yang harus terjadi:</strong> dokumen menjawab "gimana restore &amp; buktiin datanya benar".
+<strong>Kalau gagal:</strong> lihat lagi <code>bahan-bacaan.md</code> bagian 2.7.</p>
+<h3 id="langkah-42-lengkapi-commandsmd">Langkah 4.2 — Lengkapi <code>commands.md</code><a class="headerlink" href="#langkah-42-lengkapi-commandsmd" title="Permanent link">&para;</a></h3>
+<p>Salin perintah Hari 2 &amp; 3 ke <code>commands.md</code> (format: perintah → output → interpretasi, min 15).</p>
+<p><strong>Yang harus terjadi:</strong> minimal 15 perintah, terkelompok Hari 2 / Hari 3.
+<strong>Kalau gagal:</strong> lo kurang nyatet → balik ke Hari 2/3.</p>
+<h3 id="langkah-43-runbook-kegagalan">Langkah 4.3 — Runbook kegagalan<a class="headerlink" href="#langkah-43-runbook-kegagalan" title="Permanent link">&para;</a></h3>
+<p>Tulis di <code>runbooks/README.md</code>: (1) WAL nggak kearsip (<code>archive_mode=off</code>); (2) verify gagal; (3) restore target waktu nggak ketemu. Tiap skenario: gejala → bukti → pemulihan.</p>
+<p><strong>Yang harus terjadi:</strong> tiap skenario punya langkah pemulihan konkret.
+<strong>Kalau gagal:</strong> contohin dari <code>docs/disaster-recovery.md</code>.</p>
+<h3 id="langkah-44-acceptance-commit">Langkah 4.4 — Acceptance &amp; commit<a class="headerlink" href="#langkah-44-acceptance-commit" title="Permanent link">&para;</a></h3>
+<pre><code class="language-bash">docker ps --filter name=pg-restore   # harus kosong (sudah dibuang)
+make health                          # produksi lab tetap sehat
+git add labs/week-07-backup-recovery docs/disaster-recovery.md
+git commit -m &quot;week 07: backup pgbackrest + restore drill&quot;
+</code></pre>
+<p><strong>Yang harus terjadi:</strong> disposable sudah bersih, produksi sehat, commit masuk, README Referensi terisi.
+<strong>Kalau gagal:</strong> jangan <code>--force</code> push.</p>
+<h2 id="daftar-periksa-minggu-ini-selesai">Daftar periksa "minggu ini selesai"<a class="headerlink" href="#daftar-periksa-minggu-ini-selesai" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] <code>pg_dump</code> jalan &amp; <code>--list</code> keluar (logical sanity check).</li>
+<li>[ ] <code>archive_mode = on</code> terkonfirmasi.</li>
+<li>[ ] Full + incr backup pgBackRest sukses; <code>verify</code> ok.</li>
+<li>[ ] Restore drill ke instance DISPOSABLE berhasil.</li>
+<li>[ ] Verifikasi: row count + checksum + constraint lolos.</li>
+<li>[ ] Simulasi <code>DROP TABLE</code> cuma di disposable; produksi tidak tersentuh.</li>
+<li>[ ] Metrik recovery diukur &amp; dibandingkan RTO.</li>
+<li>[ ] <code>commands.md</code> ≥ 15 perintah; README Referensi terisi.</li>
+</ul>
+<h2 id="cara-membuktikan-ke-reviewer">Cara membuktikan ke reviewer<a class="headerlink" href="#cara-membuktikan-ke-reviewer" title="Permanent link">&para;</a></h2>
+<ol>
+<li><code>pgbackrest --stanza=app info</code> → daftar backup + ukuran.</li>
+<li>Output verifikasi restore: <code>count(*)</code> == baseline + checksum + <code>\d+ orders</code>.</li>
+<li>Log <code>time</code> restore vs RTO ≤ 30 menit.</li>
+<li>Bukti disposable sudah dibuang (<code>docker ps</code> kosong) &amp; produksi <code>make health</code> 200.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-07-backup-recovery/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

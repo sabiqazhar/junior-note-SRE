@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 14 · Cloud Networking dan Security — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-14-cloud/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-14-cloud-networking-dan-security-bahan-bacaan">Minggu 14 · Cloud Networking dan Security — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-penting">1. Kenapa penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-vpc-subnet-route-table">2.1 VPC, subnet, route table</a></li>
+<li><a href="#22-security-group-referensi-sg-bukan-00000">2.2 Security group: referensi SG, bukan 0.0.0.0/0</a></li>
+<li><a href="#23-iam-least-privilege-role-bukan-access-key">2.3 IAM least privilege: role, bukan access key</a></li>
+<li><a href="#24-imdsv2-tutup-celah-ssrf">2.4 IMDSv2: tutup celah SSRF</a></li>
+<li><a href="#25-load-balancer-akses-admin-ssm">2.5 Load balancer &amp; akses admin (SSM)</a></li>
+<li><a href="#26-cost-guardrail-budget-alert">2.6 Cost guardrail: budget alert</a></li>
+<li><a href="#27-diagram-dulu-konfigurasi-kemudian">2.7 Diagram dulu, konfigurasi kemudian</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check">6. Self-check</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-14-cloud-networking-dan-security-bahan-bacaan">Minggu 14 · Cloud Networking dan Security — Bahan Bacaan<a class="headerlink" href="#minggu-14-cloud-networking-dan-security-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><em>"Jaringan cloud itu kayak sistem perpipaan gedung: kalau lo salah pasang katup, yang bocor bukan cuma air, tapi data pelanggan."</em> — prinsip minggu ini.</p>
+</blockquote>
+<hr />
+<h2 id="1-kenapa-penting">1. Kenapa penting<a class="headerlink" href="#1-kenapa-penting" title="Permanent link">&para;</a></h2>
+<p>Waktu lo deploy aplikasi di laptop, "jaringan" cuma localhost dan port. Di cloud, batasnya nyata: ada yang boleh ngelihat service lo dari internet, ada yang nggak. Salah pasang security group, database lo bisa kebuka dari seluruh dunia dalam hitungan menit — dan bot scanner bakal nemuinya sebelum lo tidur. Ini bukan skenario teori: ribuan MongoDB/Postgres tanpa auth pernah ke-scrape gara-gara <code>0.0.0.0/0</code>.</p>
+<p>Kenapa gue tekankan <strong>pilih satu provider</strong>? Karena minggu ini tujuannya bukan hapal nama produk (VPC, subnet, SG), tapi paham <strong>pola</strong>: public vs private, ingress vs egress, identity vs access. Pola ini sama di AWS, GCP, maupun Azure. Kalau lo kuasai polanya di satu tempat, pindah provider cuma soal ganti nama command.</p>
+<p>Analognya: VPC itu <strong>gedung/komplek</strong>. Subnet public itu ruangan di lobi yang bisa diketuk dari jalan raya (load balancer, 80/443). Subnet private itu ruang brankas di belakang, nggak punya pintu ke jalan — cuma bisa diakses lewat lobi (SG merujuk SG) atau lewat telepon internal (NAT ke internet). Security group itu <strong>daftar tamu di tiap pintu</strong>: "yang boleh masuk lewat pintu 8080 cuma satpam (load balancer), bukan sembarang orang".</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-vpc-subnet-route-table">2.1 VPC, subnet, route table<a class="headerlink" href="#21-vpc-subnet-route-table" title="Permanent link">&para;</a></h3>
+<p>VPC (CIDR <code>10.20.0.0/16</code>) adalah batas isolasi jaringan lo. Di dalamnya ada subnet: <strong>public</strong> (ada rute ke Internet Gateway, <code>map_public_ip_on_launch=true</code>) dan <strong>private</strong> (nggak punya IP publik, egress lewat NAT). Route table nentuin kemana traffic pergi.</p>
+<pre><code class="language-hcl">resource &quot;aws_subnet&quot; &quot;public&quot; {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = &quot;10.20.0.0/24&quot;
+  map_public_ip_on_launch = true
+}
+
+resource &quot;aws_route_table&quot; &quot;public&quot; {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = &quot;0.0.0.0/0&quot;
+    gateway_id = aws_internet_gateway.main.id
+  }
+}
+</code></pre>
+<h3 id="22-security-group-referensi-sg-bukan-00000">2.2 Security group: referensi SG, bukan <code>0.0.0.0/0</code><a class="headerlink" href="#22-security-group-referensi-sg-bukan-00000" title="Permanent link">&para;</a></h3>
+<p>SG itu firewall stateful per resource. Aturan emas: app cuma nerima dari SG load balancer, DB cuma nerima dari SG app. <strong>Jangan</strong> buka database ke <code>0.0.0.0/0</code>.</p>
+<pre><code class="language-hcl">resource &quot;aws_security_group&quot; &quot;app&quot; {
+  ingress {
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = &quot;tcp&quot;
+    security_groups = [aws_security_group.lb.id]   # dari LB, BUKAN 0.0.0.0/0
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = &quot;-1&quot;
+    cidr_blocks = [&quot;0.0.0.0/0&quot;]                    # keluar lewat NAT
+  }
+}
+
+resource &quot;aws_security_group&quot; &quot;db&quot; {
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = &quot;tcp&quot;
+    security_groups = [aws_security_group.app.id]   # cuma dari app
+  }
+}
+</code></pre>
+<h3 id="23-iam-least-privilege-role-bukan-access-key">2.3 IAM least privilege: role, bukan access key<a class="headerlink" href="#23-iam-least-privilege-role-bukan-access-key" title="Permanent link">&para;</a></h3>
+<p>Jangan taruh access key permanen di instance. Pakai <strong>IAM role</strong> yang melekat ke instance (instance profile). Policy dipersempit ke resource spesifik, bukan <code>"Action":"*"</code>, <code>"Resource":"*"</code>.</p>
+<pre><code class="language-hcl">resource &quot;aws_iam_role&quot; &quot;app&quot; {
+  assume_role_policy = jsonencode({
+    Version = &quot;2012-10-17&quot;
+    Statement = [{
+      Effect    = &quot;Allow&quot;
+      Principal = { Service = &quot;ec2.amazonaws.com&quot; }
+      Action    = &quot;sts:AssumeRole&quot;
+    }]
+  })
+}
+
+resource &quot;aws_iam_role_policy&quot; &quot;app_backup&quot; {
+  policy = jsonencode({
+    Version = &quot;2012-10-17&quot;
+    Statement = [{
+      Effect   = &quot;Allow&quot;
+      Action   = [&quot;s3:PutObject&quot;,&quot;s3:GetObject&quot;,&quot;s3:ListBucket&quot;]
+      Resource = [&quot;arn:aws:s3:::sre-lab-backup/*&quot;]   # scope sempit, bukan &quot;*&quot;
+    }]
+  })
+}
+</code></pre>
+<h3 id="24-imdsv2-tutup-celah-ssrf">2.4 IMDSv2: tutup celah SSRF<a class="headerlink" href="#24-imdsv2-tutup-celah-ssrf" title="Permanent link">&para;</a></h3>
+<p>IMDS (Instance Metadata Service) itu endpoint <code>169.254.169.254</code> di dalam instance buat ngambil kredensial role. Kalau app lo kena SSRF, attacker bisa njenguk IMDS dan curi token role. <strong>IMDSv2 wajibkan token</strong> (<code>http_tokens = "required"</code>) sehingga butuh request PUT dulu — SSRF simpel nggak bisa.</p>
+<pre><code class="language-hcl">resource &quot;aws_instance&quot; &quot;app&quot; {
+  metadata_options {
+    http_tokens   = &quot;required&quot;   # IMDSv2
+    http_endpoint = &quot;enabled&quot;
+  }
+}
+</code></pre>
+<h3 id="25-load-balancer-akses-admin-ssm">2.5 Load balancer &amp; akses admin (SSM)<a class="headerlink" href="#25-load-balancer-akses-admin-ssm" title="Permanent link">&para;</a></h3>
+<p>Satu-satunya pintu publik: load balancer (80/443). Admin nggak SSH pakai public IP — pakai <strong>SSM Session Manager</strong> (zero standing access, token umur pendek). <code>nmap</code> harus nunjukin cuma 80/443 yang terbuka.</p>
+<h3 id="26-cost-guardrail-budget-alert">2.6 Cost guardrail: budget alert<a class="headerlink" href="#26-cost-guardrail-budget-alert" title="Permanent link">&para;</a></h3>
+<p>Ini minggu yang paling gampang bikin tagihan. <strong>NAT Gateway (~$0,045/jam + data)</strong> adalah tersangka utama. AWS Free Tier berubah <strong>15 Juli 2025</strong>: kredit $100 (+$100) berlaku 6 bulan, bukan 12 bulan gratis. Pasang budget alert SEBELUM deploy.</p>
+<hr />
+<h3 id="27-diagram-dulu-konfigurasi-kemudian">2.7 Diagram dulu, konfigurasi kemudian<a class="headerlink" href="#27-diagram-dulu-konfigurasi-kemudian" title="Permanent link">&para;</a></h3>
+<p>Kebiasaan paling murah yang cegah insiden lab: <strong>gambar diagram jaringan SEBELUM nulis satu baris HCL</strong>. Banyak orang langsung <code>apply</code> karena "nanti juga jalan", lalu kaget pas DB kebuka publik atau app nggak bisa ngomong ke DB. Diagram nggak perlu rapi — cukup urutannya: internet → load balancer (80/443) → subnet public (NAT) → subnet private → app → DB/Redis. Kalau lo bisa gambarnya, lo bisa nulis <code>aws_security_group</code>-nya, karena tiap panah di diagram = satu aturan SG atau route table.</p>
+<p>Blast radius juga keputusan diagram: seberapa jauh kerusakan kalau satu resource bocor? Kalau app ada di public subnet, satu miskonfigurasi = seluruh instance kebuka. Kalau di private + cuma LB yang publik, yang bisa diserang cuma LB. Prinsipnya: <strong>kecilkan permukaan yang menghadap internet sebisa mungkin</strong>, dan biarkan sisanya ngomong lewat referensi SG, bukan CIDR lebar.</p>
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Gimana traffic sampai ke app lo, step by step:</p>
+<ol>
+<li><strong>User</strong> → HTTPS ke load balancer (publik, 443).</li>
+<li><strong>LB</strong> ngecek SG-nya: dari internet oke, lalu forward ke app di <strong>private subnet</strong> lewat SG <code>app</code> (yang cuma nerima dari SG <code>lb</code>).</li>
+<li><strong>App</strong> butuh kredensial S3 → panggil <strong>IMDSv2</strong> (PUT token dulu, baru GET), dapet role token, akses S3.</li>
+<li><strong>App</strong> query <strong>DB</strong> di private subnet; DB SG cuma buka 5432 dari SG <code>app</code>.</li>
+<li><strong>App</strong> butuh update/ambail data eksternal → lewat <strong>NAT gateway</strong> (egress), bukan IP publik.</li>
+<li><strong>SSM</strong> buat admin: session di-router lewat endpoint AWS, nggak butuh port 22 publik.</li>
+</ol>
+<p>Tiap hop dicek oleh SG masing-masing — itu sebabnya "reference SG, not CIDR" itu penting: saat app nambah node, SG otomatis ikut, nggak perlu edit CIDR manual.</p>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti singkat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VPC</td>
+<td>Virtual network terisolasi milik lo di cloud</td>
+</tr>
+<tr>
+<td>Subnet</td>
+<td>Pembagian IP di dalam VPC (public/private)</td>
+</tr>
+<tr>
+<td>Route table</td>
+<td>Aturan kemana traffic diarahkan (ke IGW/NAT/dll)</td>
+</tr>
+<tr>
+<td>Internet Gateway</td>
+<td>Pintu VPC ke internet publik</td>
+</tr>
+<tr>
+<td>NAT Gateway</td>
+<td>Jalan keluar privat ke internet (tanpa IP publik)</td>
+</tr>
+<tr>
+<td>Security Group</td>
+<td>Firewall stateful per resource (allow list)</td>
+</tr>
+<tr>
+<td>IAM Role</td>
+<td>Identitas sementara untuk service, bukan user permanen</td>
+</tr>
+<tr>
+<td>IMDSv2</td>
+<td>Metadata instance ber-token, cegah SSRF ambil kredensial</td>
+</tr>
+<tr>
+<td>Least privilege</td>
+<td>Kasih izin sesedikit mungkin, cuma yang dibutuhkan</td>
+</tr>
+<tr>
+<td>SSM</td>
+<td>Session Manager: akses admin tanpa SSH publik</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>AWS VPC User Guide</strong> — https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html</li>
+<li><strong>AWS IAM User Guide</strong> — https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html</li>
+<li><strong>AWS Budgets</strong> — https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html</li>
+<li><strong>Terraform AWS Provider</strong> — https://developer.hashicorp.com/terraform/language (referensi HCL/resource)</li>
+<li><strong>OpenTofu Docs</strong> — https://opentofu.org/ (alternatif IaC open source)</li>
+<li><strong>SRE Book: Postmortem Culture</strong> — https://sre.google/sre-book/postmortem-culture/ (disiplin review insiden)</li>
+</ol>
+<hr />
+<h2 id="6-self-check">6. Self-check<a class="headerlink" href="#6-self-check" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Bedanya subnet public dan private dari sisi route table dan IP publik?</li>
+<li>Kenapa SG app harus rujuk SG load balancer, bukan <code>0.0.0.0/0</code>?</li>
+<li>Apa itu IAM role + instance profile, dan kenapa lebih aman dari access key?</li>
+<li>IMDSv2 cegah serangan apa, dan gimana mekanismenya?</li>
+<li>Kenapa NAT Gateway sering jadi biaya tak terduga di lab?</li>
+<li>Kapan lo pakai SSM daripada SSH publik, dan kenapa?</li>
+<li>Fakta penting soal AWS Free Tier per 15 Juli 2025 — apa bedanya sama dulu?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>"Biar gampang, taruh app di public subnet."</strong> Berarti app punya IP publik → surface serangan gede. Pakai private + SSM/NAT.</li>
+<li><strong>"IAM <code>Action:*</code> pas debugging, nanti dibalikin."</strong> Nanti = lupa. Selalu tulis policy sempit dari awal.</li>
+<li><strong>"Budget alert nanti aja pas udah jalan."</strong> Waktu lo sadar, tagihan udah jalan. Pasang SEBELUM apply.</li>
+<li><strong>"NAT gateway diemin seminggu nggak apa-apa."</strong> ~$0,045/jam × 168 jam ≈ $7,5 + data. Matikan kalau nggak dipakai.</li>
+<li><strong>"Security group <code>0.0.0.0/0</code> ke 5432 cuma lab."</strong> Bot scanner nggak peduli itu lab. Jangan.</li>
+<li><strong>"IMDSv1 masih aman."</strong> SSRF bisa langsung ambil token. Wajibkan IMDSv2 (<code>http_tokens=required</code>).</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-14-cloud/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 8 · Production Readiness &amp; Reliability Baseline — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-08-readiness/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-8-production-readiness-reliability-baseline-bahan-bacaan">Minggu 8 · Production Readiness &amp; Reliability Baseline — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-production-readiness-review-prr">2.1 Production Readiness Review (PRR)</a></li>
+<li><a href="#22-dependency-mapping">2.2 Dependency mapping</a></li>
+<li><a href="#23-failure-mode-and-effects-analysis-fmea">2.3 Failure Mode and Effects Analysis (FMEA)</a></li>
+<li><a href="#24-single-point-of-failure-spof">2.4 Single Point of Failure (SPOF)</a></li>
+<li><a href="#25-operational-checklist-satu-perintah">2.5 Operational checklist &amp; "satu perintah"</a></li>
+<li><a href="#26-recovery-yang-teruji-bukan-cuma-tertulis">2.6 Recovery yang teruji, bukan cuma tertulis</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib">5. Bahan bacaan wajib</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-8-production-readiness-reliability-baseline-bahan-bacaan">Minggu 8 · Production Readiness &amp; Reliability Baseline — Bahan Bacaan<a class="headerlink" href="#minggu-8-production-readiness-reliability-baseline-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Dokumen ini <strong>berdiri sendiri</strong>. Baca dari atas ke bawah tanpa buka apa pun lain. Setelah selesai, lo harusnya paham konsepnya. Baru setelah itu kerjakan <code>lab.md</code>.</p>
+</blockquote>
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Lima minggu lo bangun: aplikasi (3), proxy (4), CI/CD (5), deploy (6), backup (7). Minggu 8 adalah tempat lo <strong>menyatukan semuanya</strong> dan menjawab satu pertanyaan jujur: <em>"kalau sistem ini rusak jam 3 pagi, apakah orang yang lagi jaga bisa ngerti dan benerin tanpa nanya-nanya?"</em></p>
+<p>Ini bukan dokumen formalitas. Production Readiness Review (PRR) adalah pertanyaan yang bakal lo dapat di interview SRE level mana pun, dan yang membedakan "engineer yang bisa bikin fitur" dari "engineer yang bisa dijaga sistemnya". PRR gagal bukan karena nggak ditulis — tapi karena ditulis sekali lalu dibiarin basi, atau cuma checklist kosong tanpa bukti.</p>
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-production-readiness-review-prr">2.1 Production Readiness Review (PRR)<a class="headerlink" href="#21-production-readiness-review-prr" title="Permanent link">&para;</a></h3>
+<p>PRR = audit apakah sistem siap "dioperasikan", bukan cuma "jalan di laptop lo". Lima kategori wajib: <strong>Security, Availability, Observability, Recovery, Deployment</strong>. Setiap item punya status <code>TODO</code> / <code>PARTIAL</code> / <code>DONE</code> — dan <code>DONE</code> cuma boleh kalau <strong>sudah diuji</strong>, bukan cuma sudah ditulis.</p>
+<h3 id="22-dependency-mapping">2.2 Dependency mapping<a class="headerlink" href="#22-dependency-mapping" title="Permanent link">&para;</a></h3>
+<p>Gambar siapa bergantung ke siapa. Di lab: API → Postgres, API → Redis, Client → Nginx → API. Kalau Postgres mati, endpoint tulis ikut mati. Lo harus tahu rantai ini sebelum bisa milih mana yang SPOF.</p>
+<h3 id="23-failure-mode-and-effects-analysis-fmea">2.3 Failure Mode and Effects Analysis (FMEA)<a class="headerlink" href="#23-failure-mode-and-effects-analysis-fmea" title="Permanent link">&para;</a></h3>
+<p>Untuk tiap komponen, jawab: gimana dia gagal, apa dampaknya, gimana lo <strong>mendeteksinya</strong> (ini kuncinya — tanpa cara deteksi, item itu nggak bisa ditindaklanjuti), dan mitigasinya. FMEA tanpa kolom "gimana deteksinya" cuma daftar ketakutan, bukan rencana.</p>
+<h3 id="24-single-point-of-failure-spof">2.4 Single Point of Failure (SPOF)<a class="headerlink" href="#24-single-point-of-failure-spof" title="Permanent link">&para;</a></h3>
+<p>Satu komponen yang kalau mati = layanan mati total. Di lab: Postgres, Redis, Nginx masing-masing SPOF. PRR mewajibkan lo <strong>menulis eksplisit</strong> SPOF yang diterima (dan alasannya), bukan pura-pura nggak ada.</p>
+<h3 id="25-operational-checklist-satu-perintah">2.5 Operational checklist &amp; "satu perintah"<a class="headerlink" href="#25-operational-checklist-satu-perintah" title="Permanent link">&para;</a></h3>
+<p>Syarat tertinggi minggu ini: <strong>dari repo kosong, satu perintah sampai sistem jalan</strong>. Kalau lo butuh 5 langkah manual dari ingatan, reproduksinya gagal — dan itu bug. PRR juga butuh pemilik on-call tertulis.</p>
+<h3 id="26-recovery-yang-teruji-bukan-cuma-tertulis">2.6 Recovery yang teruji, bukan cuma tertulis<a class="headerlink" href="#26-recovery-yang-teruji-bukan-cuma-tertulis" title="Permanent link">&para;</a></h3>
+<p>Minggu 7 lo bikin backup. Minggu 8 lo buktikan: reboot mesin → sistem balik sendiri tanpa campur tangan. Catat waktunya: reboot → <code>/readyz</code> balas 200 = berapa detik?</p>
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<p>Waktu lo jalanin <code>docker compose up -d --build --wait</code> dari repo bersih:
+1. Compose baca <code>compose.yaml</code>, build image <code>api</code> dari <code>Dockerfile</code>.
+2. Buat network bridge, mount volume (data Postgres persist).
+3. Jalankan <code>postgres</code> &amp; <code>redis</code>, tunggu <code>service_healthy</code> (lewat <code>depends_on: condition</code>).
+4. Jalankan <code>api</code> setelah dependency sehat, jalankan healthcheck.
+5. Jalankan <code>nginx</code>.
+6. <code>curl /health</code> dan <code>/readyz</code> → 200.
+7. Saat reboot: container otomatis <code>restart: unless-stopped</code> (atau <code>docker compose restart</code>), volume bikin data nggak ilang.</p>
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti sederhana</th>
+<th>Contoh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PRR</td>
+<td>Audit kesiapan operasional</td>
+<td>5 kategori di <code>docs/production-readiness.md</code></td>
+</tr>
+<tr>
+<td>FMEA</td>
+<td>Analisis cara gagal &amp; dampak</td>
+<td>"Postgres lambat → tulis gagal"</td>
+</tr>
+<tr>
+<td>SPOF</td>
+<td>Titik yang kalau mati = layanan mati</td>
+<td>Database tunggal</td>
+</tr>
+<tr>
+<td>RTO</td>
+<td>Waktu pulih setelah mati</td>
+<td>reboot → readyz 200 = 45 detik</td>
+</tr>
+<tr>
+<td>RPO</td>
+<td>Batas data yang boleh hilang</td>
+<td>backup tiap 1 jam → RPO 1 jam</td>
+</tr>
+<tr>
+<td>On-call</td>
+<td>Orang yang jaga kalau rusak</td>
+<td>tertulis, bukan "siapa aja"</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-bahan-bacaan-wajib">5. Bahan bacaan wajib<a class="headerlink" href="#5-bahan-bacaan-wajib" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sumber</th>
+<th>Apa yang dibaca</th>
+<th>Estimasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="https://sre.google/sre-book/evolving-sre-engagement-model/">Google SRE — Evolving SRE Engagement Model (PRR)</a></td>
+<td>Konsep PRR</td>
+<td>20 mnt</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="https://sre.google/sre-book/launch-checklist/">Launch Coordination Checklist</a></td>
+<td>Checklist peluncuran</td>
+<td>15 mnt</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="https://sre.google/sre-book/failure-modes/">Google SRE — Failure Modes and Root Cause Analysis</a></td>
+<td>FMEA &amp; analisis kegagalan</td>
+<td>20 mnt</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>docs/production-readiness.md</code> (di repo ini)</td>
+<td>Template 5 kategori + dependency map</td>
+<td>10 mnt</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="https://docs.docker.com/compose/how-tos/startup-order/">Docker Compose <code>depends_on</code></a></td>
+<td><code>condition: service_healthy</code></td>
+<td>10 mnt</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-buka-google">6. Self-check (harus bisa dijawab tanpa buka Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-buka-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa bedanya PRR sama sekadar "deploy sukses"?</li>
+<li>Kenapa FMEA butuh kolom "gimana deteksinya"?</li>
+<li>Apa itu SPOF dan sebutkan 3 di lab lo?</li>
+<li>Kenapa "satu perintah dari repo kosong" itu syarat penting?</li>
+<li>Kenapa risiko harus ditulis eksplisit, bukan disembunyikan?</li>
+</ol>
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Mitos</th>
+<th>Kenyataan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"PRR = isi checklist sekali"</td>
+<td>Dokumen yang nggak direvisi tiap perubahan = basi &amp; berbahaya.</td>
+</tr>
+<tr>
+<td>"SPOF nggak ada di sistem bagus"</td>
+<td>SPOF hampir pasti ada; yang bener itu <strong>nyatain</strong> &amp; terima risikonya.</td>
+</tr>
+<tr>
+<td>"Backup cukup"</td>
+<td>Backup = harapan. Restore <strong>teruji</strong> = kepastian.</td>
+</tr>
+<tr>
+<td>"Dependency pihak ketiga nggak perlu masuk peta"</td>
+<td>Auth/payment gateway paling sering bikin outage justru karena lupa dicatat.</td>
+</tr>
+<tr>
+<td>"On-call siapa aja"</td>
+<td>Tanpa pemilik eksplisit, jam 3 pagi nggak ada yang gerak.</td>
+</tr>
+</tbody>
+</table>
+<div class="foot"><span>production-reliability-lab/labs/week-08-readiness/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

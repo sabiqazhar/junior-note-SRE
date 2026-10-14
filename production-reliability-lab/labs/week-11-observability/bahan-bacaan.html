@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 11 · Logs dan Distributed Tracing — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-11-observability/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-11-logs-dan-distributed-tracing-bahan-bacaan">Minggu 11 · Logs dan Distributed Tracing — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-tiga-alat-tiga-pertanyaan">2.1 Tiga alat, tiga pertanyaan</a></li>
+<li><a href="#22-structured-logging-dengan-logslog-go">2.2 Structured logging dengan log/slog (Go)</a></li>
+<li><a href="#23-correlation-id-w3c-trace-context">2.3 Correlation ID &amp; W3C Trace Context</a></li>
+<li><a href="#24-trace-span-context-propagation">2.4 Trace / Span &amp; context propagation</a></li>
+<li><a href="#25-sampling-jangan-simpan-semua">2.5 Sampling — jangan simpan semua</a></li>
+<li><a href="#26-pipeline-log-alloy-bukan-promtail">2.6 Pipeline log: Alloy (bukan Promtail)</a></li>
+<li><a href="#27-tempo-sebagai-trace-backend">2.7 Tempo sebagai trace backend</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib-primer">5. Bahan bacaan wajib (primer)</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-google">6. Self-check (harus bisa dijawab tanpa Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-11-logs-dan-distributed-tracing-bahan-bacaan">Minggu 11 · Logs dan Distributed Tracing — Bahan Bacaan<a class="headerlink" href="#minggu-11-logs-dan-distributed-tracing-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>"Metrics bilang ada api. Logs bilang di ruangan mana. Traces bilang api itu menjalar lewat kabel mana."</p>
+</blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah, kerjakan <code>lab.md</code> setelahnya.</p>
+<hr />
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Minggu lalu lo sudah tahu <em>ada</em> masalah (metrics: error naik, p95 melonjak). Tapi metrics nggak bisa jawab <strong>request mana</strong> yang bermasalah, apalagi <strong>di titik mana</strong> waktunya habis. Bayangin gedung kebakaran: alarm (metrics) bilang "kebakaran!", tapi lo butuh CCTV (logs) buat tahu ruangan mana yang asapnya paling tebal, dan lo butuh denah jalur kabel (traces) buat tahu api itu menjalar dari panel listrik ke mana. Tiga alat ini jawab tiga pertanyaan beda, dan urutannya selalu sama: <strong>metrics → logs → traces</strong>.</p>
+<p>Di lab ini aplikasi lo sudah pakai <code>log/slog</code> bawaan Go (sejak 1.21) buat log JSON terstruktur, dan <code>otelhttp</code> buat bikin trace otomatis. Tapi trace paling sering <strong>putus</strong> cuma karena lo lupa nerusin <code>context.Context</code> ke fungsi turunan — dan correlation ID paling sering <strong>ada tapi nggak masuk log</strong>. Dua kesalahan ini bikin "oh, ternyata" minggu ini nggak kejadian. Makanya lo bakal praktik: bikin request lambat, ambil <code>trace_id</code>, cari log-nya di Loki, buka trace di Tempo, dan jawab "90% waktunya habis di span database".</p>
+<p>Satu lagi yang wajib lo tahu: <strong>Promtail sudah EOL 2 Maret 2026.</strong> Pipeline log lab ini jalan lewat <strong>Grafana Alloy</strong> (<code>observability/otel/config.alloy</code>). Jangan mulai lab baru pakai Promtail.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-tiga-alat-tiga-pertanyaan">2.1 Tiga alat, tiga pertanyaan<a class="headerlink" href="#21-tiga-alat-tiga-pertanyaan" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Alat</th>
+<th>Pertanyaan</th>
+<th>Analogi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metrics</td>
+<td>"Ada yang aneh nggak?"</td>
+<td>Alarm kebakaran</td>
+</tr>
+<tr>
+<td>Logs</td>
+<td>"Persisnya apa yang terjadi?"</td>
+<td>CCTV</td>
+</tr>
+<tr>
+<td>Traces</td>
+<td>"Di titik mana waktunya habis?"</td>
+<td>Peta rute kurir</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Kapan pakai mana:</strong>
+- Pakai <strong>metrics</strong> buat deteksi &amp; SLO (murah, agregat, selalu nyala).
+- Pakai <strong>logs</strong> kalau lo sudah tahu <em>kira-kira</em> request mana &amp; mau baca detail (error stack, payload).
+- Pakai <strong>traces</strong> kalau lo tahu ada latency tapi nggak tahu <em>di span mana</em> (app vs DB vs Redis).</p>
+<h3 id="22-structured-logging-dengan-logslog-go">2.2 Structured logging dengan <code>log/slog</code> (Go)<a class="headerlink" href="#22-structured-logging-dengan-logslog-go" title="Permanent link">&para;</a></h3>
+<p>Jangan log string mentah. Pakai <code>slog</code> JSON handler biar tiap field jadi key:value yang gampang di-query LogQL.</p>
+<pre><code class="language-go">logger := slog.New(slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{Level: slog.LevelInfo}))
+slog.SetDefault(logger)
+
+slog.InfoContext(r.Context(), &quot;request_done&quot;,
+    &quot;method&quot;, r.Method,
+    &quot;route&quot;,  r.Pattern,
+    &quot;status&quot;, rw.status,
+    &quot;duration_ms&quot;, time.Since(start).Milliseconds(),
+    &quot;trace_id&quot;, span.SpanContext().TraceID().String(),
+)
+</code></pre>
+<h3 id="23-correlation-id-w3c-trace-context">2.3 Correlation ID &amp; W3C Trace Context<a class="headerlink" href="#23-correlation-id-w3c-trace-context" title="Permanent link">&para;</a></h3>
+<p>Biara log dan trace nyambung, lo butuh ID yang sama. Standarnya <strong>W3C Trace Context</strong> (<code>traceparent</code>) — dipakai otomatis oleh OTel dan berlaku lintas service &amp; vendor. <code>trace_id</code> dari span harus di-inject ke tiap log (<code>slog</code> di atas).</p>
+<h3 id="24-trace-span-context-propagation">2.4 Trace / Span &amp; context propagation<a class="headerlink" href="#24-trace-span-context-propagation" title="Permanent link">&para;</a></h3>
+<p>Satu <strong>trace</strong> = satu request lintas service. Di dalamnya ada <strong>span</strong> (tiap langkah: HTTP handler, query DB, call Redis). Kunci: <strong>teruskan <code>context.Context</code></strong> ke tiap fungsi turunan, kalau nggak trace putus.</p>
+<pre><code class="language-go">// SALAH — trace putus
+db.QueryRow(&quot;INSERT ...&quot;)                       // context nggak diteruskan
+
+// BENAR
+db.QueryRowContext(r.Context(), &quot;INSERT ...&quot;)   // span DB nyambung
+</code></pre>
+<h3 id="25-sampling-jangan-simpan-semua">2.5 Sampling — jangan simpan semua<a class="headerlink" href="#25-sampling-jangan-simpan-semua" title="Permanent link">&para;</a></h3>
+<p>Trace mahal. <strong>Tail sampling</strong> di Alloy memutuskan SETELAH trace lengkap: simpan error + lambat 100%, sisanya baseline 1%.</p>
+<pre><code class="language-river">otelcol.processor.tail_sampling &quot;default&quot; {
+  policy { status_code { status_codes = [&quot;ERROR&quot;] } }   // SELALU simpan error
+  policy { latency { threshold_ms = 500 } }             // simpan lambat
+  policy { probabilistic { sampling_percentage = 1 } }  // baseline 1%
+}
+</code></pre>
+<h3 id="26-pipeline-log-alloy-bukan-promtail">2.6 Pipeline log: Alloy (bukan Promtail)<a class="headerlink" href="#26-pipeline-log-alloy-bukan-promtail" title="Permanent link">&para;</a></h3>
+<p><code>loki.source.docker</code> kumpulin log container → <code>loki.process.json</code> parse JSON
+(level jadi label, <code>trace_id</code> tetap field) → <code>loki.write</code> kirim ke Loki.
+<code>trace_id</code> <strong>jangan</strong> jadi label (kardinalitas meledak) — cukup field yang bisa
+dicari.</p>
+<h3 id="27-tempo-sebagai-trace-backend">2.7 Tempo sebagai trace backend<a class="headerlink" href="#27-tempo-sebagai-trace-backend" title="Permanent link">&para;</a></h3>
+<p>Alloy ekspor trace lewat OTLP ke <strong>Tempo</strong>. Di Grafana lo buka trace by
+<code>trace_id</code>, lihat pohon span + durasi tiap span.</p>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>App log</strong>: <code>slog</code> tulis JSON ke stdout, berisi <code>trace_id</code>.</li>
+<li><strong>Alloy scrape</strong>: <code>loki.source.docker</code> baca stdout container, parse JSON, kirim ke Loki.</li>
+<li><strong>App trace</strong>: <code>otelhttp</code> bikin span tiap request, <code>QueryRowContext</code> bikin child span DB. Context diteruskan → span nyambung.</li>
+<li><strong>Alloy terima OTLP</strong>: <code>otelcol.receiver.otlp</code> terima dari app (port 4317/4318).</li>
+<li><strong>Tail sampling</strong>: keputusan simpan error/lambat/baseline.</li>
+<li><strong>Tempo simpan</strong>: <code>otelcol.exporter.otlp.tempo</code> kirim ke Tempo.</li>
+<li><strong>Korelasi</strong>: di Grafana, dari panel metrics → klik trace_id → Loki (log) + Tempo (trace) terbuka berdampingan.</li>
+</ol>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti singkat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Structured log</td>
+<td>Log JSON key:value, bisa di-query</td>
+</tr>
+<tr>
+<td><code>slog</code></td>
+<td>Logger bawaan Go (sejak 1.21)</td>
+</tr>
+<tr>
+<td>Correlation ID</td>
+<td>ID sama lintas log &amp; trace</td>
+</tr>
+<tr>
+<td>W3C Trace Context</td>
+<td>Standar <code>traceparent</code> penyambung trace</td>
+</tr>
+<tr>
+<td>Trace</td>
+<td>Satu request lintas service</td>
+</tr>
+<tr>
+<td>Span</td>
+<td>Satu langkah dalam trace</td>
+</tr>
+<tr>
+<td>Context propagation</td>
+<td>Meneruskan context agar span nyambung</td>
+</tr>
+<tr>
+<td>Tail sampling</td>
+<td>Sampling setelah trace lengkap</td>
+</tr>
+<tr>
+<td>Alloy</td>
+<td>Pipeline log/trace (ganti Promtail)</td>
+</tr>
+<tr>
+<td>Promtail</td>
+<td>Collector log lama, EOL 2 Mar 2026</td>
+</tr>
+<tr>
+<td>Tempo</td>
+<td>Backend penyimpan trace (Grafana)</td>
+</tr>
+<tr>
+<td>LogQL</td>
+<td>Bahasa query Loki</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib-primer">5. Bahan bacaan wajib (primer)<a class="headerlink" href="#5-bahan-bacaan-wajib-primer" title="Permanent link">&para;</a></h2>
+<ol>
+<li>OpenTelemetry — Docs (traces, logs, metrics): https://opentelemetry.io/docs/</li>
+<li>OpenTelemetry — Trace Context (W3C): https://opentelemetry.io/docs/specs/otel/trace/trace-context/</li>
+<li>OpenTelemetry — Sampling: https://opentelemetry.io/docs/concepts/sampling/</li>
+<li>Grafana — Loki LogQL: https://grafana.com/docs/loki/latest/query/logql/</li>
+<li>Grafana — Alloy (pengganti Promtail): https://grafana.com/docs/alloy/latest/</li>
+<li>Grafana — Tempo: https://grafana.com/docs/tempo/latest/</li>
+</ol>
+<hr />
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-google">6. Self-check (harus bisa dijawab tanpa Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Metrics, logs, traces jawab pertanyaan apa bedanya?</li>
+<li>Kenapa <code>trace_id</code> jangan dijadikan label Loki?</li>
+<li>Apa penyebab paling umum trace putus?</li>
+<li>Apa bedanya head sampling dan tail sampling?</li>
+<li>Kenapa Promtail nggak dipakai di lab ini?</li>
+<li>Bagaimana <code>context.Context</code> membuat span DB nyambung ke span HTTP?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>"Metrics cukup, log nggak perlu."</strong> Metrics agregat — nggak bisa tunjukin request spesifik yang gagal.</li>
+<li><strong>"Trace otomatis selalu nyambung."</strong> Salah. Lupa <code>QueryRowContext(ctx,...)</code> → span DB putus, lo nggak tahu waktu habis di DB.</li>
+<li><strong>"Correlation ID ada, berarti nyambung."</strong> Sering ID ada di header tapi lupa di-inject ke <code>slog</code> → nggak bisa cari log by trace_id.</li>
+<li><strong>"Simpan semua trace."</strong> Mahal &amp; nggak perlu. Tail sampling: error+lambat 100%, baseline 1%.</li>
+<li><strong>"Semua semconv sudah stabil."</strong> Sebagian masih Mixed — cek <code>OTEL_SEMCONV_STABILITY_OPT_IN</code>.</li>
+<li><strong>"Promtail masih oke."</strong> EOL 2 Maret 2026 — pakai Alloy.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-11-observability/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

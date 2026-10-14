@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minggu 10 · Grafana dan Alerting — Bahan Bacaan</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-10-grafana/bahan-bacaan.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#minggu-10-grafana-dan-alerting-bahan-bacaan">Minggu 10 · Grafana dan Alerting — Bahan Bacaan</a><ul>
+<li><a href="#1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting</a></li>
+<li><a href="#2-konsep-inti">2. Konsep inti</a><ul>
+<li><a href="#21-red-kacamata-buat-servicerequest">2.1 RED — kacamata buat service/request</a></li>
+<li><a href="#22-use-kacamata-buat-resourceinfra">2.2 USE — kacamata buat resource/infra</a></li>
+<li><a href="#23-alert-berbasis-gejala-bukan-penyebab">2.3 Alert berbasis gejala, bukan penyebab</a></li>
+<li><a href="#24-setiap-alert-harus-actionable-punya-runbook">2.4 Setiap alert harus actionable + punya runbook</a></li>
+<li><a href="#25-severity-page-vs-ticket">2.5 Severity: page vs ticket</a></li>
+<li><a href="#26-for-untuk-cegah-flapping">2.6 for: untuk cegah flapping</a></li>
+<li><a href="#27-provisioning-as-code-allowuiupdates-false">2.7 Provisioning as code &amp; allowUiUpdates: false</a></li>
+<li><a href="#28-promtail-eol-pakai-alloy">2.8 Promtail EOL → pakai Alloy</a></li>
+</ul>
+</li>
+<li><a href="#3-mekanisme-di-balik-layar">3. Mekanisme di balik layar</a></li>
+<li><a href="#4-glosarium-mini">4. Glosarium mini</a></li>
+<li><a href="#5-bahan-bacaan-wajib-primer">5. Bahan bacaan wajib (primer)</a></li>
+<li><a href="#6-self-check-harus-bisa-dijawab-tanpa-google">6. Self-check (harus bisa dijawab tanpa Google)</a></li>
+<li><a href="#7-yang-sering-salah-paham">7. Yang sering salah paham</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="minggu-10-grafana-dan-alerting-bahan-bacaan">Minggu 10 · Grafana dan Alerting — Bahan Bacaan<a class="headerlink" href="#minggu-10-grafana-dan-alerting-bahan-bacaan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>"Dashboard yang bagus bukan yang paling cantik, tapi yang bikin lo tahu harus bangunin orang jam 3 pagi atau nggak."</p>
+</blockquote>
+<p>Dokumen ini berdiri sendiri. Baca dari atas ke bawah, kerjakan <code>lab.md</code> setelahnya.</p>
+<hr />
+<h2 id="1-kenapa-minggu-ini-penting">1. Kenapa minggu ini penting<a class="headerlink" href="#1-kenapa-minggu-ini-penting" title="Permanent link">&para;</a></h2>
+<p>Minggu lalu lo sudah punya angka: request rate, error ratio, p95. Tapi angka yang cuma bisa lo lihat kalau lo <em>sengaja</em> buka Prometheus itu bukan observability — itu cuma data. Observability baru jadi kalau angkanya <strong>narak lo</strong> pas ada masalah, dan pas lo bangun, lo langsung tahu mau ngapain. Dua hal itulah yang minggu ini lo bangun: <strong>dashboard</strong> (biar angka gampang dibaca) dan <strong>alerting</strong> (biar angka那个 yang ngarahin lo, bukan sebaliknya).</p>
+<p>Bayangin sistem ini kayak panel indikator di mobil. Lo nggak nunggu mesin berasap baru tahu overheating — ada lampu merah di dashboard yang nyala <em>sebelum</em> rusak parah. Tapi kalau lampunya nyala tiap lo ngerem (false positive), lo bakal matiin alarm itu dan pas mesin beneran overheat, lo nggak sadar. Itulah <strong>alert fatigue</strong>: alarm yang terlalu sering atau nggak actionable bikin on-call kebal. Minggu ini lo belajar bedain "alarm yang harus dibunyikan" vs "grafik yang cuma perlu dilihat besok".</p>
+<p>Masalah kedua yang minggu ini beresin: <strong>dashboard yang nggak bisa diandalin</strong>. Kalau dashboard lo cuma hasil klik-klik di UI dan nggak ada di Git, pas Grafana redeploy panel lo hilang. Makanya lo bakal pakai <strong>provisioning as code</strong> — dashboard dan alert didefinisikan di file, bukan di klik. Sumber kebenaran = Git, bukan UI.</p>
+<hr />
+<h2 id="2-konsep-inti">2. Konsep inti<a class="headerlink" href="#2-konsep-inti" title="Permanent link">&para;</a></h2>
+<h3 id="21-red-kacamata-buat-servicerequest">2.1 RED — kacamata buat service/request<a class="headerlink" href="#21-red-kacamata-buat-servicerequest" title="Permanent link">&para;</a></h3>
+<p>RED itu tiga angka yang lo tanya tiap kali ada endpoint: <strong>R</strong>ate (req/detik), <strong>E</strong>rror (berapa yang gagal), <strong>D</strong>uration (sebaran latency). Cocok buat API.</p>
+<pre><code class="language-promql"># Rate
+sum by (route) (rate(http_server_requests_total[5m]))
+# Error ratio
+sum(rate(http_server_requests_total{status=~&quot;5..&quot;}[5m])) / sum(rate(http_server_requests_total[5m]))
+# Duration p95
+histogram_quantile(0.95, sum by (le,route)(rate(http_server_request_duration_seconds_bucket[5m])))
+</code></pre>
+<h3 id="22-use-kacamata-buat-resourceinfra">2.2 USE — kacamata buat resource/infra<a class="headerlink" href="#22-use-kacamata-buat-resourceinfra" title="Permanent link">&para;</a></h3>
+<p>USE buat CPU, memori, disk, koneksi DB: <strong>U</strong>tilization (% waktu sibuk), <strong>S</strong>aturation (seberapa numpuk antrean), <strong>E</strong>rror (error level resource).</p>
+<pre><code class="language-promql"># Utilization CPU container
+rate(container_cpu_usage_seconds_total[5m])
+# Saturation: request yang nggak selesai
+http_server_requests_in_flight
+# Error resource (contoh koneksi DB, butuh postgres-exporter)
+pg_stat_activity_count
+</code></pre>
+<p>Jangan campur RED dan USE di satu panel yang nggak jelas — pisahin: panel "kesehatan service" vs "kesehatan infra".</p>
+<h3 id="23-alert-berbasis-gejala-bukan-penyebab">2.3 Alert berbasis gejala, bukan penyebab<a class="headerlink" href="#23-alert-berbasis-gejala-bukan-penyebab" title="Permanent link">&para;</a></h3>
+<p>Ini prinsip paling penting. "User ngalamin error 5%" lebih berguna dari "CPU 80%" — kalau CPU 80% nggak bikin user rugi, itu bukan insiden. Gejala = apa yang dirasakan user. Penyebab = diagnosis, urusan dashboard &amp; investigasi, bukan alarm.</p>
+<pre><code class="language-yaml"># Alert gejala (sudah ada di rules/slo.yml)
+- alert: APIDown
+  expr: up{job=&quot;api&quot;} == 0
+  for: 1m
+  labels: { severity: page }
+</code></pre>
+<h3 id="24-setiap-alert-harus-actionable-punya-runbook">2.4 Setiap alert harus actionable + punya runbook<a class="headerlink" href="#24-setiap-alert-harus-actionable-punya-runbook" title="Permanent link">&para;</a></h3>
+<p>Kalau nggak ada yang bisa lo lakuin pas alarm nyala, itu bukan alert — itu grafik. Tiap alert wajib punya runbook (langkah diagnosis &amp; mitigasi). Tanpa runbook = alarm tanpa petunjuk jalan keluar.</p>
+<h3 id="25-severity-page-vs-ticket">2.5 Severity: page vs ticket<a class="headerlink" href="#25-severity-page-vs-ticket" title="Permanent link">&para;</a></h3>
+<p>Beda perlakuan. <strong>page</strong> = bangunin orang (SEV1/2, dampak luas). <strong>ticket</strong> = dilihat besok (SEV3, terdampak sebagian). Satu contact point buat semua severity = yang penting tenggelam. Pisahin channel.</p>
+<h3 id="26-for-untuk-cegah-flapping">2.6 <code>for:</code> untuk cegah flapping<a class="headerlink" href="#26-for-untuk-cegah-flapping" title="Permanent link">&para;</a></h3>
+<p>Alert tanpa <code>for:</code> bakal nyala-mati-nyala (flapping) kalau metriknya bergetar di ambang batas. <code>for: 2m</code> artinya baru firing kalau kondisi terpenuhi 2 menit berturut-turut.</p>
+<pre><code class="language-yaml">- alert: HighLatencyP95
+  expr: job:slo_latency_p95:histogram_quantile5m &gt; 0.3
+  for: 10m          # jangan 0 — hindari flapping
+</code></pre>
+<h3 id="27-provisioning-as-code-allowuiupdates-false">2.7 Provisioning as code &amp; <code>allowUiUpdates: false</code><a class="headerlink" href="#27-provisioning-as-code-allowuiupdates-false" title="Permanent link">&para;</a></h3>
+<p>Dashboard dan alert didefinisikan di file YAML/JSON di Git, bukan hasil klik UI. Kunci: <code>allowUiUpdates: false</code> biar nggak ada drift.</p>
+<pre><code class="language-yaml"># observability/grafana/provisioning/dashboards/default.yaml
+apiVersion: 1
+providers:
+  - name: sre-core
+    folder: SRE
+    type: file
+    allowUiUpdates: false      # sumber kebenaran = Git
+    options:
+      path: /var/lib/grafana/dashboards
+</code></pre>
+<h3 id="28-promtail-eol-pakai-alloy">2.8 Promtail EOL → pakai Alloy<a class="headerlink" href="#28-promtail-eol-pakai-alloy" title="Permanent link">&para;</a></h3>
+<p><strong>Promtail resmi End-of-Life 2 Maret 2026.</strong> Pipeline log lab ini jalan lewat <strong>Grafana Alloy</strong> (<code>observability/otel/config.alloy</code>), bukan Promtail. Jangan mulai lab baru pakai Promtail.</p>
+<hr />
+<h2 id="3-mekanisme-di-balik-layar">3. Mekanisme di balik layar<a class="headerlink" href="#3-mekanisme-di-balik-layar" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Scrape</strong>: Prometheus tarik <code>/metrics</code> dari <code>api</code> tiap 15s, simpan deret waktu.</li>
+<li><strong>Rule evaluation</strong>: tiap <code>evaluation_interval</code>, Prometheus jalanin recording rule (<code>job:slo_errors_per_request:ratio_rate5m</code>) lalu alerting rule (<code>HighErrorBudgetBurn</code>, <code>APIDown</code>).</li>
+<li><strong>Alert pending → firing</strong>: kalau <code>expr</code> benar dan tahan selama <code>for:</code>, status berubah <code>pending</code> → <code>firing</code>. Tanpa <code>for:</code>, langsung firing (rawan flapping).</li>
+<li><strong>Notification</strong>: Prometheus kirim ke Alertmanager (atau Grafana alert ke contact point). Severity <code>page</code> → on-call; <code>ticket</code> → issue tracker.</li>
+<li><strong>Visualisasi</strong>: Grafana query Prometheus lewat PromQL, render panel. Dashboard di-load dari file provisioning, bukan dari DB UI.</li>
+<li><strong>Runbook</strong>: tiap alert punya <code>runbook_url</code> — on-call buka, ikutin langkah, pulihkan dulu baru cari root cause.</li>
+</ol>
+<hr />
+<h2 id="4-glosarium-mini">4. Glosarium mini<a class="headerlink" href="#4-glosarium-mini" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti singkat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RED</td>
+<td>Rate, Error, Duration — 3 metrik service</td>
+</tr>
+<tr>
+<td>USE</td>
+<td>Utilization, Saturation, Error — 3 metrik resource</td>
+</tr>
+<tr>
+<td>Symptom-based alerting</td>
+<td>Alert berdasar gejala user, bukan penyebab</td>
+</tr>
+<tr>
+<td>Alert fatigue</td>
+<td>Kebal terhadap alarm karena terlalu sering/noise</td>
+</tr>
+<tr>
+<td>Flapping</td>
+<td>Alert nyala-mati berulang di ambang batas</td>
+</tr>
+<tr>
+<td><code>for:</code></td>
+<td>Durasi kondisi harus bertahan sebelum firing</td>
+</tr>
+<tr>
+<td>Provisioning as code</td>
+<td>Dashboard/alert didefinisikan di file, bukan UI</td>
+</tr>
+<tr>
+<td>Drift</td>
+<td>Bedanya state nyata vs yang di Git</td>
+</tr>
+<tr>
+<td>Severity page/ticket</td>
+<td>Bangunin orang vs catat besok</td>
+</tr>
+<tr>
+<td>Alloy</td>
+<td>Pengganti Promtail untuk pipeline log/trace</td>
+</tr>
+<tr>
+<td>Runbook</td>
+<td>Langkah diagnosis &amp; mitigasi tiap alert</td>
+</tr>
+<tr>
+<td>Mute timing</td>
+<td>Jendela maintenance agar alert diam sementara</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-bahan-bacaan-wajib-primer">5. Bahan bacaan wajib (primer)<a class="headerlink" href="#5-bahan-bacaan-wajib-primer" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Grafana — Alerting overview: https://grafana.com/docs/grafana/latest/alerting/</li>
+<li>Grafana — Provision dashboards/alerts as code: https://grafana.com/docs/grafana/latest/administration/provisioning/</li>
+<li>Grafana — Alloy (pengganti Promtail): https://grafana.com/docs/alloy/latest/</li>
+<li>Prometheus — Alerting (rules, <code>for:</code>, severity): https://prometheus.io/docs/practices/alerting/</li>
+<li>Google SRE Book — Monitoring distributed systems (symptom-based): https://sre.google/sre-book/monitoring-distributed-systems/</li>
+<li>Prometheus — Querying functions (rate, histogram_quantile): https://prometheus.io/docs/prometheus/latest/querying/functions/</li>
+</ol>
+<hr />
+<h2 id="6-self-check-harus-bisa-dijawab-tanpa-google">6. Self-check (harus bisa dijawab tanpa Google)<a class="headerlink" href="#6-self-check-harus-bisa-dijawab-tanpa-google" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Apa bedanya RED dan USE, dan kapan masing-masing dipakai?</li>
+<li>Kenapa alert "CPU &gt; 80%" sering bukan alert yang berguna?</li>
+<li>Apa fungsi <code>for:</code> dan kenapa tanpa itu alert bisa flapping?</li>
+<li>Apa bedanya severity <code>page</code> dan <code>ticket</code>?</li>
+<li>Kenapa <code>allowUiUpdates: false</code> penting buat provisioning as code?</li>
+<li>Promtail masih dipakai di lab ini nggak? Kenapa tidak?</li>
+</ol>
+<hr />
+<h2 id="7-yang-sering-salah-paham">7. Yang sering salah paham<a class="headerlink" href="#7-yang-sering-salah-paham" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>"Dashboard = observability."</strong> Salah. Dashboard cuma visualisasi. Tanpa alert yang narak lo, lo tetap nggak tahu pas rusak.</li>
+<li><strong>"Alert bisa nyala tiap detik."</strong> Boleh, tapi tanpa <code>for:</code> dan tanpa actionable runbook → alert fatigue. On-call jadi matiin alarm.</li>
+<li><strong>"Satu channel buat semua alert."</strong> Salah. Page dan ticket harus pisah, kalau nggak yang penting tenggelam.</li>
+<li><strong>"Promtail masih oke."</strong> Promtail EOL 2 Maret 2026 — pakai Alloy untuk lab baru.</li>
+<li><strong>"Alert penyebab lebih bagus dari alert gejala."</strong> Kebalik. User rugi karena gejala, bukan karena CPU tinggi. Alert gejala dulu, penyebab diinvestigasi.</li>
+<li><strong>"Klik di UI lebih cepat dari YAML."</strong> Kelihatannya iya, tapi pas redeploy dashboard ilang. Provisioning as code menyelamatkan lo.</li>
+</ul>
+<div class="foot"><span>production-reliability-lab/labs/week-10-grafana/bahan-bacaan.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

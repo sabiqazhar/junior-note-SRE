@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab — Week 10 · Grafana dan Alerting</title>
+<style>
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--line:#30363d;--fg:#e6edf3;--fg2:#9198a1;--accent:#58a6ff;--accent2:#3fb950;--warn:#d29922;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15.5px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.top{position:sticky;top:0;z-index:10;background:#0d1117ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;font-size:13.5px}
+.top .crumb{color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{background:var(--bg3);border:1px solid var(--line);color:var(--fg);padding:6px 13px;border-radius:8px;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+.wrap{max-width:860px;margin:0 auto;padding:28px 22px 90px}
+h1{font-size:26px;line-height:1.3;border-bottom:1px solid var(--line);padding-bottom:12px}
+h2{font-size:21px;margin-top:38px;border-bottom:1px solid var(--line);padding-bottom:8px}
+h3{font-size:17px;margin-top:28px}h4{font-size:15px;margin-top:22px}
+p,li{font-size:15px}li{margin-bottom:6px}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:.87em;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+pre{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;overflow-x:auto;font-size:13.5px;line-height:1.55;position:relative}
+pre code{background:none;padding:0}
+.copy{position:absolute;top:8px;right:8px;background:var(--bg3);border:1px solid var(--line);color:var(--fg2);border-radius:6px;font-size:11px;padding:3px 9px;cursor:pointer}
+.copy:hover{color:var(--accent);border-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13.8px;margin:16px 0;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}th{background:var(--bg3)}
+blockquote{background:var(--bg2);border-left:3px solid var(--accent);margin:16px 0;padding:12px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--fg)}
+blockquote p{margin:8px 0}
+hr{border:none;border-top:1px solid var(--line);margin:28px 0}
+img{max-width:100%;border-radius:8px;border:1px solid var(--line)}
+.toc{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin:0 0 26px;font-size:13.8px}
+.toc summary{cursor:pointer;font-weight:700}
+.toc ul{margin:8px 0;padding-left:20px}.toc li{margin-bottom:4px}
+.task-list-item{list-style:none}.task-list-item input{margin-right:8px;accent-color:var(--accent2)}
+.foot{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--fg2);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.codehilite .hll{background:#272822}.codehilite .c{color:#75715e}.codehilite .k{color:#66d9ef}.codehilite .s{color:#e6db74}.codehilite .n,.codehilite .nb,.codehilite .nf{color:#a6e22e}.codehilite .m{color:#ae81ff}
+@media(max-width:640px){.wrap{padding:20px 15px 70px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="top"><a class="btn" href="../../../index.html">&#8592; Roadmap</a><span class="crumb">production-reliability-lab/labs/week-10-grafana/lab.md</span></div>
+<div class="wrap">
+<details class="toc" open><summary>Daftar isi</summary><div class="toc">
+<ul>
+<li><a href="#lab-week-10-grafana-dan-alerting">Lab — Week 10 · Grafana dan Alerting</a><ul>
+<li><a href="#persiapan-wajib">Persiapan (wajib)</a></li>
+<li><a href="#hari-1-teori-2-jam">Hari 1 · Teori (2 jam)</a></li>
+<li><a href="#hari-2-praktik-2-jam-bangun-dashboard">Hari 2 · Praktik (2 jam) — bangun dashboard</a></li>
+<li><a href="#hari-3-eksperimen-2-jam-uji-alert">Hari 3 · Eksperimen (2 jam) — uji alert</a></li>
+<li><a href="#hari-4-review-2-jam-runbook">Hari 4 · Review (2 jam) — runbook</a></li>
+<li><a href="#daftar-periksa-checklist">Daftar periksa (checklist)</a></li>
+<li><a href="#cara-buktikan-acceptance">Cara buktikan (acceptance)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</details>
+<h1 id="lab-week-10-grafana-dan-alerting">Lab — Week 10 · Grafana dan Alerting<a class="headerlink" href="#lab-week-10-grafana-dan-alerting" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>Target: ubah metrics jadi informasi operasional.
+Waktu: 4 hari × 2 jam. Stack: <code>api</code>, <code>prometheus</code>, <code>grafana</code> (12.x), <code>alloy</code> (log pipeline).</p>
+</blockquote>
+<h2 id="persiapan-wajib">Persiapan (wajib)<a class="headerlink" href="#persiapan-wajib" title="Permanent link">&para;</a></h2>
+<pre><code>docker compose ps
+</code></pre>
+<p>Pastikan <code>sre-lab-api-1</code>, <code>sre-lab-prometheus-1</code>, <code>sre-lab-grafana-1</code>,
+dan <code>sre-lab-alloy-1</code> status <code>Up</code>. Buka <code>http://localhost:3000</code> (admin/admin —
+ganti di lab nyata). Pastikan <code>observability/otel/config.alloy</code> aktif (bukan
+Promtail). Di <code>/targets</code> Prometheus, job <code>api</code> = UP.</p>
+<hr />
+<h2 id="hari-1-teori-2-jam">Hari 1 · Teori (2 jam)<a class="headerlink" href="#hari-1-teori-2-jam" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Baca <code>bahan-bacaan.md</code> seksi 1–7.</li>
+<li>Catat di <code>notes.md</code>: tabel RED vs USE + 3 prinsip alerting (gejala, actionable, severity).</li>
+<li>Pahami <code>for:</code> cegah flapping dan <code>allowUiUpdates: false</code>.</li>
+</ul>
+<p><strong>Yang harus terjadi:</strong> lo bisa bedain alert gejala vs penyebab dengan contoh.</p>
+<p><strong>Kalau gagal:</strong> balik ke <code>bahan-bacaan.md</code> 2.3 &amp; 2.6.</p>
+<p><strong>Catat notes:</strong> tulis 1 alert di <code>rules/slo.yml</code> dan sebutin itu gejala atau penyebab.</p>
+<hr />
+<h2 id="hari-2-praktik-2-jam-bangun-dashboard">Hari 2 · Praktik (2 jam) — bangun dashboard<a class="headerlink" href="#hari-2-praktik-2-jam-bangun-dashboard" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Buat dashboard RED (provisioning as code, <code>allowUiUpdates: false</code>):
+   | Panel | Query |
+   | --- | --- |
+   | Request rate | <code>sum by (route)(rate(http_server_requests_total[5m]))</code> |
+   | Error rate % | error ratio × 100 |
+   | p95/p99 | <code>histogram_quantile(0.95, sum by (le,route)(rate(http_server_request_duration_seconds_bucket[5m])))</code> |
+   | In-flight | <code>http_server_requests_in_flight</code> |</li>
+<li>Buat dashboard USE:
+   | Panel | Query |
+   | --- | --- |
+   | CPU container | <code>rate(container_cpu_usage_seconds_total[5m])</code> |
+   | Memory | <code>container_memory_usage_bytes</code> vs limit |
+   | DB conns | <code>pg_stat_activity_count</code> (butuh postgres-exporter; opsional) |</li>
+<li>Simpan JSON dashboard ke <code>evidence/</code> dan definisi ke provisioning.</li>
+</ol>
+<p><strong>Yang harus terjadi:</strong> panel nunjukin angka live setelah traffic.
+<strong>Kalau gagai:</strong> cek data source Prometheus terhubung di Grafana.</p>
+<p><strong>Catat notes:</strong> screenshot dashboard RED sebelum &amp; sesudah traffic.</p>
+<hr />
+<h2 id="hari-3-eksperimen-2-jam-uji-alert">Hari 3 · Eksperimen (2 jam) — uji alert<a class="headerlink" href="#hari-3-eksperimen-2-jam-uji-alert" title="Permanent link">&para;</a></h2>
+<ol>
+<li>
+<p>Matiin API, ukur waktu ke firing:
+   <code>docker compose stop api
+   # catat: berapa detik dari stop sampai alert "APIDown" firing?
+   docker compose ps | grep api      # harus Exit</code>
+   <strong>Yang harus terjadi:</strong> <code>up{job="api"} == 0</code> → <code>APIDown</code> firing &lt; 2 menit
+   (job scrape 15s + <code>for: 1m</code>).
+   <strong>Kalau gagal:</strong> cek <code>for:</code> di <code>rules/slo.yml</code>, cek Alertmanager terhubung.</p>
+</li>
+<li>
+<p>Naikin error rate:
+   <code>docker compose start api
+   for i in $(seq 1 50); do curl -sS -o /dev/null -X POST -d 'bad' http://localhost/orders; done</code>
+   <strong>Yang harus terjadi:</strong> error ratio naik, <code>SlowErrorBudgetBurn</code>/<code>HighErrorBudgetBurn</code>
+   bisa firing (lihat <code>rules/slo.yml</code>).
+   <strong>Kalau gagal:</strong> cek <code>job:slo_errors_per_request:ratio_rate5m</code> di Prometheus.</p>
+</li>
+<li>
+<p>Latency tinggi:
+   <code>for i in $(seq 1 10); do curl -sS "http://localhost/slow?ms=2000" &amp; done</code>
+   <strong>Yang harus terjadi:</strong> <code>job:slo_latency_p95:histogram_quantile5m</code> &gt; 0,3 →
+   <code>HighLatencyP95</code> (ticket) firing.</p>
+</li>
+<li>
+<p><strong>CARA KEMBALI NORMAL (wajib):</strong>
+   <code>docker compose restart api        #hentikan traffic eksperimen &amp; reset
+   # atau cukup stop loop /slow; in-flight &amp; latency kembali normal sendiri
+   curl -fsS http://localhost:9090/api/v1/query?query=up{job=%22api%22}</code>
+   <strong>Yang harus terjadi:</strong> <code>up{job="api"}</code> = 1, error ratio turun ke baseline,
+   alert <code>APIDown</code> kembali ke <code>inactive</code>. Bukan rollback image — cukup pastikan
+   container jalan &amp; traffic eksperimen berhenti.</p>
+</li>
+</ol>
+<p><strong>Catat notes:</strong> isi tabel — alert | lama ke firing | actionable? | false positive?</p>
+<hr />
+<h2 id="hari-4-review-2-jam-runbook">Hari 4 · Review (2 jam) — runbook<a class="headerlink" href="#hari-4-review-2-jam-runbook" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Tulis runbook di <code>labs/week-10-grafana/runbooks/</code> (format wajib):
+   <code>markdown
+   ## Gejala
+   ## Kemungkinan penyebab (urut sering)
+   ## Query yang dicek dulu
+   ## Mitigasi cepat
+   ## Kapan eskalasi</code></li>
+<li>Verifikasi <code>allowUiUpdates: false</code> di provisioning (cegah drift).</li>
+<li>Commit dashboard JSON + runbook + <code>commands.md</code>.</li>
+</ol>
+<p><strong>Catat notes:</strong> 1 alert yang menurut lo perlu ditambah di lab ini.</p>
+<hr />
+<h2 id="daftar-periksa-checklist">Daftar periksa (checklist)<a class="headerlink" href="#daftar-periksa-checklist" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[ ] Grafana Up, data source Prometheus terhubung</li>
+<li>[ ] Dashboard RED (rate/error/p95/in-flight) live</li>
+<li>[ ] Dashboard USE (CPU/mem/DB) live</li>
+<li>[ ] <code>allowUiUpdates: false</code> aktif</li>
+<li>[ ] <code>APIDown</code> firing &lt; 2 menit pas api stop</li>
+<li>[ ] Error/latency alert teruji</li>
+<li>[ ] Setiap alert punya runbook</li>
+<li>[ ] Pipeline log lewat Alloy (bukan Promtail)</li>
+</ul>
+<h2 id="cara-buktikan-acceptance">Cara buktikan (acceptance)<a class="headerlink" href="#cara-buktikan-acceptance" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Screenshot dashboard RED+USE → <code>evidence/</code>.</li>
+<li>Timeline: stop api → alert firing (catat detik) → <code>evidence/</code>.</li>
+<li>Runbook per alert ada di <code>runbooks/</code> → <code>evidence/</code>.</li>
+<li><code>config.alloy</code> ada &amp; aktif (bukan promtail) → cek <code>docker compose ps</code>.</li>
+</ol>
+<div class="foot"><span>production-reliability-lab/labs/week-10-grafana/lab.md</span><span><a href="../../../index.html">Kembali ke roadmap</a></span></div>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(pre){
+  var b=document.createElement('button');b.className='copy';b.textContent='copy';
+  b.onclick=function(){var t=pre.innerText.replace(/\ncopy$/,'');navigator.clipboard.writeText(t).then(function(){b.textContent='copied!';setTimeout(function(){b.textContent='copy'},1200)})};
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
