@@ -31,7 +31,30 @@ pre code{background:none;padding:0}
   width:290px; flex:0 0 290px; background:var(--bg2); border-right:1px solid var(--line);
   padding:18px 0; overflow-y:auto; position:sticky; top:0; height:100vh;
 }
-.main{flex:1; padding:26px 30px 80px; max-width:1000px}
+.main{flex:1; padding:26px 30px 80px; max-width:1000px; min-width:0}
+.topbar{position:sticky; top:0; z-index:20; display:flex; background:var(--bg); background:color-mix(in srgb, var(--bg) 88%, transparent); align-items:center; gap:12px;
+  backdrop-filter:blur(8px);
+  padding:10px 0 12px; margin-bottom:6px}
+.menubtn{background:var(--bg3); border:1px solid var(--line); color:var(--fg);
+  width:38px; height:38px; border-radius:9px; cursor:pointer; font-size:18px; line-height:1;
+  display:grid; place-items:center; flex:0 0 38px}
+.menubtn:hover{border-color:var(--accent); color:var(--accent)}
+.topbar .crumb{font-size:13px; color:var(--fg2)}
+.side{transition:margin-left .25s ease, transform .25s ease}
+body.nav-collapsed .side{margin-left:-290px}
+.side .closebtn{display:none}
+.scrim{display:none}
+@media(max-width:900px){
+  .side{position:fixed; left:0; top:0; z-index:60; width:290px; max-width:85vw;
+    margin-left:0 !important; transform:translateX(-105%); box-shadow:0 0 40px #000a}
+  body.nav-open .side{transform:none}
+  body.nav-collapsed .side{transform:translateX(-105%)}
+  .side .closebtn{display:grid}
+  .scrim{display:block; position:fixed; inset:0; z-index:55; background:#000a;
+    opacity:0; pointer-events:none; transition:opacity .2s}
+  body.nav-open .scrim{opacity:1; pointer-events:auto}
+  .main{padding:16px 16px 80px}
+}
 
 /* ---------- header ---------- */
 .head{padding:0 18px 14px; border-bottom:1px solid var(--line); margin-bottom:12px}
@@ -149,12 +172,14 @@ th{background:var(--bg3);font-weight:600}
 </style>
 </head>
 <body>
+<div class="scrim" id="scrim"></div>
 <div class="wrap">
 
-  <aside class="side">
-    <div class="head">
-      <h1>Jadwal Belajar SRE</h1>
-      <p>16 minggu · 128 jam · 4 hari × 2 jam</p>
+  <aside class="side" id="sidebar">
+    <div class="head" style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+      <div><h1>Jadwal Belajar SRE</h1>
+      <p>16 minggu · 128 jam · 4 hari × 2 jam</p></div>
+      <button class="menubtn closebtn" id="closeBtn" aria-label="Tutup menu">✕</button>
     </div>
 
     <div class="progbox">
@@ -171,6 +196,10 @@ th{background:var(--bg3);font-weight:600}
   </aside>
 
   <main class="main">
+    <div class="topbar">
+      <button class="menubtn" id="menuBtn" aria-label="Buka/tutup menu" aria-expanded="true">☰</button>
+      <span class="crumb">Menu di samping bisa dibuka / tutup — coba klik ☰</span>
+    </div>
     <section class="week active" id="w0">
       <div class="overview">
         <h2>Selamat datang</h2>
@@ -810,6 +839,36 @@ document.getElementById("reset").addEventListener("click", ()=>{
     updateProgress(); buildNav(); applySearch();
   }
 });
+
+// ---------- collapsible sidebar ----------
+const menuBtn = document.getElementById("menuBtn");
+const closeBtn = document.getElementById("closeBtn");
+const scrim = document.getElementById("scrim");
+const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
+try{ if(localStorage.getItem("sre-nav-collapsed")==="1") document.body.classList.add("nav-collapsed"); }catch(e){}
+function syncMenuBtn(){
+  const collapsed = document.body.classList.contains("nav-collapsed");
+  const open = document.body.classList.contains("nav-open");
+  const expanded = isMobile() ? open : !collapsed;
+  menuBtn.setAttribute("aria-expanded", expanded ? "true" : "false");
+}
+function toggleNav(){
+  if(isMobile()) document.body.classList.toggle("nav-open");
+  else{
+    document.body.classList.toggle("nav-collapsed");
+    try{ localStorage.setItem("sre-nav-collapsed", document.body.classList.contains("nav-collapsed")?"1":"0"); }catch(e){}
+  }
+  syncMenuBtn();
+}
+function closeMobileNav(){ document.body.classList.remove("nav-open"); syncMenuBtn(); }
+menuBtn.addEventListener("click", toggleNav);
+closeBtn.addEventListener("click", ()=>{ if(isMobile()) closeMobileNav(); else toggleNav(); });
+scrim.addEventListener("click", closeMobileNav);
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeMobileNav(); });
+window.addEventListener("resize", syncMenuBtn);
+syncMenuBtn();
+const _origGo = go;
+window.go = go = function(n){ _origGo(n); if(isMobile()) closeMobileNav(); };
 
 buildNav(); buildWeeks(); updateProgress();
 if(location.hash){
